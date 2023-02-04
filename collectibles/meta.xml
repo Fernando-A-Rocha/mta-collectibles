@@ -1,0 +1,18 @@
+<meta>
+    <info version="1.0.0" author="Fernando" name="Collectibles" description="fun and customizable collectibles/packages system" type="script" />
+    <min_mta_version server="1.5.8-9.20957"></min_mta_version>
+    
+    <!-- Main Scripts -->
+    <script src="system_client.lua" type="client" />
+    <script src="system_server.lua" type="server" />
+
+    <!-- (Optional) Example Implementations -->
+    <script src="examples/godmode/godmode_server.lua" type="server" />
+    <script src="examples/godmode/godmode_client.lua" type="client" />
+
+    <!-- Sounds (must be in meta.xml in order to be played) -->
+    <file src="files/sounds/vc/checkpoint.ogg" />
+    <file src="files/sounds/vc/pickup.ogg" />
+    <file src="files/sounds/vc/notification.ogg" />
+    <file src="files/sounds/vc/pickup2.ogg" />
+</meta>
