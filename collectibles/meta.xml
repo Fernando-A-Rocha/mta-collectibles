@@ -6,8 +6,8 @@
     <script src="system_client.lua" type="client" />
     <script src="system_server.lua" type="server" />
     <file src="images/1pixelwhite.png" />
-    <script src="manage_client.lua" type="client" />
-    <script src="manage_server.lua" type="server" />
+    <script src="admin_client.lua" type="client" />
+    <script src="admin_server.lua" type="server" />
 
     <!-- (Optional) Testing Scripts -->
     <script src="testing_server.lua" type="server" />
