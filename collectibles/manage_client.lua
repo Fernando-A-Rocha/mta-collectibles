@@ -330,7 +330,7 @@ local function openCreateCollectible(metaFileSrcs)
 
     local soundAllEdit = guiCreateEdit(x+10, y + 20 + 5, PW2*(1/3), 24, "", false, scrollPane)
     local soundAllVolumeEdit = guiCreateEdit(x+10 + (PW2*(1/3)) + 5, y + 20 + 5, 50, 24, "", false, scrollPane)
-    y = y + 20 + 24 + 25
+    -- y = y + 20 + 24 + 25
 
     guiSetEnabled(soundAllEdit, false)
     guiSetEnabled(soundAllVolumeEdit, false)
@@ -581,8 +581,7 @@ addEventHandler("collectibles:manage", localPlayer, function(serverInfo)
         local rgbHex = rgbToHex({r, g, b})
         guiSetProperty(rgbImage, "ImageColours", "tl:".."FF"..rgbHex.." tr:".."FF"..rgbHex.." bl:".."FF"..rgbHex.." br:".."FF"..rgbHex)
         addEventHandler("onClientGUIChanged", rgbEdit, function()
-            local text = guiGetText(source)
-            local color = string.gsub(text, " ", "")
+            local color = string.gsub(guiGetText(source), " ", "")
             color = split(color, ",")
             if #color ~= 3 then
                 return guiSetVisible(rgbImage, false)
@@ -910,7 +909,7 @@ addEventHandler("collectibles:manage", localPlayer, function(serverInfo)
 
             local soundAllEdit = guiCreateEdit(x+10, y + 20 + 5, PW2*(1/3), 24, "", false, tabScroll)
             local soundAllVolumeEdit = guiCreateEdit(x+10 + (PW2*(1/3)) + 5, y + 20 + 5, 50, 24, "", false, tabScroll)
-            y = y + 20 + 24 + 25
+            -- y = y + 20 + 24 + 25
 
             if info.collect_all.sound and info.collect_all.sound_volume then
                 guiCheckBoxSetSelected(playSoundAllCheckbox, true)

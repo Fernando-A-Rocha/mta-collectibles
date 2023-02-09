@@ -122,8 +122,8 @@ local function parseOneNode(rootChildren, targetNodeName)
                     if not children then
                         return false, "Failed to get children of 'types' node."
                     end
-                    for i=1, #children do
-                        local child = children[i]
+                    for j=1, #children do
+                        local child = children[j]
                         if child then
                             local childName = xmlNodeGetName(child)
                             if childName ~= "type" then
@@ -163,8 +163,8 @@ local function parseOneNode(rootChildren, targetNodeName)
                                 end
                                 toggle_keybind = string.lower(toggle_keybind)
                                 local found = false
-                                for i=1, #KEY_NAMES do
-                                    if toggle_keybind == string.lower(KEY_NAMES[i]) then
+                                for w=1, #KEY_NAMES do
+                                    if toggle_keybind == string.lower(KEY_NAMES[w]) then
                                         found = true
                                         break
                                     end
@@ -227,8 +227,8 @@ local function parseOneNode(rootChildren, targetNodeName)
                     if not children then
                         return false, "Failed to get children of 'actions' node."
                     end
-                    for i=1, #children do
-                        local child = children[i]
+                    for j=1, #children do
+                        local child = children[j]
                         if child then
                             local childName = xmlNodeGetName(child)
                             if childName ~= "action" then
@@ -279,8 +279,8 @@ local function parseOneNode(rootChildren, targetNodeName)
                     if not children then
                         return false, "Failed to get children of 'spawnpoints' node."
                     end
-                    for i=1, #children do
-                        local child = children[i]
+                    for j=1, #children do
+                        local child = children[j]
                         if child then
                             local childName = xmlNodeGetName(child)
                             if childName ~= "spawnpoint" then
@@ -340,8 +340,8 @@ local function parseOneNode(rootChildren, targetNodeName)
                             destroyElement(testPickup)
                             for theType2, info in pairs(collectibleTypes) do
                                 if info.spawnpoints then
-                                    for i=1, #info.spawnpoints do
-                                        local spawnpoint = info.spawnpoints[i]
+                                    for w=1, #info.spawnpoints do
+                                        local spawnpoint = info.spawnpoints[w]
                                         if spawnpoint.x == x and spawnpoint.y == y and spawnpoint.z == z then
                                             return false, "Duplicate spawnpoint at position " .. x .. ", " .. y .. ", " .. z .. "."
                                         end
@@ -366,8 +366,8 @@ local function parseOneNode(rootChildren, targetNodeName)
                     if not children then
                         return false, "Failed to get children of 'texts' node."
                     end
-                    for i=1, #children do
-                        local child = children[i]
+                    for j=1, #children do
+                        local child = children[j]
                         if child then
                             local childName = xmlNodeGetName(child)
                             if childName ~= "text" then
@@ -397,12 +397,12 @@ local function parseOneNode(rootChildren, targetNodeName)
                                 return false, "Invalid attribute 'color' of 'text' node - must be a string in the format 'r,g,b' e.g. 255,255,0."
                             end
                             local colorTable = {}
-                            for i=1, #color do
-                                local value = tonumber(color[i])
+                            for w=1, #color do
+                                local value = tonumber(color[w])
                                 if (not value) or (value < 0) or (value > 255) then
                                     return false, "Invalid attribute 'color' of 'text' node - must be a string in the format 'r,g,b' e.g. 255,255,0."
                                 end
-                                colorTable[i] = value
+                                colorTable[w] = value
                             end
                             texts[name] = {
                                 text = value,
@@ -417,8 +417,8 @@ local function parseOneNode(rootChildren, targetNodeName)
                     if not children then
                         return false, "Failed to get children of 'commands' node."
                     end
-                    for i=1, #children do
-                        local child = children[i]
+                    for j=1, #children do
+                        local child = children[j]
                         if child then
                             local childName = xmlNodeGetName(child)
                             if childName ~= "command" then
@@ -468,14 +468,14 @@ local function loadConfiguration()
         xmlUnloadFile(config)
         return false, "Failed to parse <actions>: " .. reason
     end
-    for theType, info in pairs(collectibleTypes) do
-        if not info.collect_one then
+    for theType2, info2 in pairs(collectibleTypes) do
+        if not info2.collect_one then
             xmlUnloadFile(config)
-            return false, "Missing action 'collect_one' for type '" .. theType .. "'."
+            return false, "Missing action 'collect_one' for type '" .. theType2 .. "'."
         end
-        if not info.collect_all then
+        if not info2.collect_all then
             xmlUnloadFile(config)
-            return false, "Missing action 'collect_all' for type '" .. theType .. "'."
+            return false, "Missing action 'collect_all' for type '" .. theType2 .. "'."
         end
     end
     success, reason = parseOneNode(children, "spawnpoints")
@@ -483,12 +483,12 @@ local function loadConfiguration()
         xmlUnloadFile(config)
         return false, "Failed to parse <spawnpoints>: " .. reason
     end
-    for theType, info in pairs(collectibleTypes) do
-        if not info.spawnpoints then
+    for theType2, info2 in pairs(collectibleTypes) do
+        if not info2.spawnpoints then
             xmlUnloadFile(config)
-            return false, "Missing spawnpoints for type '" .. theType .. "'."
+            return false, "Missing spawnpoints for type '" .. theType2 .. "'."
         end
-        collectibleTypes[theType].total = #info.spawnpoints
+        collectibleTypes[theType2].total = #info2.spawnpoints
     end
     success, reason = parseOneNode(children, "texts")
     if not success then
@@ -1053,8 +1053,8 @@ function spawnCollectibles(theType, thePlayer)
         return false, "admin_invalid_collectible_type"
     end
     local countExisting = 0
-    for pickup, info in pairs(spawnedServerCollectibles) do
-        if info.type == theType then
+    for pickup, info2 in pairs(spawnedServerCollectibles) do
+        if info2.type == theType then
             countExisting = countExisting + 1
         end
     end
@@ -1232,14 +1232,14 @@ function removeSpawnpoint(theType, index)
     for i=1, #children do
         local child = children[i]
         if child and xmlNodeGetName(child) == "spawnpoints" then
-            local spawnpoints = xmlNodeGetChildren(child)
-            if not spawnpoints then
+            local spawnpoints2 = xmlNodeGetChildren(child)
+            if not spawnpoints2 then
                 xmlUnloadFile(config)
                 return false, "Failed to get children of 'spawnpoints' in 'config.xml'."
             end
             local countedIndexes = {}
-            for i2=1, #spawnpoints do
-                local spawnpoint2 = spawnpoints[i2]
+            for i2=1, #spawnpoints2 do
+                local spawnpoint2 = spawnpoints2[i2]
                 if spawnpoint2 and xmlNodeGetName(spawnpoint2) == "spawnpoint" then
                     local theType2 = xmlNodeGetAttribute(spawnpoint2, "type")
                     if theType == theType2 then
@@ -1508,9 +1508,9 @@ function resetClientCollectibles(targetAccount, theType, thePlayer)
         data = fromJSON(data) or {}
     end
     if theType == "all" then
-        for theType, info in pairs(collectibleTypes) do
+        for theType2, info in pairs(collectibleTypes) do
             if info.target == "client" then
-                data[theType] = {}
+                data[theType2] = {}
             end
         end
     else
@@ -1575,7 +1575,7 @@ local function handlePickedUp(thePlayer_, collectibleInfo)
     local accountID = getAccountID(account)
     local respawn_after = collectibleTypes[theType].respawn_after
     local index = collectibleInfo.index
-    local count = 0
+    local count
     if (not client) then
         count = countCollectedServer(accountID, theType) + 1
         collectibleTypes[theType].spawnpoints[index].collected_by = accountID

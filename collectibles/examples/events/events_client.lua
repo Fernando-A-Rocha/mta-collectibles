@@ -18,7 +18,6 @@ local function announceEvent(event, adminName, winner)
             if (adminName) then
                 outputChatBox(string.format("[Event]#ffffff A new event has been started by#36c9ff %s#ffffff:", adminName), 255, 0, 255, true)
             else
-                local announce = string.format(event.announce, event.friendlyName, event.rewardMoney)
                 outputChatBox(string.format("[Event]#ffffff There is currently an event happening, in which you can participate:", adminName), 255, 0, 255, true)
             end
             outputChatBox(string.format("[Event]#ffffff %s", announce), 255, 0, 255, true)
