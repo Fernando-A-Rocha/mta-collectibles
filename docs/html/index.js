@@ -1,0 +1,15 @@
+var docs = [
+{path:"module/system_client.html", type:"module", title:"system_client", text:""},
+{path:"module/system_server.html", type:"module", title:"system_server", text:""},
+{path:"module/system_client.html#system_client.canToggleCollectibles", type:"function", title:"system_client.canToggleCollectibles", text:"*(Exported)* This may be customized"},
+{path:"module/system_server.html#system_server.setPlayerPreventPicking", type:"function", title:"system_server.setPlayerPreventPicking", text:"*(Exported)*"},
+{path:"module/system_server.html#system_server.getCollectibleTypes", type:"function", title:"system_server.getCollectibleTypes", text:"*(Exported)*"},
+{path:"module/system_server.html#system_server.canManageCollectibles", type:"function", title:"system_server.canManageCollectibles", text:"*(Exported)* This may be customized"},
+{path:"module/system_server.html#system_server.canCollectPickup", type:"function", title:"system_server.canCollectPickup", text:"*(Exported)* This may be customized PS: Valid player account check is elsewhere in the code already"},
+{path:"module/system_server.html#system_server.spawnCollectibles", type:"function", title:"system_server.spawnCollectibles", text:"*(Exported)*"},
+{path:"module/system_server.html#system_server.destroyCollectibles", type:"function", title:"system_server.destroyCollectibles", text:"*(Exported)*"},
+{path:"module/system_server.html#system_server.removeSpawnpoint", type:"function", title:"system_server.removeSpawnpoint", text:"*(Exported)*"},
+{path:"module/system_server.html#system_server.createNewSpawnpoint", type:"function", title:"system_server.createNewSpawnpoint", text:"*(Exported)*"},
+{path:"module/system_server.html#system_server.getCollectedCounts", type:"function", title:"system_server.getCollectedCounts", text:"*(Exported)*"},
+{path:"module/system_server.html#system_server.resetClientCollectibles", type:"function", title:"system_server.resetClientCollectibles", text:"*(Exported)*"},
+];
