@@ -53,7 +53,8 @@
         <text name="admin_destroyed" color="5, 255, 5">You have destroyed the existing %s %s collectibles.</text>
         <text name="admin_invalid_collectible_type" color="255, 0, 0">Collectible type &apos;%s&apos; does not exist.</text>
         <text name="admin_invalid_account_id" color="255, 0, 0">User account ID %s does not exist.</text>
-        <text name="admin_reset_success" color="5, 255, 5">You have respawned %s client collectibles for %s (ID: %s).</text>
+        <text name="admin_reset_success" color="5, 255, 5">You have reset and respawned %s client collectibles for %s (ID: %s).</text>
+        <text name="admin_reset_success_player" color="88, 255, 88">An admin has reset and respawned your collectibles (%s).</text>
     </texts>
     <types>
         <type name="Totem" target="client" auto_load="true" toggle_command="totems" respawn_after_unit="minutes" respawn_after="1" />

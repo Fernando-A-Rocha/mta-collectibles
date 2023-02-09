@@ -507,7 +507,7 @@ local function loadConfiguration()
     local EXPECTED_TEXTS = {
         "command_syntax", "ask_to_wait", "cant_pickup",
         "cant_toggle", "toggle_on", "toggle_off", "respawned", "already_collected", "text_top", "text_bottom", "reward_money",
-        "admin_no_permission", "admin_count_spawned", "admin_spawned", "admin_destroyed", "admin_invalid_collectible_type", "admin_invalid_account_id", "admin_reset_success"
+        "admin_no_permission", "admin_count_spawned", "admin_spawned", "admin_destroyed", "admin_invalid_collectible_type", "admin_invalid_account_id", "admin_reset_success_player", "admin_reset_success"
     }
     for i=1, #EXPECTED_TEXTS do
         local name = EXPECTED_TEXTS[i]
@@ -1565,6 +1565,7 @@ function resetClientCollectibles(targetAccount, theType, thePlayer)
     end
     if targetPlayer then
         sendCollectibles(targetPlayer, targetAccount, (theType ~= "all" and theType or nil))
+        outputCustomText(targetPlayer, "admin_reset_success_player", (string.gsub(theType, "_", " ")))
     end
     if isElement(thePlayer) then
         local targetAccountName = getAccountName(targetAccount)
