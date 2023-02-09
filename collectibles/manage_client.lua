@@ -290,7 +290,7 @@ local function openCreateCollectible(metaFileSrcs)
 
     -- Right side
     x = x + (PW2/2) + 10
-    y = 15
+    y = 40
 
     local actionsTitle = guiCreateLabel(x, y, PW2*(1/3), 20, "Actions", false, scrollPane)
     guiSetFont(actionsTitle, "default-bold-small")
@@ -520,88 +520,6 @@ addEventHandler("collectibles:manage", localPlayer, function(serverInfo)
     
     local tabPanel = guiCreateTabPanel(x, y, WW-(x*2), WH - 80, false, mainWin)
 
-   
-    -- Read-only stats
-
-    local tabStats = guiCreateTab("Statistics", tabPanel)
-    local TW, TH = guiGetSize(tabStats, false)
-
-    x = 10
-    y = 15
-    local statsText = ""
-
-    local cTypes = 0
-    local cTypesClient = 0
-    local cTypesServer = 0
-    for theType, info in pairs(serverInfo.collectibleTypes) do
-        if info.target == "client" then
-            cTypesClient = cTypesClient + 1
-        else
-            cTypesServer = cTypesServer + 1
-        end
-        cTypes = cTypes + 1
-    end
-    statsText = statsText .. "Collectible Types (Client): " .. cTypesClient
-    statsText = statsText .. "\n\nCollectible Types (Server): " .. cTypesServer
-
-    local cAccountCollectors = 0
-    local cAccountMostCollectedCount = 0
-    local cAccountMostCollectedName = "No-one"
-    local cAccountMostCollectedID = 0
-    for i=1, #(serverInfo.collectedCounts) do
-        local info = serverInfo.collectedCounts[i]
-        if info then
-            local cCounts = info.counts.client
-            local accountCount = 0
-            for theType, v in pairs(cCounts) do
-                if v.count > 0 then
-                    accountCount = accountCount + v.count
-                end
-            end
-            if accountCount > 0 then
-                if accountCount > cAccountMostCollectedCount then
-                    cAccountMostCollectedCount = accountCount
-                    cAccountMostCollectedName = info.accountName
-                    cAccountMostCollectedID = info.accountID
-                end
-                cAccountCollectors = cAccountCollectors + 1
-            end
-        end
-    end
-
-    statsText = statsText .. "\n\nUnique Collectors (Player Accounts): " .. cAccountCollectors
-    if cAccountMostCollectedCount > 0 then
-        statsText = statsText .. "\n\nMost Collected (Player Account): " .. cAccountMostCollectedName .. " ID: "..cAccountMostCollectedID.." (" .. cAccountMostCollectedCount..")"
-    end
-
-    local mostCollectedType = "None"
-    for theType, info in pairs(serverInfo.collectibleTypes) do
-        if info.target == "client" then
-            local mostCollectedCount = 0
-            for i=1, #(serverInfo.collectedCounts) do
-                local info = serverInfo.collectedCounts[i]
-                if info then
-                    local cCounts = info.counts.client
-                    if cCounts[theType] and cCounts[theType].count > mostCollectedCount then
-                        mostCollectedCount = cCounts[theType].count
-                    end
-                end
-            end
-            if mostCollectedCount > 0 then
-                mostCollectedType = theType .. " (" .. mostCollectedCount .. ")"
-            end
-        end
-    end
-
-    statsText = statsText .. "\n\nMost Collected Client Collectible: " .. mostCollectedType
-
-    local _, countLines = statsText:gsub("\n","")
-    countLines = countLines + 1
-    local statsHeight = (20*countLines)
-
-    local stats = guiCreateLabel(x, y, TW-(x*2), statsHeight, statsText, false, tabStats)
-    y = y + statsHeight + 20
-
     -- Customizable settings
 
     local settings = {}
@@ -609,6 +527,7 @@ addEventHandler("collectibles:manage", localPlayer, function(serverInfo)
     -- Settings: Commands
 
     local tabCommands = guiCreateTab("Commands", tabPanel)
+    local TW, TH = guiGetSize(tabCommands, false)
 
     x = 10
     y = 10
@@ -728,18 +647,17 @@ addEventHandler("collectibles:manage", localPlayer, function(serverInfo)
         settings.types = {}
         settings.actions = {}
 
-        local topY = y
-        
         for theType, info in pairs(serverInfo.collectibleTypes) do
 
             x = 10
             y = 0
             local tab = guiCreateTab(theType, tabPanelTypes)
-            local TW2, TH2 = guiGetSize(tabStats, false)
+            local TW2, TH2 = guiGetSize(tab, false)
 
-            local tabScroll = guiCreateScrollPane(x, y, TW2-(x*2), TH2-topY-15, false, tab)
+            local tabScroll = guiCreateScrollPane(x, y, TW2-(x*2), TH2-15, false, tab)
             
             local PW2 = guiGetSize(tabCommandsScroll, false)
+            PW2 = PW2 - 10
 
             guiCreateLabel(0, y, PW2, 10, " ", false, tabScroll)
             y = y + 15
@@ -897,7 +815,19 @@ addEventHandler("collectibles:manage", localPlayer, function(serverInfo)
                 end, 50, 1)
             end)
 
-            local deleteInfoLabel = guiCreateLabel(0, y, PW2, 20, "DANGER: Deletes this type's spawnpoints and collected counts of all player accounts.", false, tabScroll)
+            local statsInfoLabel = guiCreateLabel(0, y, PW2, 20, "INFO: View all server and player stats related to this collectible:", false, tabScroll)
+            guiLabelSetHorizontalAlign(statsInfoLabel, "left", true)
+            guiLabelSetColor(statsInfoLabel, 110, 240, 255)
+            y = y + 20 + 5
+
+            local statsButton = guiCreateButton(0, y, 160, 24, "View Stats", false, tabScroll)
+            addEventHandler("onClientGUIClick", statsButton, function()
+                outputChatBox("Coming soon!", 200, 200, 200)
+            end, false)
+            guiSetProperty(statsButton, "NormalTextColour", "ff6ef0ff")
+            y = y + 24 + 25
+
+            local deleteInfoLabel = guiCreateLabel(0, y, PW2, 20, "DANGER: Deletes this type's spawnpoints and collected counts of all player accounts:", false, tabScroll)
             guiLabelSetHorizontalAlign(deleteInfoLabel, "left", true)
             guiLabelSetColor(deleteInfoLabel, 255, 0, 0)
             y = y + 20 + 5
@@ -934,7 +864,7 @@ addEventHandler("collectibles:manage", localPlayer, function(serverInfo)
 
 
             -- Right side
-            x = x + (PW2/2) + 10
+            x = x + (PW2/2)
             y = 15
 
             local actionsTitle = guiCreateLabel(x, y, PW2*(1/3), 20, "Actions", false, tabScroll)
