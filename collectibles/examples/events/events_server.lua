@@ -51,8 +51,8 @@ local function handleCollect(account, accountID, accountName, collectibleTarget,
     if not event then return end
     if not event.ongoing then return end
     local now = getRealTime().timestamp
-    local index = #event.found+1
-    EVENTS[theType].found[index] = { timestamp = now, accountID = accountID, playerName = getPlayerName(thePlayer) }
+    local i = #event.found+1
+    EVENTS[theType].found[i] = { timestamp = now, accountID = accountID, playerName = getPlayerName(thePlayer) }
 
     if #EVENTS[theType].found == total then
         local playerCollectedCounts = {}
