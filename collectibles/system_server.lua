@@ -455,6 +455,9 @@ local function parseOneNode(rootChildren, targetNodeName)
     return true
 end
 
+--- Loads the configuration file and parses it
+--
+-- Errors are usually caused by incorrectly formatted XML file (caused by editing it manually) and file IO operations.
 local function loadConfiguration()
 
     local config = xmlLoadFile("config.xml")

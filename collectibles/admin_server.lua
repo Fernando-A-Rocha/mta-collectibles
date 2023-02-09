@@ -109,12 +109,12 @@ function commandManageCollectibles(thePlayer, cmd)
     local meta = xmlLoadFile("meta.xml", true)
     if not meta then
         antiSpam[thePlayer] = nil
-        return outputChatBox("Unexpected error #1 on /"..cmd..".", thePlayer, 255, 0, 0)
+        return outputChatBox("ERROR #1 (/"..cmd..").", thePlayer, 255, 0, 0)
     end
     local metaChildren = xmlNodeGetChildren(meta)
     if not metaChildren then
         antiSpam[thePlayer] = nil
-        return outputChatBox("Unexpected error #2 on /"..cmd..".", thePlayer, 255, 0, 0)
+        return outputChatBox("ERROR #2 (/"..cmd..").", thePlayer, 255, 0, 0)
     end
     for i=1, #metaChildren do
         local metaChild = metaChildren[i]
