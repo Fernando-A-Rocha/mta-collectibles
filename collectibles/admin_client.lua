@@ -33,9 +33,9 @@ local function rgbToHex(rgb)
 	for key, value in pairs(rgb) do
 		local hex = ''
 		while(value > 0)do
-			local index = math.fmod(value, 16) + 1
+			local ind = math.fmod(value, 16) + 1
 			value = math.floor(value / 16)
-			hex = string.sub('0123456789ABCDEF', index, index) .. hex			
+			hex = string.sub('0123456789ABCDEF', ind, ind) .. hex			
 		end
 		if(string.len(hex) == 0)then
 			hex = '00'
@@ -1103,8 +1103,8 @@ addEventHandler("collectibles:manage", localPlayer, function(serverInfo)
                         local collect_one = info.collect_one
                         local collect_all = info.collect_all
                         for on, info2 in pairs({collect_one = info.collect_one, collect_all = info.collect_all}) do
-                            local index = #updateNodes[settingType]+1
-                            updateNodes[settingType][index] = { attributeNames = {type=name, on=on} }
+                            local i = #updateNodes[settingType]+1
+                            updateNodes[settingType][i] = { attributeNames = {type=name, on=on} }
                             if guiCheckBoxGetSelected(info2.playSound) then
                                 local volume = tonumber(guiGetText(info2.soundVolume))
                                 if (not volume) or (volume < 0) then
@@ -1125,12 +1125,12 @@ addEventHandler("collectibles:manage", localPlayer, function(serverInfo)
                                 if not found then
                                     return showValidationError("Sound file path for '"..name.." - "..on.."' does not exist")
                                 end
-                                updateNodes[settingType][index].attributes = {
+                                updateNodes[settingType][i].attributes = {
                                     sound = sound,
                                     sound_volume = tostring(volume),
                                 }
                             else
-                                updateNodes[settingType][index].attributes = {
+                                updateNodes[settingType][i].attributes = {
                                     sound = false,
                                     sound_volume = false,
                                 }
@@ -1282,7 +1282,7 @@ local function openCreateNewSpawnpoint(theType, lastModelID)
         else
             guiSetEnabled(customModelEdit, false)
             guiSetText(customModelEdit, MODEL_EDIT_PLACEHOLDER)
-            chosenModelID = MODELS[item][2]
+            chosenModelID = MODELS[item+1][2]
             guiLabelSetColor(modelLabel, 0, 255, 0)
         end
     end, false)
@@ -1315,8 +1315,7 @@ addEventHandler("collectibles:configureSpawnpoints", localPlayer, function(comma
     spWin = guiCreateWindow((SW-WW)/2, (SH-WH)/2, WW, WH, theType.. " - /"..commandName, false)
 
     local spList = guiCreateGridList(0.05, 0.05, 0.9, 0.7, true, spWin)
-    -- cols: index, model, x, y, z, interior, dimension
-    guiGridListAddColumn(spList, "Index", 0.12)
+    guiGridListAddColumn(spList, "ID", 0.12)
     guiGridListAddColumn(spList, "Model", 0.12)
     guiGridListAddColumn(spList, "X", 0.12)
     guiGridListAddColumn(spList, "Y", 0.12)
@@ -1324,15 +1323,18 @@ addEventHandler("collectibles:configureSpawnpoints", localPlayer, function(comma
     guiGridListAddColumn(spList, "Interior", 0.12)
     guiGridListAddColumn(spList, "Dimension", 0.12)
 
-    for index, spawnpoint in pairs(info.spawnpoints) do
-        local row = guiGridListAddRow(spList)
-        guiGridListSetItemText(spList, row, 1, tostring(index), false, false)
-        guiGridListSetItemText(spList, row, 2, tostring(spawnpoint.model), false, false)
-        guiGridListSetItemText(spList, row, 3, tostring(spawnpoint.x), false, false)
-        guiGridListSetItemText(spList, row, 4, tostring(spawnpoint.y), false, false)
-        guiGridListSetItemText(spList, row, 5, tostring(spawnpoint.z), false, false)
-        guiGridListSetItemText(spList, row, 6, tostring(spawnpoint.interior), false, false)
-        guiGridListSetItemText(spList, row, 7, tostring(spawnpoint.dimension), false, false)
+    for i=1, #info.spawnpoints do
+        local spawnpoint = info.spawnpoints[i]
+        if spawnpoint then
+            local row = guiGridListAddRow(spList)
+            guiGridListSetItemText(spList, row, 1, tostring(spawnpoint.spID), false, false)
+            guiGridListSetItemText(spList, row, 2, tostring(spawnpoint.model), false, false)
+            guiGridListSetItemText(spList, row, 3, tostring(spawnpoint.x), false, false)
+            guiGridListSetItemText(spList, row, 4, tostring(spawnpoint.y), false, false)
+            guiGridListSetItemText(spList, row, 5, tostring(spawnpoint.z), false, false)
+            guiGridListSetItemText(spList, row, 6, tostring(spawnpoint.interior), false, false)
+            guiGridListSetItemText(spList, row, 7, tostring(spawnpoint.dimension), false, false)
+        end
     end
 
     local spAdd = guiCreateButton(0.05, 0.8, 0.2, 0.15, "Add", true, spWin)
@@ -1367,21 +1369,13 @@ addEventHandler("collectibles:configureSpawnpoints", localPlayer, function(comma
                 local lastModelID = tonumber(guiGridListGetItemText(spList, guiGridListGetRowCount(spList)-1, 2))
                 openCreateNewSpawnpoint(theType, lastModelID)
             elseif source == spGoto then
-                local index = tonumber(guiGridListGetItemText(spList, row, 1))
-                triggerServerEvent("collectibles:gotoSpawnpoint", resourceRoot, theType, index)
+                local spID = tonumber(guiGridListGetItemText(spList, row, 1))
+                triggerServerEvent("collectibles:gotoSpawnpoint", resourceRoot, theType, spID)
             elseif source == spRemove then
 
-                local index = guiGridListGetItemText(spList, row, 1)
-                local desc = "Are you sure you want to remove spawnpoint #"..tostring(index).."?"
-                local color = "FF00FF00"
-                if #info.spawnpoints == 1 then
-                    desc = desc .. "\n\nWARNING: You need to have at least one spawnpoint.\nBy removing this one, a new one will be created at the center\nof the map, which you can remove later."
-                    desc = desc .. "\n\nIf you don't want this, click Cancel and add a new\nspawnpoint instead of removing this one."
-                    desc = desc .. "\n\nIf you want to remove this type of collectible,\ndelete it from the administration panel."
-                    color = "FFFF0000"
-                end
-
-                createConfirmPopup("Remove Spawnpoint", color, desc, "Confirm", "Cancel", "collectibles:manageConfirm", "removeSpawnpoint", theType, tonumber(index))
+                local spID = guiGridListGetItemText(spList, row, 1)
+                local desc = "Are you sure you want to remove spawnpoint #"..tostring(spID).."?"
+                createConfirmPopup("Remove Spawnpoint", "FF00FF00", desc, "Confirm", "Cancel", "collectibles:manageConfirm", "removeSpawnpoint", theType, tonumber(spID))
             end
         end
     end)

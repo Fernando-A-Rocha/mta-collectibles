@@ -239,11 +239,11 @@ local function requestRestoreConfigBackup()
 end
 addEventHandler("collectibles:restoreConfigBackup", resourceRoot, requestRestoreConfigBackup, false)
 
-local function requestGotoSpawnpoint(theType, index)
+local function requestGotoSpawnpoint(theType, spID)
     if not client then return end
 
-    if type(index) ~= "number" then
-        return triggerClientEvent(client, "collectibles:manageResponse", client, false, "Invalid spawnpoint index.", "OK")
+    if type(spID) ~= "number" then
+        return triggerClientEvent(client, "collectibles:manageResponse", client, false, "Invalid spawnpoint spID.", "OK")
     end
 
     local collectibleTypes = getCollectibleTypes() or {}
@@ -252,9 +252,16 @@ local function requestGotoSpawnpoint(theType, index)
         return triggerClientEvent(client, "collectibles:manageResponse", client, false, "Invalid collectible type.", "OK")
     end
     
-    local spawnpoint = info.spawnpoints[index]
+    local spawnpoint
+    for i=1, #info.spawnpoints do
+        local sp = info.spawnpoints[i]
+        if sp and sp.spID == spID then
+            spawnpoint = sp
+            break
+        end
+    end
     if not spawnpoint then
-        return triggerClientEvent(client, "collectibles:manageResponse", client, false, "Invalid spawnpoint index for '"..theType.."'", "OK")
+        return triggerClientEvent(client, "collectibles:manageResponse", client, false, "Invalid spawnpoint spID for '"..theType.."'", "OK")
     end
 
     -- Prevent the player from picking up the collectible
@@ -267,15 +274,15 @@ local function requestGotoSpawnpoint(theType, index)
     setElementInterior(client, interior)
     setElementDimension(client, dimension)
 
-    triggerClientEvent(client, "collectibles:manageResponse", client, "Teleported to '"..theType.."' spawnpoint #"..index..".", false, "OK")
+    triggerClientEvent(client, "collectibles:manageResponse", client, "Teleported to '"..theType.."' spawnpoint #"..spID..".", false, "OK")
 end
 addEventHandler("collectibles:gotoSpawnpoint", resourceRoot, requestGotoSpawnpoint, false)
 
-local function requestRemoveSpawnpoint(theType, index)
+local function requestRemoveSpawnpoint(theType, spID)
     if not client then return end
 
-    if type(index) ~= "number" then
-        return triggerClientEvent(client, "collectibles:manageResponse", client, false, "Invalid spawnpoint index.", "OK")
+    if type(spID) ~= "number" then
+        return triggerClientEvent(client, "collectibles:manageResponse", client, false, "Invalid spawnpoint spID.", "OK")
     end
 
     local collectibleTypes = getCollectibleTypes() or {}
@@ -284,17 +291,24 @@ local function requestRemoveSpawnpoint(theType, index)
         return triggerClientEvent(client, "collectibles:manageResponse", client, false, "Invalid collectible type.", "OK")
     end
     
-    local spawnpoint = info.spawnpoints[index]
+    local spawnpoint
+    for i=1, #info.spawnpoints do
+        local sp = info.spawnpoints[i]
+        if sp and sp.spID == spID then
+            spawnpoint = sp
+            break
+        end
+    end
     if not spawnpoint then
-        return triggerClientEvent(client, "collectibles:manageResponse", client, false, "Invalid spawnpoint index for '"..theType.."'", "OK")
+        return triggerClientEvent(client, "collectibles:manageResponse", client, false, "Invalid spawnpoint spID for '"..theType.."'", "OK")
     end
 
-    local success, reason = removeSpawnpoint(theType, index)
+    local success, reason = removeSpawnpoint(theType, spID)
     if not success then
         return triggerClientEvent(client, "collectibles:manageResponse", client, false, reason, "OK")
     end
 
-    triggerClientEvent(client, "collectibles:manageResponse", client, "'"..theType.."' spawnpoint #"..index.." removed successfully.", false, "OK")
+    triggerClientEvent(client, "collectibles:manageResponse", client, "'"..theType.."' spawnpoint #"..spID.." removed successfully.", false, "OK")
 end
 addEventHandler("collectibles:removeSpawnpoint", resourceRoot, requestRemoveSpawnpoint, false)
 

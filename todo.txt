@@ -1,5 +1,3 @@
-- proper Lua doc in the code (auto-generate)
-- spawnpoint IDs per type
-- ability to have 0 spawnpoints spawned
+- better and more Lua code documentation
 - ability to translate literally every string
 - collectible stats window

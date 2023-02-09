@@ -25,9 +25,6 @@ local commands = {}
 local spawnedServerCollectibles = {}
 local preventPicking = {}
 
--- x,y,z,interior,dimension for default & temporary spawnpoint
-local NEW_SPAWNPOINT_DEFAULT = {0,0,-10,0,0}
-
 --- **(Exported)**
 function setPlayerPreventPicking(player, interval)
     assert(type(interval) == "number", "Bad argument @ setPlayerPreventPicking (number expected, got " .. type(interval) .. ")")
@@ -290,6 +287,11 @@ local function parseOneNode(rootChildren, targetNodeName)
                             if not theType then
                                 return false, "Missing attribute 'type' of 'spawnpoint' node."
                             end
+                            local id = xmlNodeGetAttribute(child, "id")
+                            id = tonumber(id)
+                            if (not id) or (id < 0) then
+                                return false, "Invalid attribute 'id' of 'spawnpoint' node - must be a number greater than 0."
+                            end
                             local x = xmlNodeGetAttribute(child, "x")
                             if not x then
                                 return false, "Missing attribute 'x' of 'spawnpoint' node."
@@ -342,16 +344,24 @@ local function parseOneNode(rootChildren, targetNodeName)
                                 if info.spawnpoints then
                                     for w=1, #info.spawnpoints do
                                         local spawnpoint = info.spawnpoints[w]
-                                        if spawnpoint.x == x and spawnpoint.y == y and spawnpoint.z == z then
+                                        if spawnpoint and spawnpoint.x == x and spawnpoint.y == y and spawnpoint.z == z then
                                             return false, "Duplicate spawnpoint at position " .. x .. ", " .. y .. ", " .. z .. "."
                                         end
                                     end
                                 end
                             end
-                            collectibleTypes[theType].spawnpoints = collectibleTypes[theType].spawnpoints or {}
-                            local index = #collectibleTypes[theType].spawnpoints + 1
-                            collectibleTypes[theType].spawnpoints[index] = {
-                                index = index,
+                            if not collectibleTypes[theType].spawnpoints then
+                                collectibleTypes[theType].spawnpoints = {}
+                            end
+                            for w=1, #collectibleTypes[theType].spawnpoints do
+                                local spawnpoint = collectibleTypes[theType].spawnpoints[w]
+                                if spawnpoint and spawnpoint.spID == id then
+                                    return false, "Duplicate spawnpoint ID '" .. id .. "' for type '" .. theType .. "'."
+                                end
+                            end
+                            local newIndex = #collectibleTypes[theType].spawnpoints + 1
+                            collectibleTypes[theType].spawnpoints[newIndex] = {
+                                spID = id,
                                 x = x,
                                 y = y,
                                 z = z,
@@ -485,10 +495,9 @@ local function loadConfiguration()
     end
     for theType2, info2 in pairs(collectibleTypes) do
         if not info2.spawnpoints then
-            xmlUnloadFile(config)
-            return false, "Missing spawnpoints for type '" .. theType2 .. "'."
+            collectibleTypes[theType2].spawnpoints = {}
         end
-        collectibleTypes[theType2].total = #info2.spawnpoints
+        collectibleTypes[theType2].total = #collectibleTypes[theType2].spawnpoints
     end
     success, reason = parseOneNode(children, "texts")
     if not success then
@@ -885,15 +894,13 @@ function createNewType(typeInfo)
     end
 
     -- Find the necessary node
-    local typesNode, actionsNode, spawnpointsNode
+    local typesNode, actionsNode
     for i=1, #children do
         local child = children[i]
         if xmlNodeGetName(child) == "types" then
             typesNode = child
         elseif xmlNodeGetName(child) == "actions" then
             actionsNode = child
-        elseif xmlNodeGetName(child) == "spawnpoints" then
-            spawnpointsNode = child
         end
     end
 
@@ -904,10 +911,6 @@ function createNewType(typeInfo)
     if not actionsNode then
         xmlUnloadFile(config)
         return false, "Failed to find node 'actions' in 'config.xml'."
-    end
-    if not spawnpointsNode then
-        xmlUnloadFile(config)
-        return false, "Failed to find node 'spawnpoints' in 'config.xml'."
     end
 
     -- Create new type node
@@ -993,26 +996,6 @@ function createNewType(typeInfo)
         xmlNodeSetAttribute(newActionNodeAll, "sound_volume", typeInfo.actions.collect_all.sound_volume)
     end
 
-    -- Create 1 spawnpoint node (default)
-
-    -- NEW_SPAWNPOINT_DEFAULT
-    local newSpawnpointNode = xmlCreateChild(spawnpointsNode, "spawnpoint")
-    if not newSpawnpointNode then
-        xmlUnloadFile(config)
-        return false, "Failed to create new spawnpoint node."
-    end
-
-    xmlNodeSetAttribute(newSpawnpointNode, "type", newName)
-
-    local x,y,z,interior,dimension = NEW_SPAWNPOINT_DEFAULT[1], NEW_SPAWNPOINT_DEFAULT[2], NEW_SPAWNPOINT_DEFAULT[3], NEW_SPAWNPOINT_DEFAULT[4], NEW_SPAWNPOINT_DEFAULT[5]
-
-    xmlNodeSetAttribute(newSpawnpointNode, "model", 1240)
-    xmlNodeSetAttribute(newSpawnpointNode, "x", x)
-    xmlNodeSetAttribute(newSpawnpointNode, "y", y)
-    xmlNodeSetAttribute(newSpawnpointNode, "z", z)
-    xmlNodeSetAttribute(newSpawnpointNode, "interior", interior)
-    xmlNodeSetAttribute(newSpawnpointNode, "dimension", dimension)
-
     if not xmlSaveFile(config) then
         xmlUnloadFile(config)
         return false, "Failed to save file 'config.xml'."
@@ -1022,17 +1005,17 @@ function createNewType(typeInfo)
     return true
 end
 
-local function createOnePickup(theType, index, spawnpoint)
+local function createOnePickup(theType, spID, spawnpoint)
     local pickup = createPickup(spawnpoint.x, spawnpoint.y, spawnpoint.z, 3, spawnpoint.model)
     if not pickup then
-        outputInfoMessage("Failed to create pickup for type '" .. theType .. "' at spawnpoint " .. (index) .. ".", "ERROR")
+        outputInfoMessage("Failed to create pickup for type '" .. theType .. "' at spawnpoint " .. (spID) .. ".", "ERROR")
         return false
     end
     setElementInterior(pickup, spawnpoint.interior)
     setElementDimension(pickup, spawnpoint.dimension)
     spawnedServerCollectibles[pickup] = {
         type = theType,
-        index = index,
+        spID = spID,
     }
     return pickup
 end
@@ -1065,12 +1048,15 @@ function spawnCollectibles(theType, thePlayer)
         return false, "admin_count_spawned"
     end
     for i=1, #info.spawnpoints do
-        collectibleTypes[theType].spawnpoints[i].collected_by = false
+        local sp = info.spawnpoints[i]
+        if sp then
+            collectibleTypes[theType].spawnpoints[i].collected_by = false
+        end
     end
     local countCreated = 0
     for i=1, #info.spawnpoints do
         local spawnpoint = info.spawnpoints[i]
-        if createOnePickup(theType, i, spawnpoint) then
+        if spawnpoint and createOnePickup(theType, i, spawnpoint) then
             countCreated = countCreated + 1
         end
     end
@@ -1098,7 +1084,10 @@ function destroyCollectibles(theType, thePlayer)
     end
     local total = info.total
     for i=1, total do
-        collectibleTypes[theType].spawnpoints[i].collected_by = false
+        local sp = info.spawnpoints[i]
+        if sp then
+            collectibleTypes[theType].spawnpoints[i].collected_by = false
+        end
     end
     local pickupsLeft = {}
     for pickup, info2 in pairs(spawnedServerCollectibles) do
@@ -1124,12 +1113,18 @@ function destroyCollectibles(theType, thePlayer)
     return true
 end
 
-local function spawnClientCollectible(theType, index, thePlayer)
-    local spawnpoint = collectibleTypes[theType].spawnpoints[index]
-    triggerClientEvent(thePlayer, "collectibles:spawn", thePlayer, theType, index, spawnpoint)
+local function spawnClientCollectible(theType, spID, thePlayer)
+    for i=1, #collectibleTypes[theType].spawnpoints do
+        local spawnpoint = collectibleTypes[theType].spawnpoints[i]
+        if spawnpoint and spawnpoint.spID == spID then
+
+            triggerClientEvent(thePlayer, "collectibles:spawn", thePlayer, theType, spID, spawnpoint)
+            return
+        end
+    end
 end
 
-local function isCollectedClient(thePlayer, account, theType, respawn_after, index)
+local function isCollectedClient(thePlayer, account, theType, respawn_after, spID)
     local data = getAccountData(account, "collectibiles.client")
     if not data then
         return false
@@ -1138,15 +1133,15 @@ local function isCollectedClient(thePlayer, account, theType, respawn_after, ind
     if not data[theType] then
         return false
     end
-    local collectedAt = tonumber(data[theType][tostring(index)])
+    local collectedAt = tonumber(data[theType][tostring(spID)])
     if not collectedAt then
         return false
     end
     local now = getRealTime().timestamp
     if (respawn_after) and ((now - collectedAt) > respawn_after) then
-        data[theType][tostring(index)] = nil
+        data[theType][tostring(spID)] = nil
         setAccountData(account, "collectibiles.client", toJSON(data))
-        spawnClientCollectible(theType, tonumber(index), thePlayer)
+        spawnClientCollectible(theType, tonumber(spID), thePlayer)
         return false
     end
     return true
@@ -1159,18 +1154,20 @@ local function sendCollectibles(player, account, thisType)
             local spawnpoints = {}
             for i=1, #info.spawnpoints do
                 local spawnpoint = info.spawnpoints[i]
-                local alreadyCollected = isCollectedClient(player, account, theType, info.respawn_after, spawnpoint.index)
-                if not alreadyCollected then
-                    -- no longer ipairs list because some may already be collected (won't spawn)
-                    spawnpoints[spawnpoint.index] = {
-                        index = spawnpoint.index,
-                        x = spawnpoint.x,
-                        y = spawnpoint.y,
-                        z = spawnpoint.z,
-                        interior = spawnpoint.interior,
-                        dimension = spawnpoint.dimension,
-                        model = spawnpoint.model,
-                    }
+                if spawnpoint then
+                    local alreadyCollected = isCollectedClient(player, account, theType, info.respawn_after, spawnpoint.spID)
+                    if not alreadyCollected then
+                        -- no longer ipairs list because some may already be collected (won't spawn)
+                        spawnpoints[i] = {
+                            spID = spawnpoint.spID,
+                            x = spawnpoint.x,
+                            y = spawnpoint.y,
+                            z = spawnpoint.z,
+                            interior = spawnpoint.interior,
+                            dimension = spawnpoint.dimension,
+                            model = spawnpoint.model,
+                        }
+                    end
                 end
             end
             local toggled = (info.auto_load or false)
@@ -1206,15 +1203,21 @@ local function resendClientCollectibles()
 end
 
 --- **(Exported)**
-function removeSpawnpoint(theType, index)
+function removeSpawnpoint(theType, spID)
     assert(type(theType) == "string", "Bad argument @ removeSpawnpoint [expected string at argument 1, got " .. type(theType) .. "]")
-    assert(type(index) == "number", "Bad argument @ removeSpawnpoint [expected number at argument 2, got " .. type(index) .. "]")
+    assert(type(spID) == "number", "Bad argument @ removeSpawnpoint [expected number at argument 2, got " .. type(spID) .. "]")
     local info = collectibleTypes[theType]
     if (not info) then
         return false, "admin_invalid_collectible_type"
     end
-    local spawnpoints = info.spawnpoints
-    local spawnpoint = spawnpoints[index]
+    local spawnpoint
+    for i=1, #info.spawnpoints do
+        local sp = info.spawnpoints[i]
+        if sp and sp.spID == spID then
+            spawnpoint = sp
+            break
+        end
+    end
     if (not spawnpoint) then
         return false, "admin_invalid_spawnpoint_index"
     end
@@ -1229,6 +1232,7 @@ function removeSpawnpoint(theType, index)
         return false, "Failed to get children of 'config.xml'."
     end
 
+    local found = false
     for i=1, #children do
         local child = children[i]
         if child and xmlNodeGetName(child) == "spawnpoints" then
@@ -1237,35 +1241,54 @@ function removeSpawnpoint(theType, index)
                 xmlUnloadFile(config)
                 return false, "Failed to get children of 'spawnpoints' in 'config.xml'."
             end
-            local countedIndexes = {}
             for i2=1, #spawnpoints2 do
                 local spawnpoint2 = spawnpoints2[i2]
                 if spawnpoint2 and xmlNodeGetName(spawnpoint2) == "spawnpoint" then
                     local theType2 = xmlNodeGetAttribute(spawnpoint2, "type")
                     if theType == theType2 then
-                        if not countedIndexes[theType2] then
-                            countedIndexes[theType2] = 0
-                        end
-                        countedIndexes[theType2] = countedIndexes[theType2] + 1
-                        if countedIndexes[theType2] == index then
+                        local id = tonumber(xmlNodeGetAttribute(spawnpoint2, "id"))
+                        if id and id == spID then
                             xmlDestroyNode(spawnpoint2)
+                            found = true
                             break
                         end
                     end
                 end
             end
+            if found then
+                break
+            end
         end
     end
+    if not found then
+        xmlUnloadFile(config)
+        return false, "Failed to find spawnpoint in 'config.xml'."
+    end
+
+    local theIndex
+    for i=1, #collectibleTypes[theType].spawnpoints do
+        local sp = collectibleTypes[theType].spawnpoints[i]
+        if sp and sp.spID == spID then
+            theIndex = i
+            break
+        end
+    end
+    if not theIndex then
+        xmlUnloadFile(config)
+        return false, "Failed to find spawnpoint of type '" .. theType .. "' in collectibleTypes."
+    end
+
     if not xmlSaveFile(config) then
         xmlUnloadFile(config)
         return false, "Failed to save file 'config.xml'."
     end
     xmlUnloadFile(config)
 
-    table.remove(collectibleTypes[theType].spawnpoints, index)
+    table.remove(collectibleTypes[theType].spawnpoints, theIndex)
+
     collectibleTypes[theType].total = collectibleTypes[theType].total - 1
     for pickup, info2 in pairs(spawnedServerCollectibles) do
-        if info2.type == theType and info2.index == index then
+        if info2.type == theType and info2.spID == spID then
             destroyElement(pickup)
             spawnedServerCollectibles[pickup] = nil
         end
@@ -1291,14 +1314,6 @@ function removeSpawnpoint(theType, index)
         end
 
         resendClientCollectibles()
-    end
-
-    if #collectibleTypes[theType].spawnpoints == 0 then
-        return createNewSpawnpoint(
-            theType, spawnpoint.model,
-            NEW_SPAWNPOINT_DEFAULT[1], NEW_SPAWNPOINT_DEFAULT[2], NEW_SPAWNPOINT_DEFAULT[3],
-            NEW_SPAWNPOINT_DEFAULT[4], NEW_SPAWNPOINT_DEFAULT[5]
-        )
     end
 
     return true
@@ -1327,11 +1342,22 @@ function createNewSpawnpoint(theType, model, x,y,z, interior, dimension)
         xmlUnloadFile(config)
         return false, "Failed to get children of 'config.xml'."
     end
+
+    local lastSpID = 0
+    for i=1, #info.spawnpoints do
+        local spawnpoint = info.spawnpoints[i]
+        if spawnpoint and spawnpoint.spID > lastSpID then
+            lastSpID = spawnpoint.spID
+        end
+    end
+    lastSpID = lastSpID + 1
+
     for i=1, #children do
         local child = children[i]
         if child and xmlNodeGetName(child) == "spawnpoints" then
             local newSpawnpoint = xmlCreateChild(child, "spawnpoint")
             xmlNodeSetAttribute(newSpawnpoint, "type", theType)
+            xmlNodeSetAttribute(newSpawnpoint, "id", lastSpID)
             xmlNodeSetAttribute(newSpawnpoint, "model", model)
             xmlNodeSetAttribute(newSpawnpoint, "x", x)
             xmlNodeSetAttribute(newSpawnpoint, "y", y)
@@ -1347,9 +1373,9 @@ function createNewSpawnpoint(theType, model, x,y,z, interior, dimension)
     end
     xmlUnloadFile(config)
 
-    local index = #info.spawnpoints + 1
-    collectibleTypes[theType].spawnpoints[index] = {
-        index = index,
+    local newIndex = #collectibleTypes[theType].spawnpoints + 1
+    collectibleTypes[theType].spawnpoints[newIndex] = {
+        spID = lastSpID,
         model = model,
         x = x,
         y = y,
@@ -1362,7 +1388,7 @@ function createNewSpawnpoint(theType, model, x,y,z, interior, dimension)
     if info.target == "client" then
         resendClientCollectibles()
     elseif (info.auto_load == true) then
-        createOnePickup(theType, index, collectibleTypes[theType].spawnpoints[index])
+        createOnePickup(theType, lastSpID, collectibleTypes[theType].spawnpoints[newIndex])
     end
     return true
 end
@@ -1372,14 +1398,19 @@ local function createServerCollectibles()
         if info.target == "server" then
 
             for i=1, #info.spawnpoints do
-                collectibleTypes[theType].spawnpoints[i].collected_by = false
+                local sp = info.spawnpoints[i]
+                if sp then
+                    collectibleTypes[theType].spawnpoints[i].collected_by = false
+                end
             end
 
             if (info.auto_load == true) then
                 -- Auto create on startup
                 for i=1, #info.spawnpoints do
                     local spawnpoint = info.spawnpoints[i]
-                    createOnePickup(theType, i, spawnpoint)
+                    if spawnpoint then
+                        createOnePickup(theType, i, spawnpoint)
+                    end
                 end
             end
         end
@@ -1389,14 +1420,15 @@ end
 local function countCollectedServer(accountID, theType)
     local count = 0
     for i=1, #collectibleTypes[theType].spawnpoints do
-        if collectibleTypes[theType].spawnpoints[i].collected_by == accountID then
+        local sp = collectibleTypes[theType].spawnpoints[i]
+        if sp and sp.collected_by == accountID then
             count = count + 1
         end
     end
     return count
 end
 
-local function saveCollectedClient(account, theType, index)
+local function saveCollectedClient(account, theType, spID)
     local data = getAccountData(account, "collectibiles.client")
     if not data then
         data = {}
@@ -1406,7 +1438,7 @@ local function saveCollectedClient(account, theType, index)
     if not data[theType] then
         data[theType] = {}
     end
-    data[theType][tostring(index)] = getRealTime().timestamp
+    data[theType][tostring(spID)] = getRealTime().timestamp
     setAccountData(account, "collectibiles.client", toJSON(data))
 end
 
@@ -1425,15 +1457,15 @@ local function countCollectedClient(thePlayer, account, theType, respawn_after)
     end
     local now = getRealTime().timestamp
     local count = 0
-    for index, collectedAt in pairs(data[theType]) do
+    for spID, collectedAt in pairs(data[theType]) do
         collectedAt = tonumber(collectedAt)
         if collectedAt then
             if (respawn_after) and ((now - collectedAt) > respawn_after) then
-                data[theType][tostring(index)] = nil
+                data[theType][tostring(spID)] = nil
                 setAccountData(account, "collectibiles.client", toJSON(data))
 
                 if isElement(thePlayer) then
-                    spawnClientCollectible(theType, tonumber(index), thePlayer)
+                    spawnClientCollectible(theType, tonumber(spID), thePlayer)
                 end
             else
                 count = count + 1
@@ -1454,7 +1486,7 @@ function getCollectedCounts(account)
             local spawnedPickups = {}
             for pickup, data in pairs(spawnedServerCollectibles) do
                 if data.type == theType then
-                    spawnedPickups[data.index] = pickup
+                    spawnedPickups[data.spID] = pickup
                 end
             end
             local count = countCollectedServer(accountID, theType)
@@ -1574,16 +1606,22 @@ local function handlePickedUp(thePlayer_, collectibleInfo)
     local accountName = getAccountName(account)
     local accountID = getAccountID(account)
     local respawn_after = collectibleTypes[theType].respawn_after
-    local index = collectibleInfo.index
+    local spID = collectibleInfo.spID
     local count
     if (not client) then
         count = countCollectedServer(accountID, theType) + 1
-        collectibleTypes[theType].spawnpoints[index].collected_by = accountID
+        for i=1, #collectibleTypes[theType].spawnpoints do
+            local spawnpoint = collectibleTypes[theType].spawnpoints[i]
+            if spawnpoint and (spawnpoint.id == spID) then
+                collectibleTypes[theType].spawnpoints[i].collected_by = accountID
+                break
+            end
+        end
         destroyElement(pickup)
         spawnedServerCollectibles[pickup] = nil
     else
         count = countCollectedClient(thePlayer, account, theType, respawn_after) + 1
-        saveCollectedClient(account, theType, index)
+        saveCollectedClient(account, theType, spID)
         -- pickup will be destroyed on client
     end
 

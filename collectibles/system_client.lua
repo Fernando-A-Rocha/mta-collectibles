@@ -55,17 +55,17 @@ function outputCustomText(name, ...)
     end
 end
 
-local function createOnePickup(theType, index, spawnpoint)
+local function createOnePickup(theType, spID, spawnpoint)
     local pickup = createPickup(spawnpoint.x, spawnpoint.y, spawnpoint.z, 3, spawnpoint.model)
     if not pickup then
-        outputDebugMsg("Failed to create pickup for type '" .. theType .. "' at spawnpoint " .. (index) .. ".", "ERROR")
+        outputDebugMsg("Failed to create pickup for type '" .. theType .. "' at spawnpoint " .. (spID) .. ".", "ERROR")
         return false
     end
     setElementInterior(pickup, spawnpoint.interior)
     setElementDimension(pickup, spawnpoint.dimension)
     spawnedCollectibles[pickup] = {
         type = theType,
-        index = index,
+        spID = spID,
     }
     return pickup
 end
@@ -91,10 +91,7 @@ local function toggleCollectibles(theType)
     else
         return
     end
-    local countAvailable = 0
-    for index, spawnpoint in pairs(info.spawnpoints) do
-        countAvailable = countAvailable + 1
-    end
+    local countAvailable = #info.spawnpoints
     local countCollected = info.total - countAvailable
     if countAvailable == 0 then
         outputCustomText("already_collected", (string.gsub(theType, "_", " ")), info.total)
@@ -102,8 +99,11 @@ local function toggleCollectibles(theType)
     end
     if receivedCollectibles[theType].toggled == false then
         -- Create collectibles
-        for index, spawnpoint in pairs(info.spawnpoints) do
-            createOnePickup(theType, index, spawnpoint)
+        for i=1, countAvailable do
+            local spawnpoint = info.spawnpoints[i]
+            if spawnpoint then
+                createOnePickup(theType, spawnpoint.spID, spawnpoint)
+            end
         end
         outputCustomText("toggle_on", countCollected, info.total, (string.gsub(theType, "_", " ")))
         receivedCollectibles[theType].toggled = true
@@ -125,8 +125,11 @@ end
 local function createCollectibles(initial)
     for theType, info in pairs(receivedCollectibles) do
         if (info.toggled == true) then
-            for index, spawnpoint in pairs(info.spawnpoints) do
-                createOnePickup(theType, index, spawnpoint)
+            for i=1, #info.spawnpoints do
+                local spawnpoint = info.spawnpoints[i]
+                if spawnpoint then
+                    createOnePickup(theType, spawnpoint.spID, spawnpoint)
+                end
             end
         end
         if (initial == true) then
@@ -154,15 +157,15 @@ local function onPickupHit(thePlayer)
     if not collectibleInfo then return end
     if (getElementDimension(localPlayer) ~= getElementDimension(source) or getElementInterior(localPlayer) ~= getElementInterior(source)) then return end
     local theType = collectibleInfo.type
-    local index = collectibleInfo.index
-    waitingPickup = {type = theType, index = index, pickup = source}
+    local spID = collectibleInfo.spID
+    waitingPickup = {type = theType, spID = spID, pickup = source}
     triggerServerEvent("collectibles:handlePickedUp", root, false, collectibleInfo)
 end
 addEventHandler("onClientPickupHit", resourceRoot, onPickupHit)
 
 addEventHandler("collectibles:pickupDenied", localPlayer, function(collectibleInfo)
     if waitingPickup == nil then return end
-    if (waitingPickup.type ~= collectibleInfo.type or waitingPickup.index ~= collectibleInfo.index) then return end
+    if (waitingPickup.type ~= collectibleInfo.type or waitingPickup.spID ~= collectibleInfo.spID) then return end
     waitingPickup = nil
 end, false)
 
@@ -223,7 +226,19 @@ local function actionOnPickedUp(theType, collected, total, action)
     end
 
     if waitingPickup and waitingPickup.type == theType then
-        receivedCollectibles[theType].spawnpoints[waitingPickup.index] = nil
+        local theIndex
+        for i=1, #receivedCollectibles[theType].spawnpoints do
+            local sp = receivedCollectibles[theType].spawnpoints[i]
+            if sp and sp.spID == waitingPickup.spID then
+                theIndex = i
+                break
+            end
+        end
+        if theIndex then
+            table.remove(receivedCollectibles[theType].spawnpoints, theIndex)
+        else
+            outputDebugMsg("Failed to find spawnpoint ID '" .. waitingPickup.spID .. "' of type '" .. theType .. "'.", "ERROR")
+        end
         destroyElement(waitingPickup.pickup)
         spawnedCollectibles[waitingPickup.pickup] = nil
         waitingPickup = nil
@@ -261,15 +276,16 @@ addEventHandler("collectibles:despawn", localPlayer, function()
     spawnedCollectibles = nil
 end, false)
 
-addEventHandler("collectibles:spawn", localPlayer, function(theType, index, spawnpoint)
+addEventHandler("collectibles:spawn", localPlayer, function(theType, spID, spawnpoint)
     if not receivedCollectibles[theType] then
         return
     end
     if type(spawnpoint) ~= "table" then
         return
     end
-    receivedCollectibles[theType].spawnpoints[index] = {
-        index = index,
+    local theIndex = #receivedCollectibles[theType].spawnpoints + 1
+    receivedCollectibles[theType].spawnpoints[spID] = {
+        spID = spID,
         x = spawnpoint.x,
         y = spawnpoint.y,
         z = spawnpoint.z,
@@ -279,8 +295,8 @@ addEventHandler("collectibles:spawn", localPlayer, function(theType, index, spaw
     if receivedCollectibles[theType].toggled ~= true then
         return
     end
-    if createOnePickup(theType, index, spawnpoint) then
-        outputCustomText("respawned", (string.gsub(theType, "_", " ")), index)
+    if createOnePickup(theType, spID, spawnpoint) then
+        outputCustomText("respawned", (string.gsub(theType, "_", " ")), spID)
     end
 end, false)
 

@@ -17,7 +17,7 @@ local function showCollectibleStats(counts)
     local tabPanel, tabClient, tabServer
     local c = 0
     for theType, v in pairs(sCounts) do
-        for index, pickup in pairs(v.spawnedPickups) do
+        for spID, pickup in pairs(v.spawnedPickups) do
             c = c + 1
         end
     end
