@@ -7,16 +7,23 @@
 ]]
 
 -- Internal Events
-addEvent("collectibles:receive", true)
-addEvent("collectibles:spawn", true)
-addEvent("collectibles:actionOnPickedUp", true)
-addEvent("collectibles:handlePickedUp", true)
+addEvent("collectibles:receive", true) -- source: always the local player
+addEvent("collectibles:despawn", true) -- source: always the local player
+addEvent("collectibles:spawn", true) -- source: always the local player
+addEvent("collectibles:actionOnPickedUp", true) -- source: always the local player
+addEvent("collectibles:pickupDenied", true) -- source: always the local player
+
+local SW, SH = guiGetScreenSize()
 
 local receivedCollectibles = {}
 local texts = {}
 local spawnedCollectibles = nil
+local lastActionAt = nil
+local drawing = nil
 
-local function outputDebugMsg(msg, theType)
+local waitingPickup = nil
+
+function outputDebugMsg(msg, theType)
     msg = "[Collectibles] " .. msg
     local r,g,b = 255, 255, 255
     if theType == "ERROR" then
@@ -27,7 +34,7 @@ local function outputDebugMsg(msg, theType)
     outputDebugString(msg, 4, r,g,b)
 end
 
-local function outputCustomText(name, ...)
+function getCustomText(name, ...)
     local info = texts[name]
     if not info then
         return
@@ -38,11 +45,34 @@ local function outputCustomText(name, ...)
     if #formatWith > 0 then
         text = string.format(text, unpack(formatWith))
     end
-    outputChatBox(text, r, g, b, true)
+    return text, r, g, b
 end
 
+function outputCustomText(name, ...)
+    local text, r, g, b = getCustomText(name, ...)
+    if text then
+        outputChatBox(text, r, g, b, true)
+    end
+end
+
+local function createOnePickup(theType, index, spawnpoint)
+    local pickup = createPickup(spawnpoint.x, spawnpoint.y, spawnpoint.z, 3, spawnpoint.model)
+    if not pickup then
+        outputDebugMsg("Failed to create pickup for type '" .. theType .. "' at spawnpoint " .. (index) .. ".", "ERROR")
+        return false
+    end
+    setElementInterior(pickup, spawnpoint.interior)
+    setElementDimension(pickup, spawnpoint.dimension)
+    spawnedCollectibles[pickup] = {
+        type = theType,
+        index = index,
+    }
+    return pickup
+end
+
+-- [Exported]
 -- This may be customized
-local function canToggleCollectibles()
+function canToggleCollectibles()
     return (not isPedDead(localPlayer))
 end
 
@@ -55,29 +85,26 @@ local function toggleCollectibles(theType)
     if not info then
         return
     end
+    if (not lastActionAt or getTickCount() - lastActionAt > 1000) then
+        lastActionAt = getTickCount()
+    else
+        return
+    end
     local countAvailable = 0
     for index, spawnpoint in pairs(info.spawnpoints) do
         countAvailable = countAvailable + 1
     end
     local countCollected = info.total - countAvailable
     if countAvailable == 0 then
-        outputCustomText("already_collected", theType, info.total)
+        outputCustomText("already_collected", (string.gsub(theType, "_", " ")), info.total)
         return
     end
     if receivedCollectibles[theType].toggled == false then
         -- Create collectibles
         for index, spawnpoint in pairs(info.spawnpoints) do
-            local pickup = createPickup(spawnpoint.x, spawnpoint.y, spawnpoint.z, 3, spawnpoint.model)
-            if not pickup then
-                outputDebugMsg("Failed to create pickup for type '" .. theType .. "' at spawnpoint " .. (index) .. ".", "ERROR")
-            else
-                spawnedCollectibles[pickup] = {
-                    type = theType,
-                    index = index,
-                }
-            end
+            createOnePickup(theType, index, spawnpoint)
         end
-        outputCustomText("toggle_on", #info.spawnpoints, info.total, theType)
+        outputCustomText("toggle_on", countCollected, info.total, (string.gsub(theType, "_", " ")))
         receivedCollectibles[theType].toggled = true
     else
         -- Destroy collectibles
@@ -89,7 +116,7 @@ local function toggleCollectibles(theType)
                 spawnedCollectibles[pickup] = nil
             end
         end
-        outputCustomText("toggle_off", countDel, theType)
+        outputCustomText("toggle_off", countDel, (string.gsub(theType, "_", " ")))
         receivedCollectibles[theType].toggled = false
     end
 end
@@ -97,17 +124,8 @@ end
 local function createCollectibles(initial)
     for theType, info in pairs(receivedCollectibles) do
         if (info.toggled == true) then
-            -- Auto create collectibles
             for index, spawnpoint in pairs(info.spawnpoints) do
-                local pickup = createPickup(spawnpoint.x, spawnpoint.y, spawnpoint.z, 3, spawnpoint.model)
-                if not pickup then
-                    outputDebugMsg("Failed to create pickup for type '" .. theType .. "' at spawnpoint " .. (index) .. ".", "ERROR")
-                else
-                    spawnedCollectibles[pickup] = {
-                        type = theType,
-                        index = index,
-                    }
-                end
+                createOnePickup(theType, index, spawnpoint)
             end
         end
         if (initial == true) then
@@ -130,17 +148,52 @@ end
 local function onPickupHit(thePlayer)
     if thePlayer ~= localPlayer then return end
     if not spawnedCollectibles then return end
+    if waitingPickup ~= nil then return end
     local collectibleInfo = spawnedCollectibles[source]
     if not collectibleInfo then return end
     if (getElementDimension(localPlayer) ~= getElementDimension(source) or getElementInterior(localPlayer) ~= getElementInterior(source)) then return end
     local theType = collectibleInfo.type
     local index = collectibleInfo.index
-    receivedCollectibles[theType].spawnpoints[index] = nil
-    destroyElement(source)
-    spawnedCollectibles[source] = nil
-    triggerServerEvent("collectibles:handlePickedUp", localPlayer, collectibleInfo)
+    waitingPickup = {type = theType, index = index, pickup = source}
+    triggerServerEvent("collectibles:handlePickedUp", root, false, collectibleInfo)
 end
 addEventHandler("onClientPickupHit", resourceRoot, onPickupHit)
+
+addEventHandler("collectibles:pickupDenied", localPlayer, function(collectibleInfo)
+    if waitingPickup == nil then return end
+    if (waitingPickup.type ~= collectibleInfo.type or waitingPickup.index ~= collectibleInfo.index) then return end
+    waitingPickup = nil
+end, false)
+
+local function drawCollectible()
+    local elapsed = getTickCount() - drawing.startedAt
+    if elapsed > 5000 then
+        removeEventHandler("onClientRender", root, drawCollectible)
+        drawing = nil
+        return
+    end
+
+    local text_top, text_top_color = drawing.text_top, drawing.text_top_color
+    local text_bottom, text_bottom_color = drawing.text_bottom, drawing.text_bottom_color
+
+    local width_top, height_top = SW, (SH*0.6)-120
+
+    dxDrawText(text_top, 1, 1, width_top + 1, height_top + 1, 0xff000000, 2, "pricedown", "center", "center", false, false, true, true)
+    dxDrawText(text_top, 1, -1, width_top + 1, height_top - 1, 0xff000000, 2, "pricedown", "center", "center", false, false, true, true)
+    dxDrawText(text_top, -1, 1, width_top - 1, height_top + 1, 0xff000000, 2, "pricedown", "center", "center", false, false, true, true)
+    dxDrawText(text_top, 1, 1, width_top - 1, height_top - 1, 0xff000000, 2, "pricedown", "center", "center", false, false, true, true)
+    
+    dxDrawText(text_top, 0, 0, width_top, height_top, text_top_color, 2, "pricedown", "center", "center", false, false, true, true)
+    
+    local width_bottom, height_bottom = SW, (SH*0.6)
+
+    dxDrawText(text_bottom, 1, 1, width_bottom + 1, height_bottom + 1, 0xff000000, 2, "pricedown", "center", "center", false, false, true, true)
+    dxDrawText(text_bottom, 1, -1, width_bottom + 1, height_bottom - 1, 0xff000000, 2, "pricedown", "center", "center", false, false, true, true)
+    dxDrawText(text_bottom, -1, 1, width_bottom - 1, height_bottom + 1, 0xff000000, 2, "pricedown", "center", "center", false, false, true, true)
+    dxDrawText(text_bottom, 1, 1, width_bottom - 1, height_bottom - 1, 0xff000000, 2, "pricedown", "center", "center", false, false, true, true)
+
+    dxDrawText(text_bottom, 0, 0, width_bottom, height_bottom, text_bottom_color, 2, "pricedown", "center", "center", false, false, true, true)
+end
 
 local function actionOnPickedUp(theType, collected, total, action)
     
@@ -154,14 +207,28 @@ local function actionOnPickedUp(theType, collected, total, action)
             setSoundVolume(soundElement, sound_volume)
         end
     end
-    local name = action.name
-    if name == "collect_one" then
-        outputCustomText("collect_one", collected, total, theType)
-    elseif name == "collect_all" then
-        outputCustomText("collect_all", total, theType)
+    local notDrawing = (drawing == nil)
+    local text_top = { getCustomText("text_top", (string.gsub(theType, "_", " "))) }
+    local text_bottom = { getCustomText("text_bottom", collected, total) }
+    drawing = {
+        startedAt = getTickCount(),
+        text_top = text_top[1],
+        text_top_color = tocolor(text_top[2], text_top[3], text_top[4], 255),
+        text_bottom = text_bottom[1],
+        text_bottom_color = tocolor(text_bottom[2], text_bottom[3], text_bottom[4], 255),
+    }
+    if (notDrawing == true) then
+        addEventHandler("onClientRender", root, drawCollectible)
+    end
+
+    if waitingPickup and waitingPickup.type == theType then
+        receivedCollectibles[theType].spawnpoints[waitingPickup.index] = nil
+        destroyElement(waitingPickup.pickup)
+        spawnedCollectibles[waitingPickup.pickup] = nil
+        waitingPickup = nil
     end
 end
-addEventHandler("collectibles:actionOnPickedUp", localPlayer, actionOnPickedUp)
+addEventHandler("collectibles:actionOnPickedUp", localPlayer, actionOnPickedUp, false)
 
 addEventHandler("collectibles:receive", localPlayer, function(list, texts_)
     if type(list) ~= "table" then
@@ -181,7 +248,17 @@ addEventHandler("collectibles:receive", localPlayer, function(list, texts_)
     spawnedCollectibles = {}
     createCollectibles(initial)
 
-end)
+end, false)
+
+addEventHandler("collectibles:despawn", localPlayer, function()
+    if type(spawnedCollectibles) ~= "table" then
+        return
+    end
+    for pickup, info in pairs(spawnedCollectibles) do
+        destroyElement(pickup)
+    end
+    spawnedCollectibles = nil
+end, false)
 
 addEventHandler("collectibles:spawn", localPlayer, function(theType, index, spawnpoint)
     if not receivedCollectibles[theType] then
@@ -201,14 +278,11 @@ addEventHandler("collectibles:spawn", localPlayer, function(theType, index, spaw
     if receivedCollectibles[theType].toggled ~= true then
         return
     end
-    local pickup = createPickup(spawnpoint.x, spawnpoint.y, spawnpoint.z, 3, spawnpoint.model)
-    if not pickup then
-        outputDebugMsg("Failed to create pickup for type '" .. theType .. "' at spawnpoint " .. (index) .. ".", "ERROR")
-    else
-        spawnedCollectibles[pickup] = {
-            type = theType,
-            index = index,
-        }
-        outputCustomText("respawned", theType, index)
+    if createOnePickup(theType, index, spawnpoint) then
+        outputCustomText("respawned", (string.gsub(theType, "_", " ")), index)
     end
-end)
+end, false)
+
+addEventHandler("onClientResourceStart", resourceRoot, function()
+    triggerLatentServerEvent("collectibles:requestCollectibles", resourceRoot)
+end, false)

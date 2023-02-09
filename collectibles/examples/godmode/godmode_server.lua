@@ -20,7 +20,7 @@ local function syncGodModeWithClients()
         end
     end
 end
-local function handlePickedHeart(collectibleTarget, theType, count, total)
+local function handlePickedHeart(account, accountID, accountName, collectibleTarget, theType, count, total)
     local thePlayer = source
     if theType ~= "Heart" then return end
     if count ~= total then return end -- Only give godmode when all hearts have been collected
@@ -34,7 +34,7 @@ local function handlePickedHeart(collectibleTarget, theType, count, total)
         end
         syncGodModeWithClients()
     end, GOD_MODE_DURATION, 1)
-    outputChatBox("#00ff00You have been given #ffffffGOD MODE #00ff00for "..tostring(GOD_MODE_DURATION/1000).." seconds!", thePlayer, 255, 255, 255, true)
+    outputChatBox(string.format("#00ff00You have been given #ffffffGOD MODE #00ff00for %s seconds!", tostring(GOD_MODE_DURATION/1000)), thePlayer, 255, 255, 255, true)
     syncGodModeWithClients()
 end
 addEventHandler("collectibles:onCollected", root, handlePickedHeart)

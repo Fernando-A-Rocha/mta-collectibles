@@ -1,0 +1,3 @@
+- display better stats
+- proper Lua doc in the code (auto-generate)
+- ability to translate literally every string

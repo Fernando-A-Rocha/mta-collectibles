@@ -2,17 +2,44 @@
     <info version="1.0.0" author="Fernando" name="Collectibles" description="fun and customizable collectibles/packages system" type="script" />
     <min_mta_version server="1.5.8-9.20957"></min_mta_version>
     
-    <!-- Main Scripts -->
+    <!-- Core Scripts -->
     <script src="system_client.lua" type="client" />
     <script src="system_server.lua" type="server" />
+    <file src="images/1pixelwhite.png" />
+    <script src="manage_client.lua" type="client" />
+    <script src="manage_server.lua" type="server" />
+
+    <!-- (Optional) Testing Scripts -->
+    <script src="testing_server.lua" type="server" />
+
+    <!-- Exported Functions (for Developers) -->
+    <export function="getCollectibleTypes" type="server" />
+    <export function="getCollectedCounts" type="server" />
+    <export function="spawnCollectibles" type="server" />
+    <export function="destroyCollectibles" type="server" />
+    <export function="resetClientCollectibles" type="server" />
+    <export function="createNewSpawnpoint" type="server" />
+    <export function="removeSpawnpoint" type="server" />
+    <export function="canCollectPickup" type="client" />
+    <export function="setPlayerPreventPicking" type="server" />
+    <export function="canToggleCollectibles" type="client" />
+    <export function="canManageCollectibles" type="server" />
 
     <!-- (Optional) Example Implementations -->
+    <file src="examples/events/notification.mp3" />
+    <file src="examples/events/congrats.mp3" />
+    <script src="examples/events/events_client.lua" type="client" />
+    <script src="examples/events/events_server.lua" type="server" />
+    <script src="examples/gui/gui_client.lua" type="client" />
+    <script src="examples/gui/gui_server.lua" type="server" />
     <script src="examples/godmode/godmode_server.lua" type="server" />
     <script src="examples/godmode/godmode_client.lua" type="client" />
 
     <!-- Sounds (must be in meta.xml in order to be played) -->
-    <file src="files/sounds/vc/checkpoint.ogg" />
-    <file src="files/sounds/vc/pickup.ogg" />
-    <file src="files/sounds/vc/notification.ogg" />
-    <file src="files/sounds/vc/pickup2.ogg" />
+    <file src="sounds/vc/checkpoint.ogg" />
+    <file src="sounds/vc/pickup.ogg" />
+    <file src="sounds/vc/notification.ogg" />
+    <file src="sounds/vc/pickup2.ogg" />
+    <file src="sounds/vc/back.ogg" />
+    <file src="sounds/vc/error.ogg" />
 </meta>

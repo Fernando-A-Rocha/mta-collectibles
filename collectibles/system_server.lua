@@ -10,23 +10,56 @@
 ]]
 
 -- Internal Events
-addEvent("collectibles:handlePickedUp", true)
+addEvent("collectibles:requestCollectibles", true) -- source: always resourceRoot
+addEvent("collectibles:handlePickedUp", true) -- source: root or a player element
 
 -- Custom Events (for Developers)
-addEvent("collectibles:onCollected", true)
+addEvent("collectibles:onCollected", true) -- source: a player element
+addEvent("collectibles:onSpawnedServer", true) -- source: always root
+addEvent("collectibles:onDestroyedServer", true) -- source: always root
 
 local clientsWaiting = {} -- initial startup
 local collectibleTypes = {}
 local texts = {}
-local spawnedCollectibles = {}
-local collectedCount = {}
+local commands = {}
+local spawnedServerCollectibles = {}
+local preventPicking = {}
 
-local function outputInfoMessage(msg)
+-- x,y,z,interior,dimension for default & temporary spawnpoint
+local NEW_SPAWNPOINT_DEFAULT = {0,0,-10,0,0}
+
+-- [Exported]
+function setPlayerPreventPicking(player, interval)
+    assert(type(interval) == "number", "Bad argument @ setPlayerPreventPicking (number expected, got " .. type(interval) .. ")")
+    assert(interval > 50, "Bad argument @ setPlayerPreventPicking (interval must be greater than 50ms)")
+    if isTimer(preventPicking[player]) then killTimer(preventPicking[player]) end
+    preventPicking[player] = setTimer(function() preventPicking[player] = nil end, interval, 1)
+    return true
+end
+
+-- [Exported]
+function getCollectibleTypes()
+    return collectibleTypes
+end
+
+function getCustomTexts()
+    return texts
+end
+
+function getCustomCommands()
+    return commands
+end
+
+function getSpawnedServerCollectibles()
+    return spawnedServerCollectibles
+end
+
+function outputInfoMessage(msg)
     msg = "[Collectibles] " .. msg
     outputServerLog(msg)
 end
 
-local function outputCustomText(player, name, ...)
+function getCustomText(name, ...)
     local info = texts[name]
     if not info then
         return
@@ -37,11 +70,20 @@ local function outputCustomText(player, name, ...)
     if #formatWith > 0 then
         text = string.format(text, unpack(formatWith))
     end
-    outputChatBox(text, player, r, g, b, true)
+    return text, r, g, b
 end
 
+function outputCustomText(player, name, ...)
+    local text, r, g, b = getCustomText(name, ...)
+    if text then
+        outputChatBox(text, player, r, g, b, true)
+    end
+end
+
+-- [Exported]
 -- This may be customized
-local function canManageCollectibles(player)
+function canManageCollectibles(player)
+    assert(isElement(player) and getElementType(player)=="player", "Bad argument @ canManageCollectibles (player expected, got " .. type(player) .. ")")
     local account = getPlayerAccount(player)
     if (not account) or isGuestAccount(account) then
         return false
@@ -50,7 +92,22 @@ local function canManageCollectibles(player)
     return isObjectInACLGroup("user." .. accountName, aclGetGroup("Admin"))
 end
 
+-- This may be customized
+-- PS. it checks for valid player account elsewhere in the code already
+function canCollectPickup(player, account, theType)
+    assert(isElement(player) and getElementType(player)=="player", "Bad argument @ canCollectPickup (player expected, got " .. type(player) .. ")")
+    return (preventPicking[player] == nil)
+end
+
 local function parseOneNode(rootChildren, targetNodeName)
+
+    local KEY_NAMES = { "mouse1", "mouse2", "mouse3", "mouse4", "mouse5", "mouse_wheel_up", "mouse_wheel_down", "arrow_l", "arrow_u", --escape
+    "arrow_r", "arrow_d", "0", "1", "2", "3", "4", "5", "6", "7", "8", "9", "a", "b", "c", "d", "e", "f", "g", "h", "i", "j", "k",
+    "l", "m", "n", "o", "p", "q", "r", "s", "t", "u", "v", "w", "x", "y", "z", "num_0", "num_1", "num_2", "num_3", "num_4", "num_5",
+    "num_6", "num_7", "num_8", "num_9", "num_mul", "num_add", "num_sep", "num_sub", "num_div", "num_dec", "num_enter", "F1", "F2", "F3", "F4", "F5",
+    "F6", "F7", "F8", "F9", "F10", "F11", "F12", "backspace", "tab", "lalt", "ralt", "enter", "space", "pgup", "pgdn", "end", "home",
+    "insert", "delete", "lshift", "rshift", "lctrl", "rctrl", "[", "]", "pause", "capslock", "scroll", ";", ",", "-", ".", "/", "#", "\\", "=" }
+
     for i=1, #rootChildren do
         local node = rootChildren[i]
         if node then
@@ -75,6 +132,12 @@ local function parseOneNode(rootChildren, targetNodeName)
                             if collectibleTypes[name] then
                                 return false, "Duplicate collectible type '" .. name .. "'."
                             end
+                            if name == "all" then
+                                return false, "Collectible type name 'all' is not allowed."
+                            end
+                            if string.find(name, " ") then
+                                return false, "Collectible type name '" .. name .. "' is not allowed - replace spaces with '_'."
+                            end
                             local target = xmlNodeGetAttribute(child, "target")
                             if (not target) then
                                 return false, "Missing attribute 'target' of 'type' node."
@@ -87,8 +150,24 @@ local function parseOneNode(rootChildren, targetNodeName)
                             if ((toggle_command or toggle_keybind) and target=="server") then
                                 return false, "'toggle_keybind' or 'toggle_command' are only for client-side collectibles."
                             end
+                            if toggle_command and toggle_command == "" then
+                                return false, "Invalid attribute 'toggle_command' of 'type' node, can't be empty."
+                            end
                             if toggle_keybind then
+                                if toggle_keybind == "" then
+                                    return false, "Invalid attribute 'toggle_keybind' of 'type' node, can't be empty."
+                                end
                                 toggle_keybind = string.lower(toggle_keybind)
+                                local found = false
+                                for i=1, #KEY_NAMES do
+                                    if toggle_keybind == string.lower(KEY_NAMES[i]) then
+                                        found = true
+                                        break
+                                    end
+                                end
+                                if not found then
+                                    return false, "Invalid attribute 'toggle_keybind' of 'type' node, unknown key name."
+                                end
                             end
                             local auto_load = xmlNodeGetAttribute(child, "auto_load") or false
                             if auto_load and auto_load ~= "true" and auto_load ~= "false" then
@@ -99,44 +178,43 @@ local function parseOneNode(rootChildren, targetNodeName)
                             else
                                 auto_load = false
                             end
-                            local spawn_command = xmlNodeGetAttribute(child, "spawn_command") or false
-                            local destroy_command = xmlNodeGetAttribute(child, "destroy_command") or false
-                            if (spawn_command or destroy_command) then
-                                if (target=="client") then
-                                    return false, "'spawn_command' or 'destroy_command' are only for server-side collectibles."
-                                end
-                                if (not spawn_command) or (not destroy_command) then
-                                    return false, "Both 'spawn_command' and 'destroy_command' must be set for server-side collectibles."
-                                end
-                            end
                             local respawn_after = xmlNodeGetAttribute(child, "respawn_after") or false
+                            local respawn_after_converted
                             local respawn_after_unit = xmlNodeGetAttribute(child, "respawn_after_unit") or false
-                            if (target=="client") then
-                                if not respawn_after then
-                                    return false, "Missing attribute 'respawn_after' of 'type' node - must be set for client-side collectibles."
-                                end
+                            if (target=="client" and respawn_after) then
                                 respawn_after = tonumber(respawn_after)
                                 if (not respawn_after) or (respawn_after < 0) then
                                     return false, "Invalid attribute 'respawn_after' of 'type' node - must be a number greater than 0."
                                 end
-                                if not (respawn_after_unit == "seconds" or respawn_after_unit == "minutes" or respawn_after_unit == "hours") then
-                                    return false, "Invalid attribute 'respawn_after_unit' of 'type' node - must be seconds/minutes/hours."
+                                if not (respawn_after_unit == "seconds"
+                                or respawn_after_unit == "minutes"
+                                or respawn_after_unit == "hours"
+                                or respawn_after_unit == "days"
+                                or respawn_after_unit == "weeks") then
+                                    return false, "Invalid attribute 'respawn_after_unit' of 'type' node - must be seconds/minutes/hours/days/weeks."
                                 end
                                 -- convert to seconds
+                                respawn_after_converted = respawn_after
                                 if respawn_after_unit == "minutes" then
-                                    respawn_after = respawn_after * 60
+                                    respawn_after_converted = respawn_after_converted * 60
                                 elseif respawn_after_unit == "hours" then
-                                    respawn_after = respawn_after * 60 * 60
+                                    respawn_after_converted = respawn_after_converted * 60 * 60
+                                elseif respawn_after_unit == "days" then
+                                    respawn_after_converted = respawn_after_converted * 60 * 60 * 24
+                                elseif respawn_after_unit == "weeks" then
+                                    respawn_after_converted = respawn_after_converted * 60 * 60 * 24 * 7
                                 end
                             end
                             collectibleTypes[name] = {
                                 target = target,
+                                auto_load = auto_load,
+
+                                -- client only:
                                 toggle_keybind = toggle_keybind,
                                 toggle_command = toggle_command,
-                                spawn_command = spawn_command,
-                                destroy_command = destroy_command,
-                                respawn_after = respawn_after,
-                                auto_load = auto_load,
+                                respawn_after = respawn_after_converted,
+                                respawn_after_nonconverted = respawn_after,
+                                respawn_after_unit = respawn_after_unit,
                             }
                         end
                     end
@@ -152,9 +230,13 @@ local function parseOneNode(rootChildren, targetNodeName)
                             if childName ~= "action" then
                                 return false, "Invalid child node '" .. childName .. "' of 'actions' node."
                             end
-                            local type = xmlNodeGetAttribute(child, "type")
-                            if not type then
+                            local theType = xmlNodeGetAttribute(child, "type")
+                            if not theType then
                                 return false, "Missing attribute 'type' of 'action' node."
+                            end
+                            local collectibleType = collectibleTypes[theType]
+                            if not collectibleType then
+                                return false, "Invalid type '" .. theType .. "' of 'action' node."
                             end
                             local on = xmlNodeGetAttribute(child, "on")
                             if not on then
@@ -181,12 +263,7 @@ local function parseOneNode(rootChildren, targetNodeName)
                                     return false, "Invalid attribute 'reward_money' of 'action' node - must be a number greater than 0."
                                 end
                             end
-                            local collectibleType = collectibleTypes[type]
-                            if not collectibleType then
-                                return false, "Invalid type '" .. type .. "' of 'action' node."
-                            end
-                            collectibleTypes[type][on] = {
-                                name = on,
+                            collectibleTypes[theType][on] = {
                                 sound = sound,
                                 sound_volume = sound_volume,
                                 reward_money = reward_money,
@@ -205,8 +282,8 @@ local function parseOneNode(rootChildren, targetNodeName)
                             if childName ~= "spawnpoint" then
                                 return false, "Invalid child node '" .. childName .. "' of 'spawnpoints' node."
                             end
-                            local type = xmlNodeGetAttribute(child, "type")
-                            if not type then
+                            local theType = xmlNodeGetAttribute(child, "type")
+                            if not theType then
                                 return false, "Missing attribute 'type' of 'spawnpoint' node."
                             end
                             local x = xmlNodeGetAttribute(child, "x")
@@ -233,6 +310,16 @@ local function parseOneNode(rootChildren, targetNodeName)
                             if (not z) then
                                 return false, "Invalid attribute 'z' of 'spawnpoint' node - must be a number."
                             end
+                            local interior = xmlNodeGetAttribute(child, "interior") or 0
+                            interior = tonumber(interior)
+                            if (not interior) or (interior < 0) then
+                                return false, "Invalid attribute 'interior' of 'spawnpoint' node - must be a number greater than 0."
+                            end
+                            local dimension = xmlNodeGetAttribute(child, "dimension") or 0
+                            dimension = tonumber(dimension)
+                            if (not dimension) or (dimension < 0) then
+                                return false, "Invalid attribute 'dimension' of 'spawnpoint' node - must be a number greater than 0."
+                            end
                             local model = xmlNodeGetAttribute(child, "model")
                             if not model then
                                 return false, "Missing attribute 'model' of 'spawnpoint' node."
@@ -247,7 +334,7 @@ local function parseOneNode(rootChildren, targetNodeName)
                                 return false, "Invalid attribute 'model' of 'spawnpoint' node - invalid object model ID."
                             end
                             destroyElement(testPickup)
-                            for theType, info in pairs(collectibleTypes) do
+                            for theType2, info in pairs(collectibleTypes) do
                                 if info.spawnpoints then
                                     for i=1, #info.spawnpoints do
                                         local spawnpoint = info.spawnpoints[i]
@@ -257,13 +344,15 @@ local function parseOneNode(rootChildren, targetNodeName)
                                     end
                                 end
                             end
-                            collectibleTypes[type].spawnpoints = collectibleTypes[type].spawnpoints or {}
-                            local index = #collectibleTypes[type].spawnpoints + 1
-                            collectibleTypes[type].spawnpoints[index] = {
+                            collectibleTypes[theType].spawnpoints = collectibleTypes[theType].spawnpoints or {}
+                            local index = #collectibleTypes[theType].spawnpoints + 1
+                            collectibleTypes[theType].spawnpoints[index] = {
                                 index = index,
                                 x = x,
                                 y = y,
                                 z = z,
+                                interior = interior,
+                                dimension = dimension,
                                 model = model,
                             }
                         end
@@ -319,6 +408,32 @@ local function parseOneNode(rootChildren, targetNodeName)
                             }
                         end
                     end
+                elseif nodeName == "commands" then
+                    local children = xmlNodeGetChildren(node)
+                    if not children then
+                        return false, "Failed to get children of 'commands' node."
+                    end
+                    for i=1, #children do
+                        local child = children[i]
+                        if child then
+                            local childName = xmlNodeGetName(child)
+                            if childName ~= "command" then
+                                return false, "Invalid child node '" .. childName .. "' of 'commands' node."
+                            end
+                            local name = xmlNodeGetAttribute(child, "name")
+                            if not name then
+                                return false, "Missing attribute 'name' of 'command' node."
+                            end
+                            local value = xmlNodeGetValue(child)
+                            if not value then
+                                return false, "Missing value of 'command' node."
+                            end
+                            if value == "" then
+                                return false, "Invalid value of 'command' node - must not be empty."
+                            end
+                            commands[name] = value
+                        end
+                    end
                 end
             end
         end
@@ -328,20 +443,164 @@ end
 
 local function loadConfiguration()
 
-    -- if not fileExists("config.xml.backup") then
-    --     local backup = fileCreate("config.xml.backup")
-    --     if not backup then
-    --         return false, "Failed to create backup file 'config.xml.backup' - check permissions."
-    --     end
-    --     local config = fileOpen("config.xml")
-    --     if not config then
-    --         return false, "Failed to open file 'config.xml' - check permissions."
-    --     end
-    --     local content = fileRead(config, fileGetSize(config))
-    --     fileWrite(backup, content)
-    --     fileClose(config)
-    --     fileClose(backup)
-    -- end
+    local config = xmlLoadFile("config.xml")
+    if not config then
+        return false, "Failed to load file 'config.xml'."
+    end
+
+    local children = xmlNodeGetChildren(config)
+    if not children then
+        xmlUnloadFile(config)
+        return false, "Failed to get children of 'config.xml'."
+    end
+
+    local success, reason, theType = parseOneNode(children, "types")
+    if not success then
+        xmlUnloadFile(config)
+        return false, "Failed to parse <types>: " .. reason
+    end
+    success, reason = parseOneNode(children, "actions")
+    if not success then
+        xmlUnloadFile(config)
+        return false, "Failed to parse <actions>: " .. reason
+    end
+    for theType, info in pairs(collectibleTypes) do
+        if not info.collect_one then
+            xmlUnloadFile(config)
+            return false, "Missing action 'collect_one' for type '" .. theType .. "'."
+        end
+        if not info.collect_all then
+            xmlUnloadFile(config)
+            return false, "Missing action 'collect_all' for type '" .. theType .. "'."
+        end
+    end
+    success, reason = parseOneNode(children, "spawnpoints")
+    if not success then
+        xmlUnloadFile(config)
+        return false, "Failed to parse <spawnpoints>: " .. reason
+    end
+    for theType, info in pairs(collectibleTypes) do
+        if not info.spawnpoints then
+            xmlUnloadFile(config)
+            return false, "Missing spawnpoints for type '" .. theType .. "'."
+        end
+        collectibleTypes[theType].total = #info.spawnpoints
+    end
+    success, reason = parseOneNode(children, "texts")
+    if not success then
+        xmlUnloadFile(config)
+        return false, "Failed to parse <texts>: " .. reason
+    end
+    local EXPECTED_TEXTS = {
+        "command_syntax", "ask_to_wait", "cant_pickup",
+        "cant_toggle", "toggle_on", "toggle_off", "respawned", "already_collected", "text_top", "text_bottom", "reward_money",
+        "admin_no_permission", "admin_count_spawned", "admin_spawned", "admin_destroyed", "admin_invalid_collectible_type", "admin_invalid_account_id", "admin_reset_success"
+    }
+    for i=1, #EXPECTED_TEXTS do
+        local name = EXPECTED_TEXTS[i]
+        if not texts[name] then
+            xmlUnloadFile(config)
+            return false, "Missing text '" .. name .. "'."
+        end
+    end
+    success, reason = parseOneNode(children, "commands")
+    if not success then
+        xmlUnloadFile(config)
+        return false, "Failed to parse <commands>: " .. reason
+    end
+    local EXPECTED_COMMANDS = {"manage", "spawn", "destroy", "resetplayer", "points"}
+    for i=1, #EXPECTED_COMMANDS do
+        local name = EXPECTED_COMMANDS[i]
+        if not commands[name] then
+            xmlUnloadFile(config)
+            return false, "Missing command '" .. name .. "'."
+        end
+    end
+    addCommandHandler(commands.manage, commandManageCollectibles)
+    addCommandHandler(commands.spawn, commandSpawnCollectibles)
+    addCommandHandler(commands.destroy, commandDestroyCollectibles)
+    addCommandHandler(commands.resetplayer, commandResetCollectibles)
+    addCommandHandler(commands.points, commandConfigureSpawnpoints)
+
+    xmlUnloadFile(config)
+    return true
+end
+
+function backupConfiguration()
+    if fileExists("config.xml.backup") then
+        if not fileDelete("config.xml.backup") then
+            return false, "Failed to delete file 'config.xml.backup' - check permissions."
+        end
+    end
+    local backup = fileCreate("config.xml.backup")
+    if not backup then
+        return false, "Failed to create file 'config.xml.backup' - check permissions."
+    end
+    local config = fileOpen("config.xml")
+    if not config then
+        fileClose(backup)
+        return false, "Failed to open file 'config.xml' - check permissions."
+    end
+    fileWrite(backup, fileRead(config, fileGetSize(config)))
+    fileClose(config)
+    fileClose(backup)
+    return true
+end
+
+function restoreConfigBackup()
+    if fileExists("config.xml.old") then
+        if not fileDelete("config.xml.old") then
+            return false, "Failed to delete file 'config.xml.old' - check permissions."
+        end
+    end
+    local old = fileCreate("config.xml.old")
+    if not old then
+        return false, "Failed to create file 'config.xml.old' - check permissions."
+    end
+    local config = fileOpen("config.xml")
+    if not config then
+        fileClose(old)
+        return false, "Failed to open file 'config.xml' - check permissions."
+    end
+    fileWrite(old, fileRead(config, fileGetSize(config)))
+    fileClose(config)
+    fileClose(old)
+    if not fileCopy("config.xml.backup", "config.xml", true) then -- Overwrite
+        return false, "Failed to copy file 'config.xml.backup' to 'config.xml' - check permissions."
+    end
+    return true
+end
+
+local function findNode(theChildren, nodeName, attributeNames)
+    for i=1, #theChildren do
+        local child = theChildren[i]
+        if xmlNodeGetName(child) == nodeName then
+            local nodeChildren = xmlNodeGetChildren(child)
+            if not nodeChildren then
+                return false, "Failed to get children of '" .. nodeName .. "' in 'config.xml'."
+            end
+            for j=1, #nodeChildren do
+                local nodeChild = nodeChildren[j]
+                if nodeChild then
+                    local matches = true
+                    for attrName, withAttrName in pairs(attributeNames) do
+                        if xmlNodeGetAttribute(nodeChild, attrName) ~= withAttrName then
+                            matches = false
+                            break
+                        end
+                    end
+                    if matches then
+                        return nodeChild
+                    end
+                end
+            end
+        end
+    end
+    return false, "Failed to find node '" .. nodeName .. "/" .. inspect(attributeNames) .. "' in 'config.xml'."
+end
+
+function updateConfiguration(updateNodes)
+    assert(type(updateNodes) == "table", "Bad argument @ updateConfiguration (table expected, got " .. type(updateNodes) .. ")")
 
     local config = xmlLoadFile("config.xml")
     if not config then
@@ -350,69 +609,456 @@ local function loadConfiguration()
 
     local children = xmlNodeGetChildren(config)
     if not children then
+        xmlUnloadFile(config)
         return false, "Failed to get children of 'config.xml'."
     end
 
-    local success, reason, theType = parseOneNode(children, "types")
-    if not success then
-        return false, "Failed to parse <types>: " .. reason
-    end
-    success, reason = parseOneNode(children, "actions")
-    if not success then
-        return false, "Failed to parse <actions>: " .. reason
-    end
-    for theType, info in pairs(collectibleTypes) do
-        if not info.collect_one then
-            return false, "Missing action 'collect_one' for type '" .. theType .. "'."
-        end
-        if not info.collect_all then
-            return false, "Missing action 'collect_all' for type '" .. theType .. "'."
+    local updatedTypeNames = {} -- old => new
+    for settingType, list in pairs(updateNodes) do
+        for name, info in pairs(list) do
+            if type(info.attributes)=="table" then
+                for attrName, attrValue in pairs(info.attributes) do
+                    if settingType == "types" and attrName == "name" then
+                        updatedTypeNames[name] = attrValue
+                    end
+                end
+            end
         end
     end
-    success, reason = parseOneNode(children, "spawnpoints")
-    if not success then
-        return false, "Failed to parse <spawnpoints>: " .. reason
-    end
-    for theType, info in pairs(collectibleTypes) do
-        if not info.spawnpoints then
-            return false, "Missing spawnpoints for type '" .. theType .. "'."
+
+    for settingType, list in pairs(updateNodes) do
+        for name, info in pairs(list) do
+            local attributeNames = info.attributeNames
+            if type(attributeNames)=="table" then
+                local node, failFindReason = findNode(children, settingType, attributeNames)
+                if not node then
+                    xmlUnloadFile(config)
+                    return false, failFindReason
+                end
+                if type(info.value)=="string" then
+                    xmlNodeSetValue(node, info.value)
+                end
+                if type(info.attributes)=="table" then
+                    for attrName, attrValue in pairs(info.attributes) do
+                        if attrValue == false then
+                            xmlNodeSetAttribute(node, tostring(attrName), nil)
+                        else
+                            xmlNodeSetAttribute(node, tostring(attrName), tostring(attrValue))
+                        end
+                    end
+                end
+            end
         end
-        collectibleTypes[theType].total = #info.spawnpoints
     end
-    success, reason = parseOneNode(children, "texts")
-    if not success then
-        return false, "Failed to parse <texts>: " .. reason
+
+    children = xmlNodeGetChildren(config)
+    if not children then
+        xmlUnloadFile(config)
+        return false, "Failed to get children of 'config.xml'."
     end
-    local EXPECTED_TEXTS = {
-        "command_syntax",
-        "cant_toggle", "toggle_on", "toggle_off", "respawned", "collect_one", "collect_all", "already_collected",
-        "admin_no_permission", "admin_already_spawned", "admin_spawned", "admin_destroyed", "admin_invalid_collectible_type", "admin_invalid_account_name", "admin_reset_success"
-    }
-    for i=1, #EXPECTED_TEXTS do
-        local name = EXPECTED_TEXTS[i]
-        if not texts[name] then
-            return false, "Missing text '" .. name .. "'."
+
+    for i=1, #children do
+        local child = children[i]
+        if xmlNodeGetName(child) == "actions" or xmlNodeGetName(child) == "spawnpoints" then
+            local nodeChildren = xmlNodeGetChildren(child)
+            if not nodeChildren then
+                xmlUnloadFile(config)
+                return false, "Failed to get children of '" .. xmlNodeGetName(child) .. "' in 'config.xml'."
+            end
+            for j=1, #nodeChildren do
+                local nodeChild = nodeChildren[j]
+                local typeName = xmlNodeGetAttribute(nodeChild, "type")
+                if typeName and updatedTypeNames[typeName] then
+                    xmlNodeSetAttribute(nodeChild, "type", updatedTypeNames[typeName])
+                end
+            end
         end
+    end
+
+    if not xmlSaveFile(config) then
+        xmlUnloadFile(config)
+        return false, "Failed to save file 'config.xml'."
     end
 
     xmlUnloadFile(config)
     return true
 end
 
-local function spawnCollectibles(theType, info, thePlayer)
-    if not canManageCollectibles(thePlayer) then
-        outputCustomText(thePlayer, "admin_no_permission")
-        return
+function deleteType(theType)
+    assert(type(theType) == "string", "Bad argument @ deleteType (string expected, got " .. type(theType) .. ")")
+    local info = collectibleTypes[theType]
+    if not info then
+        return false, "Failed to delete type '" .. theType .. "' - type does not exist."
+    end
+
+    local config = xmlLoadFile("config.xml")
+    if not config then
+        return false, "Failed to load file 'config.xml'."
+    end
+
+    local children = xmlNodeGetChildren(config)
+    if not children then
+        xmlUnloadFile(config)
+        return false, "Failed to get children of 'config.xml'."
+    end
+
+    -- Find the necessary node
+    local typesNode, actionsNode, spawnpointsNode
+    for i=1, #children do
+        local child = children[i]
+        if xmlNodeGetName(child) == "types" then
+            typesNode = child
+        elseif xmlNodeGetName(child) == "actions" then
+            actionsNode = child
+        elseif xmlNodeGetName(child) == "spawnpoints" then
+            spawnpointsNode = child
+        end
+    end
+
+    if not typesNode then
+        xmlUnloadFile(config)
+        return false, "Failed to find node 'types' in 'config.xml'."
+    end
+    if not actionsNode then
+        xmlUnloadFile(config)
+        return false, "Failed to find node 'actions' in 'config.xml'."
+    end
+    if not spawnpointsNode then
+        xmlUnloadFile(config)
+        return false, "Failed to find node 'spawnpoints' in 'config.xml'."
+    end
+
+    local typesChildren = xmlNodeGetChildren(typesNode)
+    if not typesChildren then
+        xmlUnloadFile(config)
+        return false, "Failed to get children of 'types' in 'config.xml'."
+    end
+
+    local actionsChildren = xmlNodeGetChildren(actionsNode)
+    if not actionsChildren then
+        xmlUnloadFile(config)
+        return false, "Failed to get children of 'actions' in 'config.xml'."
+    end
+
+    local spawnpointsChildren = xmlNodeGetChildren(spawnpointsNode)
+    if not spawnpointsChildren then
+        xmlUnloadFile(config)
+        return false, "Failed to get children of 'spawnpoints' in 'config.xml'."
+    end
+
+    local typeNode = nil
+    local actionNodes, spawnpointNodes = {}, {}
+    for i=1, #typesChildren do
+        local child = typesChildren[i]
+        if xmlNodeGetName(child) == "type" then
+            local name = xmlNodeGetAttribute(child, "name")
+            if name == theType then
+                typeNode = child
+                break
+            end
+        end
+    end
+    if not typeNode then
+        xmlUnloadFile(config)
+        return false, "Failed to find node 'type' with attribute 'name' = '" .. theType .. "' in 'config.xml'."
+    end
+
+    for i=1, #actionsChildren do
+        local child = actionsChildren[i]
+        if xmlNodeGetName(child) == "action" then
+            local typeName = xmlNodeGetAttribute(child, "type")
+            if typeName == theType then
+                actionNodes[#actionNodes+1] = child
+            end
+        end
+    end
+    if #actionNodes ~= 2 then
+        xmlUnloadFile(config)
+        return false, "Failed to find 2 'action' nodes with attribute 'type' = '" .. theType .. "' in 'config.xml'."
+    end
+
+    for i=1, #spawnpointsChildren do
+        local child = spawnpointsChildren[i]
+        if xmlNodeGetName(child) == "spawnpoint" then
+            local typeName = xmlNodeGetAttribute(child, "type")
+            if typeName == theType then
+                spawnpointNodes[#spawnpointNodes+1] = child
+            end
+        end
+    end
+
+    -- Delete the nodes
+    xmlDestroyNode(typeNode)
+    for i=1, #actionNodes do
+        xmlDestroyNode(actionNodes[i])
+    end
+    for i=1, #spawnpointNodes do
+        if spawnpointNodes[i] then
+            xmlDestroyNode(spawnpointNodes[i])
+        end
+    end
+
+    if info.target == "client" then
+
+        -- reset all accounts' collected counts of this type
+        local accounts = getAccounts()
+        local collectedCounts = {}
+        for i=1, #accounts do
+            local account = accounts[i]
+            if account then
+                local data = getAccountData(account, "collectibiles.client")
+                if not data then
+                    data = {}
+                else
+                    data = fromJSON(data) or {}
+                end
+                data[theType] = nil
+                setAccountData(account, "collectibiles.client", toJSON(data))
+            end
+        end
+    end
+
+    if not xmlSaveFile(config) then
+        xmlUnloadFile(config)
+        return false, "Failed to save file 'config.xml'."
+    end
+
+    xmlUnloadFile(config)
+    return true
+end
+
+function createNewType(typeInfo)
+    assert(type(typeInfo) == "table", "Bad argument @ createNewType (table expected, got " .. type(typeInfo) .. ")")
+
+    local config = xmlLoadFile("config.xml")
+    if not config then
+        return false, "Failed to load file 'config.xml'."
+    end
+
+    local children = xmlNodeGetChildren(config)
+    if not children then
+        xmlUnloadFile(config)
+        return false, "Failed to get children of 'config.xml'."
+    end
+
+    -- Verify type info
+
+    local newName = typeInfo.name
+    if type(newName) ~= "string" then
+        xmlUnloadFile(config)
+        return false, "Failed to create new type - no name specified."
+    end
+
+    if type(typeInfo.auto_load) ~= "string" then
+        xmlUnloadFile(config)
+        return false, "Failed to create new type - no auto_load specified."
+    end
+
+    if type(typeInfo.target) ~= "string" then
+        xmlUnloadFile(config)
+        return false, "Failed to create new type - no target specified."
+    end
+
+    if type(typeInfo.actions) ~= "table" then
+        xmlUnloadFile(config)
+        return false, "Failed to create new type - no actions specified."
+    end
+
+    if type(typeInfo.actions.collect_one) ~= "table" then
+        xmlUnloadFile(config)
+        return false, "Failed to create new type - no collect_one actions specified."
+    end
+
+    if type(typeInfo.actions.collect_all) ~= "table" then
+        xmlUnloadFile(config)
+        return false, "Failed to create new type - no collect_all actions specified."
+    end
+
+    -- Check if type with that name already exists
+    if findNode(children, "types", {name=newName}) then
+        xmlUnloadFile(config)
+        return false, "Failed to create new type - type with name '" .. newName .. "' already exists."
+    end
+
+    -- Find the necessary node
+    local typesNode, actionsNode, spawnpointsNode
+    for i=1, #children do
+        local child = children[i]
+        if xmlNodeGetName(child) == "types" then
+            typesNode = child
+        elseif xmlNodeGetName(child) == "actions" then
+            actionsNode = child
+        elseif xmlNodeGetName(child) == "spawnpoints" then
+            spawnpointsNode = child
+        end
+    end
+
+    if not typesNode then
+        xmlUnloadFile(config)
+        return false, "Failed to find node 'types' in 'config.xml'."
+    end
+    if not actionsNode then
+        xmlUnloadFile(config)
+        return false, "Failed to find node 'actions' in 'config.xml'."
+    end
+    if not spawnpointsNode then
+        xmlUnloadFile(config)
+        return false, "Failed to find node 'spawnpoints' in 'config.xml'."
+    end
+
+    -- Create new type node
+
+    local newTypeNode = xmlCreateChild(typesNode, "type")
+    if not newTypeNode then
+        xmlUnloadFile(config)
+        return false, "Failed to create new type node."
+    end
+
+    xmlNodeSetAttribute(newTypeNode, "name", newName)
+    xmlNodeSetAttribute(newTypeNode, "auto_load", typeInfo.auto_load)
+    xmlNodeSetAttribute(newTypeNode, "target", typeInfo.target)
+
+    if typeInfo.respawn_after ~= nil then
+        if type(typeInfo.respawn_after) ~= "string" then
+            xmlUnloadFile(config)
+            return false, "Failed to create new type - respawn_after must be a string."
+        end
+        if type(typeInfo.respawn_after_unit) ~= "string" then
+            xmlUnloadFile(config)
+            return false, "Failed to create new type - respawn_after_unit must be a string."
+        end
+        xmlNodeSetAttribute(newTypeNode, "respawn_after", typeInfo.respawn_after)
+        xmlNodeSetAttribute(newTypeNode, "respawn_after_unit", typeInfo.respawn_after_unit)
+    end
+    if typeInfo.toggle_command ~= nil then
+        if type(typeInfo.toggle_command) ~= "string" then
+            xmlUnloadFile(config)
+            return false, "Failed to create new type - toggle_command must be a string."
+        end
+        xmlNodeSetAttribute(newTypeNode, "toggle_command", typeInfo.toggle_command)
+    end
+    if typeInfo.toggle_key_bind ~= nil then
+        if type(typeInfo.toggle_key_bind) ~= "string" then
+            xmlUnloadFile(config)
+            return false, "Failed to create new type - toggle_key_bind must be a string."
+        end
+        xmlNodeSetAttribute(newTypeNode, "toggle_key_bind", typeInfo.toggle_key_bind)
+    end
+
+    -- Create 2 action nodes
+
+    local newActionNodeOne = xmlCreateChild(actionsNode, "action")
+    if not newActionNodeOne then
+        xmlUnloadFile(config)
+        return false, "Failed to create new action node."
+    end
+
+    xmlNodeSetAttribute(newActionNodeOne, "type", newName)
+    xmlNodeSetAttribute(newActionNodeOne, "on", "collect_one")
+
+    if typeInfo.actions.collect_one.sound ~= nil then
+        if type(typeInfo.actions.collect_one.sound) ~= "string" then
+            xmlUnloadFile(config)
+            return false, "Failed to create new type - collect_one sound must be a string."
+        end
+        if type(typeInfo.actions.collect_one.sound_volume) ~= "string" then
+            xmlUnloadFile(config)
+            return false, "Failed to create new type - collect_one sound_volume must be a string."
+        end
+        xmlNodeSetAttribute(newActionNodeOne, "sound_volume", typeInfo.actions.collect_one.sound_volume)
+    end
+
+    local newActionNodeAll = xmlCreateChild(actionsNode, "action")
+    if not newActionNodeAll then
+        xmlUnloadFile(config)
+        return false, "Failed to create new action node."
+    end
+
+    xmlNodeSetAttribute(newActionNodeAll, "type", newName)
+    xmlNodeSetAttribute(newActionNodeAll, "on", "collect_all")
+
+    if typeInfo.actions.collect_all.sound ~= nil then
+        if type(typeInfo.actions.collect_all.sound) ~= "string" then
+            xmlUnloadFile(config)
+            return false, "Failed to create new type - collect_all sound must be a string."
+        end
+        if type(typeInfo.actions.collect_all.sound_volume) ~= "string" then
+            xmlUnloadFile(config)
+            return false, "Failed to create new type - collect_all sound_volume must be a string."
+        end
+        xmlNodeSetAttribute(newActionNodeAll, "sound_volume", typeInfo.actions.collect_all.sound_volume)
+    end
+
+    -- Create 1 spawnpoint node (default)
+
+    -- NEW_SPAWNPOINT_DEFAULT
+    local newSpawnpointNode = xmlCreateChild(spawnpointsNode, "spawnpoint")
+    if not newSpawnpointNode then
+        xmlUnloadFile(config)
+        return false, "Failed to create new spawnpoint node."
+    end
+
+    xmlNodeSetAttribute(newSpawnpointNode, "type", newName)
+
+    local x,y,z,interior,dimension = NEW_SPAWNPOINT_DEFAULT[1], NEW_SPAWNPOINT_DEFAULT[2], NEW_SPAWNPOINT_DEFAULT[3], NEW_SPAWNPOINT_DEFAULT[4], NEW_SPAWNPOINT_DEFAULT[5]
+
+    xmlNodeSetAttribute(newSpawnpointNode, "model", 1240)
+    xmlNodeSetAttribute(newSpawnpointNode, "x", x)
+    xmlNodeSetAttribute(newSpawnpointNode, "y", y)
+    xmlNodeSetAttribute(newSpawnpointNode, "z", z)
+    xmlNodeSetAttribute(newSpawnpointNode, "interior", interior)
+    xmlNodeSetAttribute(newSpawnpointNode, "dimension", dimension)
+
+    if not xmlSaveFile(config) then
+        xmlUnloadFile(config)
+        return false, "Failed to save file 'config.xml'."
+    end
+
+    xmlUnloadFile(config)
+    return true
+end
+
+local function createOnePickup(theType, index, spawnpoint)
+    local pickup = createPickup(spawnpoint.x, spawnpoint.y, spawnpoint.z, 3, spawnpoint.model)
+    if not pickup then
+        outputInfoMessage("Failed to create pickup for type '" .. theType .. "' at spawnpoint " .. (index) .. ".", "ERROR")
+        return false
+    end
+    setElementInterior(pickup, spawnpoint.interior)
+    setElementDimension(pickup, spawnpoint.dimension)
+    spawnedServerCollectibles[pickup] = {
+        type = theType,
+        index = index,
+    }
+    return pickup
+end
+
+-- [Exported]
+function spawnCollectibles(theType, thePlayer)
+    assert(type(theType) == "string", "Bad argument @ spawnCollectibles [expected string at argument 1, got " .. type(theType) .. "]")
+    local info = collectibleTypes[theType]
+    if (not info) or (info.target ~= "server") then
+        if isElement(thePlayer) then
+            outputCustomText(thePlayer, "admin_invalid_collectible_type", theType)
+            for theType2, info2 in pairs(collectibleTypes) do
+                if info2.target == "server" then
+                    outputChatBox("  - " .. theType2, thePlayer, 255, 255, 255)
+                end
+            end
+        end
+        return false, "admin_invalid_collectible_type"
     end
     local countExisting = 0
-    for pickup, info in pairs(spawnedCollectibles) do
+    for pickup, info in pairs(spawnedServerCollectibles) do
         if info.type == theType then
             countExisting = countExisting + 1
         end
     end
     if countExisting > 0 then
-        outputCustomText(thePlayer, "admin_already_spawned", countExisting, theType)
-        return
+        if isElement(thePlayer) then
+            outputCustomText(thePlayer, "admin_count_spawned", countExisting, (string.gsub(theType, "_", " ")))
+        end
+        return false, "admin_count_spawned"
     end
     for i=1, #info.spawnpoints do
         collectibleTypes[theType].spawnpoints[i].collected_by = false
@@ -420,104 +1066,63 @@ local function spawnCollectibles(theType, info, thePlayer)
     local countCreated = 0
     for i=1, #info.spawnpoints do
         local spawnpoint = info.spawnpoints[i]
-        local pickup = createPickup(spawnpoint.x, spawnpoint.y, spawnpoint.z, 3, spawnpoint.model)
-        if not pickup then
-            outputInfoMessage("Failed to create pickup for type '" .. theType .. "' at spawnpoint " .. (i) .. ".")
-        else
-            spawnedCollectibles[pickup] = {
-                type = theType,
-                index = spawnpoint.index,
-            }
+        if createOnePickup(theType, i, spawnpoint) then
             countCreated = countCreated + 1
         end
     end
-    outputCustomText(thePlayer, "admin_spawned", countCreated, theType)
+    if isElement(thePlayer) then
+        outputCustomText(thePlayer, "admin_spawned", countCreated, (string.gsub(theType, "_", " ")))
+    end
+    triggerEvent("collectibles:onSpawnedServer", root, (isElement(thePlayer) and thePlayer or "SYSTEM"), theType, countCreated)
+    return true
 end
 
-local function destroyCollectibles(theType, info, thePlayer)
-    if not canManageCollectibles(thePlayer) then
-        outputCustomText(thePlayer, "admin_no_permission")
-        return
-    end
-    for i=1, #info.spawnpoints do
-        collectibleTypes[theType].spawnpoints[i].collected_by = false
-    end
-    local countLeft = 0
-    for pickup, info2 in pairs(spawnedCollectibles) do
-        if info2.type == theType then
-            destroyElement(pickup)
-            spawnedCollectibles[pickup] = nil
-            countLeft = countLeft + 1
-        end
-    end
-    outputCustomText(thePlayer, "admin_destroyed", countLeft, theType)
-end
-
-local function createServerCollectibles()
-    for theType, info in pairs(collectibleTypes) do
-        if info.target == "server" then
-
-            for i=1, #info.spawnpoints do
-                collectibleTypes[theType].spawnpoints[i].collected_by = false
-            end
-
-            if (info.auto_load == true) then
-                -- Auto create on startup
-                for i=1, #info.spawnpoints do
-                    local spawnpoint = info.spawnpoints[i]
-                    local pickup = createPickup(spawnpoint.x, spawnpoint.y, spawnpoint.z, 3, spawnpoint.model)
-                    if not pickup then
-                        outputInfoMessage("Failed to create pickup for type '" .. theType .. "' at spawnpoint " .. i .. ".")
-                    else
-                        spawnedCollectibles[pickup] = {
-                            type = theType,
-                            index = spawnpoint.index,
-                        }
-                    end
+-- [Exported]
+function destroyCollectibles(theType, thePlayer)
+    assert(type(theType) == "string", "Bad argument @ destroyCollectibles [expected string at argument 1, got " .. type(theType) .. "]")
+    local info = collectibleTypes[theType]
+    if (not info) or (info.target ~= "server") then
+        if isElement(thePlayer) then
+            outputCustomText(thePlayer, "admin_invalid_collectible_type", theType)
+            for theType2, info2 in pairs(collectibleTypes) do
+                if info2.target == "server" then
+                    outputChatBox("  - " .. theType2, thePlayer, 255, 255, 255)
                 end
             end
-            if (info.spawn_command and info.destroy_command) then
-                outputInfoMessage("'" .. theType .. "' collectibles can now be spawned using /"..(info.spawn_command))
-
-                addCommandHandler(info.spawn_command, function(thePlayer, cmd)
-                    spawnCollectibles(theType, info, thePlayer)
-                end, false, false)
-
-                addCommandHandler(info.destroy_command, function(thePlayer, cmd)
-                    destroyCollectibles(theType, info, thePlayer)
-                end, false, false)
-            end
+        end
+        return false, "admin_invalid_collectible_type"
+    end
+    local total = info.total
+    for i=1, total do
+        collectibleTypes[theType].spawnpoints[i].collected_by = false
+    end
+    local pickupsLeft = {}
+    for pickup, info2 in pairs(spawnedServerCollectibles) do
+        if info2.type == theType then
+            pickupsLeft[#pickupsLeft+1] = pickup
         end
     end
-end
-
-local function countCollectedServer(accountName, theType)
-    local count = 0
-    for i=1, #collectibleTypes[theType].spawnpoints do
-        if collectibleTypes[theType].spawnpoints[i].collected_by == accountName then
-            count = count + 1
+    if #pickupsLeft == 0 then
+        if isElement(thePlayer) then
+            outputCustomText(thePlayer, "admin_count_spawned", 0, (string.gsub(theType, "_", " ")))
         end
+        return false, "admin_count_spawned"
     end
-    return count
+    for i=1, #pickupsLeft do
+        local pickup = pickupsLeft[i]
+        destroyElement(pickup)
+        spawnedServerCollectibles[pickup] = nil
+    end
+    if isElement(thePlayer) then
+        outputCustomText(thePlayer, "admin_destroyed", countLeft, (string.gsub(theType, "_", " ")))
+    end
+    triggerEvent("collectibles:onDestroyedServer", root, (isElement(thePlayer) and thePlayer or "SYSTEM"), theType, countLeft, total)
+    return true
 end
 
 local function spawnClientCollectible(theType, index, thePlayer)
     local spawnpoint = collectibleTypes[theType].spawnpoints[index]
     triggerClientEvent(thePlayer, "collectibles:spawn", thePlayer, theType, index, spawnpoint)
-end
-
-local function saveCollectedClient(account, accountName, theType, index)
-    local data = getAccountData(account, "collectibiles.client")
-    if not data then
-        data = {}
-    else
-        data = fromJSON(data) or {}
-    end
-    if not data[theType] then
-        data[theType] = {}
-    end
-    data[theType][tostring(index)] = getRealTime().timestamp
-    setAccountData(account, "collectibiles.client", toJSON(data))
 end
 
 local function isCollectedClient(thePlayer, account, theType, respawn_after, index)
@@ -534,7 +1139,7 @@ local function isCollectedClient(thePlayer, account, theType, respawn_after, ind
         return false
     end
     local now = getRealTime().timestamp
-    if (now - collectedAt) > respawn_after then
+    if (respawn_after) and ((now - collectedAt) > respawn_after) then
         data[theType][tostring(index)] = nil
         setAccountData(account, "collectibiles.client", toJSON(data))
         spawnClientCollectible(theType, tonumber(index), thePlayer)
@@ -543,21 +1148,14 @@ local function isCollectedClient(thePlayer, account, theType, respawn_after, ind
     return true
 end
 
-local function sendCollectibles(player, thisType)
-    local account = getPlayerAccount(player)
-    if (not account) or (isGuestAccount(account)) then
-        return
-    end
+local function sendCollectibles(player, account, thisType)
     local collectibleTypesClient = {}
     for theType, info in pairs(collectibleTypes) do
         if info.target == "client" and (not thisType or thisType == theType) then
             local spawnpoints = {}
             for i=1, #info.spawnpoints do
                 local spawnpoint = info.spawnpoints[i]
-                local alreadyCollected = false
-                if accountName ~= true then
-                    alreadyCollected = isCollectedClient(player, account, theType, info.respawn_after, spawnpoint.index)
-                end
+                local alreadyCollected = isCollectedClient(player, account, theType, info.respawn_after, spawnpoint.index)
                 if not alreadyCollected then
                     -- no longer ipairs list because some may already be collected (won't spawn)
                     spawnpoints[spawnpoint.index] = {
@@ -565,6 +1163,8 @@ local function sendCollectibles(player, thisType)
                         x = spawnpoint.x,
                         y = spawnpoint.y,
                         z = spawnpoint.z,
+                        interior = spawnpoint.interior,
+                        dimension = spawnpoint.dimension,
                         model = spawnpoint.model,
                     }
                 end
@@ -588,6 +1188,228 @@ local function sendCollectibles(player, thisType)
     )
 end
 
+local function resendClientCollectibles()
+    local playersTable = getElementsByType("player")
+    for i=1, #playersTable do
+        local player = playersTable[i]
+        if player then
+            local account = getPlayerAccount(player)
+            if (account and not isGuestAccount(account)) then
+                sendCollectibles(player, account)
+            end
+        end
+    end
+end
+
+-- [Exported]
+function removeSpawnpoint(theType, index)
+    assert(type(theType) == "string", "Bad argument @ removeSpawnpoint [expected string at argument 1, got " .. type(theType) .. "]")
+    assert(type(index) == "number", "Bad argument @ removeSpawnpoint [expected number at argument 2, got " .. type(index) .. "]")
+    local info = collectibleTypes[theType]
+    if (not info) then
+        return false, "admin_invalid_collectible_type"
+    end
+    local spawnpoints = info.spawnpoints
+    local spawnpoint = spawnpoints[index]
+    if (not spawnpoint) then
+        return false, "admin_invalid_spawnpoint_index"
+    end
+
+    local config = xmlLoadFile("config.xml")
+    if not config then
+        return false, "Failed to load file 'config.xml'."
+    end
+    local children = xmlNodeGetChildren(config)
+    if not children then
+        xmlUnloadFile(config)
+        return false, "Failed to get children of 'config.xml'."
+    end
+
+    for i=1, #children do
+        local child = children[i]
+        if child and xmlNodeGetName(child) == "spawnpoints" then
+            local spawnpoints = xmlNodeGetChildren(child)
+            if not spawnpoints then
+                xmlUnloadFile(config)
+                return false, "Failed to get children of 'spawnpoints' in 'config.xml'."
+            end
+            local countedIndexes = {}
+            for i2=1, #spawnpoints do
+                local spawnpoint2 = spawnpoints[i2]
+                if spawnpoint2 and xmlNodeGetName(spawnpoint2) == "spawnpoint" then
+                    local theType2 = xmlNodeGetAttribute(spawnpoint2, "type")
+                    if theType == theType2 then
+                        if not countedIndexes[theType2] then
+                            countedIndexes[theType2] = 0
+                        end
+                        countedIndexes[theType2] = countedIndexes[theType2] + 1
+                        if countedIndexes[theType2] == index then
+                            xmlDestroyNode(spawnpoint2)
+                            break
+                        end
+                    end
+                end
+            end
+        end
+    end
+    if not xmlSaveFile(config) then
+        xmlUnloadFile(config)
+        return false, "Failed to save file 'config.xml'."
+    end
+    xmlUnloadFile(config)
+
+    table.remove(collectibleTypes[theType].spawnpoints, index)
+    collectibleTypes[theType].total = collectibleTypes[theType].total - 1
+    for pickup, info2 in pairs(spawnedServerCollectibles) do
+        if info2.type == theType and info2.index == index then
+            destroyElement(pickup)
+            spawnedServerCollectibles[pickup] = nil
+        end
+    end
+
+    if info.target == "client" then
+
+        -- reset all accounts' collected counts of this type
+        local accounts = getAccounts()
+        local collectedCounts = {}
+        for i=1, #accounts do
+            local account = accounts[i]
+            if account then
+                local data = getAccountData(account, "collectibiles.client")
+                if not data then
+                    data = {}
+                else
+                    data = fromJSON(data) or {}
+                end
+                data[theType] = nil
+                setAccountData(account, "collectibiles.client", toJSON(data))
+            end
+        end
+
+        resendClientCollectibles()
+    end
+
+    if #collectibleTypes[theType].spawnpoints == 0 then
+        return createNewSpawnpoint(
+            theType, spawnpoint.model,
+            NEW_SPAWNPOINT_DEFAULT[1], NEW_SPAWNPOINT_DEFAULT[2], NEW_SPAWNPOINT_DEFAULT[3],
+            NEW_SPAWNPOINT_DEFAULT[4], NEW_SPAWNPOINT_DEFAULT[5]
+        )
+    end
+
+    return true
+end
+
+-- [Exported]
+function createNewSpawnpoint(theType, model, x,y,z, interior, dimension)
+    assert(type(theType) == "string", "Bad argument @ createNewSpawnpoint [expected string at argument 1, got " .. type(theType) .. "]")
+    assert(type(model) == "number", "Bad argument @ createNewSpawnpoint [expected number at argument 2, got " .. type(model) .. "]")
+    assert(type(x) == "number", "Bad argument @ createNewSpawnpoint [expected number at argument 3, got " .. type(x) .. "]")
+    assert(type(y) == "number", "Bad argument @ createNewSpawnpoint [expected number at argument 4, got " .. type(y) .. "]")
+    assert(type(z) == "number", "Bad argument @ createNewSpawnpoint [expected number at argument 5, got " .. type(z) .. "]")
+    assert(type(interior) == "number", "Bad argument @ createNewSpawnpoint [expected number at argument 6, got " .. type(interior) .. "]")
+    assert(type(dimension) == "number", "Bad argument @ createNewSpawnpoint [expected number at argument 7, got " .. type(dimension) .. "]")
+    local info = collectibleTypes[theType]
+    if (not info) then
+        return false, "admin_invalid_collectible_type"
+    end
+
+    local config = xmlLoadFile("config.xml")
+    if not config then
+        return false, "Failed to load file 'config.xml'."
+    end
+    local children = xmlNodeGetChildren(config)
+    if not children then
+        xmlUnloadFile(config)
+        return false, "Failed to get children of 'config.xml'."
+    end
+    for i=1, #children do
+        local child = children[i]
+        if child and xmlNodeGetName(child) == "spawnpoints" then
+            local newSpawnpoint = xmlCreateChild(child, "spawnpoint")
+            xmlNodeSetAttribute(newSpawnpoint, "type", theType)
+            xmlNodeSetAttribute(newSpawnpoint, "model", model)
+            xmlNodeSetAttribute(newSpawnpoint, "x", x)
+            xmlNodeSetAttribute(newSpawnpoint, "y", y)
+            xmlNodeSetAttribute(newSpawnpoint, "z", z)
+            xmlNodeSetAttribute(newSpawnpoint, "interior", interior)
+            xmlNodeSetAttribute(newSpawnpoint, "dimension", dimension)
+            break
+        end
+    end
+    if not xmlSaveFile(config) then
+        xmlUnloadFile(config)
+        return false, "Failed to save file 'config.xml'."
+    end
+    xmlUnloadFile(config)
+
+    local index = #info.spawnpoints + 1
+    collectibleTypes[theType].spawnpoints[index] = {
+        index = index,
+        model = model,
+        x = x,
+        y = y,
+        z = z,
+        interior = interior,
+        dimension = dimension,
+    }
+    collectibleTypes[theType].total = #info.spawnpoints
+
+    if info.target == "client" then
+        resendClientCollectibles()
+    elseif (info.auto_load == true) then
+        createOnePickup(theType, index, collectibleTypes[theType].spawnpoints[index])
+    end
+    return true
+end
+
+local function createServerCollectibles()
+    for theType, info in pairs(collectibleTypes) do
+        if info.target == "server" then
+
+            for i=1, #info.spawnpoints do
+                collectibleTypes[theType].spawnpoints[i].collected_by = false
+            end
+
+            if (info.auto_load == true) then
+                -- Auto create on startup
+                for i=1, #info.spawnpoints do
+                    local spawnpoint = info.spawnpoints[i]
+                    createOnePickup(theType, i, spawnpoint)
+                end
+            end
+        end
+    end
+end
+
+local function countCollectedServer(accountID, theType)
+    local count = 0
+    for i=1, #collectibleTypes[theType].spawnpoints do
+        if collectibleTypes[theType].spawnpoints[i].collected_by == accountID then
+            count = count + 1
+        end
+    end
+    return count
+end
+
+local function saveCollectedClient(account, theType, index)
+    local data = getAccountData(account, "collectibiles.client")
+    if not data then
+        data = {}
+    else
+        data = fromJSON(data) or {}
+    end
+    if not data[theType] then
+        data[theType] = {}
+    end
+    data[theType][tostring(index)] = getRealTime().timestamp
+    setAccountData(account, "collectibiles.client", toJSON(data))
+end
+
+local function despawnCollectibles(player)
+    triggerClientEvent(player, "collectibles:despawn", player)
+end
+
 local function countCollectedClient(thePlayer, account, theType, respawn_after)
     local data = getAccountData(account, "collectibiles.client")
     if not data then
@@ -602,16 +1424,43 @@ local function countCollectedClient(thePlayer, account, theType, respawn_after)
     for index, collectedAt in pairs(data[theType]) do
         collectedAt = tonumber(collectedAt)
         if collectedAt then
-            if (now - collectedAt) > respawn_after then
+            if (respawn_after) and ((now - collectedAt) > respawn_after) then
                 data[theType][tostring(index)] = nil
                 setAccountData(account, "collectibiles.client", toJSON(data))
-                spawnClientCollectible(theType, tonumber(index), thePlayer)
+
+                if isElement(thePlayer) then
+                    spawnClientCollectible(theType, tonumber(index), thePlayer)
+                end
             else
                 count = count + 1
             end
         end
     end
     return count
+end
+
+-- [Exported]
+function getCollectedCounts(account)
+    local accountID = getAccountID(account)
+    assert(type(accountID)=="number", "Bad argument @ getCollectedCounts [valid account expected, got " .. tostring(account) .. "]")
+    local serverCounts = {}
+    local clientCounts = {}
+    for theType, info in pairs(collectibleTypes) do
+        if info.target == "server" then
+            local spawnedPickups = {}
+            for pickup, data in pairs(spawnedServerCollectibles) do
+                if data.type == theType then
+                    spawnedPickups[data.index] = pickup
+                end
+            end
+            local count = countCollectedServer(accountID, theType)
+            serverCounts[theType] = {count = count, total = info.total, spawnpoints = info.spawnpoints, spawnedPickups = spawnedPickups}
+        elseif info.target == "client" then
+            local count = countCollectedClient(thePlayer, account, theType, info.respawn_after)
+            clientCounts[theType] = {count = count, total = info.total, spawnpoints = info.spawnpoints}
+        end
+    end
+    return {server = serverCounts, client = clientCounts}
 end
 
 local function respawnAllClientCollectibles()
@@ -630,29 +1479,23 @@ local function respawnAllClientCollectibles()
             end
         end
     end
-end 
+end
 
-local function resetClientCollectibles(thePlayer, cmd, targetAccountName, theType)
-    if not canManageCollectibles(thePlayer) then
-        outputCustomText(thePlayer, "admin_no_permission")
-        return
-    end
-    if not targetAccountName then
-        outputCustomText(thePlayer, "command_syntax", cmd, "[target account name] (optional: [collectible type name])")
-        return
-    end
-    if not theType then
-        theType = "all"
-    else
-        if theType ~= "all" and not collectibleTypes[theType] then
+-- [Exported]
+function resetClientCollectibles(targetAccount, theType, thePlayer)
+    local targetAccountID = getAccountID(targetAccount)
+    assert(type(targetAccountID)=="number", "Bad argument @ getCollectedCounts [valid account expected, got " .. tostring(targetAccount) .. "]")
+    assert(type(theType) == "string", "Bad argument @ resetClientCollectibles [string expected, got " .. type(theType) .. "]")
+    if theType ~= "all" and ((not collectibleTypes[theType]) or (collectibleTypes[theType].target ~= "client")) then
+        if isElement(thePlayer) then
             outputCustomText(thePlayer, "admin_invalid_collectible_type", theType)
-            return
+            for theType2, info2 in pairs(collectibleTypes) do
+                if info2.target == "client" then
+                    outputChatBox("  - " .. theType2, thePlayer, 255, 255, 255)
+                end
+            end
         end
-    end
-    local targetAccount = getAccount(targetAccountName)
-    if not targetAccount then
-        outputCustomText(thePlayer, "admin_invalid_account_name", targetAccountName)
-        return
+        return false, "admin_invalid_collectible_type"
     end
     local data = getAccountData(targetAccount, "collectibiles.client")
     if not data then
@@ -661,7 +1504,11 @@ local function resetClientCollectibles(thePlayer, cmd, targetAccountName, theTyp
         data = fromJSON(data) or {}
     end
     if theType == "all" then
-        data = {}
+        for theType, info in pairs(collectibleTypes) do
+            if info.target == "client" then
+                data[theType] = {}
+            end
+        end
     else
         data[theType] = {}
     end
@@ -673,7 +1520,7 @@ local function resetClientCollectibles(thePlayer, cmd, targetAccountName, theTyp
         if player then
             local account = getPlayerAccount(player)
             if (account) and (not isGuestAccount(account)) then
-                if getAccountName(account) == targetAccountName then
+                if getAccountID(account) == targetAccountID then
                     targetPlayer = player
                     break
                 end
@@ -681,41 +1528,68 @@ local function resetClientCollectibles(thePlayer, cmd, targetAccountName, theTyp
         end
     end
     if targetPlayer then
-        sendCollectibles(targetPlayer, theType ~= "all" and theType or nil)
+        sendCollectibles(targetPlayer, targetAccount, (theType ~= "all" and theType or nil))
     end
-    outputCustomText(thePlayer, "admin_reset_success", targetAccountName, theType)
+    if isElement(thePlayer) then
+        local targetAccountName = getAccountName(targetAccount)
+        outputCustomText(thePlayer, "admin_reset_success", (string.gsub(theType, "_", " ")), targetAccountName, tostring(targetAccountID))
+    end
+    return true
 end
-addCommandHandler("resetcollectibles", resetClientCollectibles, false, false)
 
-local function handlePickedUp(collectibleInfo)
-    local thePlayer = source
+local function handlePickedUp(thePlayer_, collectibleInfo)
+    local pickup = source
+    if (thePlayer_) and (not (isElement(pickup) and getElementType(pickup) == "pickup")) then
+        return
+    end
+    local thePlayer = client or thePlayer_
     if not (isElement(thePlayer) and getElementType(thePlayer) == "player") then
         return
     end
     if (type(collectibleTypes)~="table") then
         return
     end
-    local theType = collectibleInfo.type
-    if not collectibleTypes[theType] then
-        return
-    end
     local account = getPlayerAccount(thePlayer)
     if (not account) or (isGuestAccount(account)) then
+        return--hacker?
+    end
+    local theType = collectibleInfo.type
+    if not collectibleTypes[theType] then
+        return--hacker?
+    end
+    if not canCollectPickup(thePlayer, account, theType) then
+        if client then
+            triggerClientEvent(client, "collectibles:pickupDenied", client, collectibleInfo)
+        end
+        outputCustomText(thePlayer, "cant_pickup")
         return
     end
+
+    -- success, pick it up:
+
     local accountName = getAccountName(account)
+    local accountID = getAccountID(account)
     local respawn_after = collectibleTypes[theType].respawn_after
     local index = collectibleInfo.index
     local count = 0
-    if not isElement(client) then
-        count = countCollectedServer(accountName, theType) + 1
-        collectibleTypes[theType].spawnpoints[index].collected_by = accountName
+    if (not client) then
+        count = countCollectedServer(accountID, theType) + 1
+        collectibleTypes[theType].spawnpoints[index].collected_by = accountID
+        destroyElement(pickup)
+        spawnedServerCollectibles[pickup] = nil
     else
         count = countCollectedClient(thePlayer, account, theType, respawn_after) + 1
-        saveCollectedClient(account, accountName, theType, index)
+        saveCollectedClient(account, theType, index)
+        -- pickup will be destroyed on client
     end
-    
+
     local total = collectibleTypes[theType].total
+
+    local rewardMoney = collectibleTypes[theType].collect_one.reward_money
+    if rewardMoney then
+        givePlayerMoney(thePlayer, rewardMoney)
+        outputCustomText(thePlayer, "reward_money", rewardMoney, (string.gsub(theType, "_", " ")))
+    end
 
     local action
     if count == total then
@@ -723,26 +1597,19 @@ local function handlePickedUp(collectibleInfo)
     else
         action = collectibleTypes[theType].collect_one
     end
-
-    -- Custom Event (for Developers)
-    triggerEvent("collectibles:onCollected", thePlayer, collectibleTypes[theType].target, theType, count, total)
-
-    if action.reward_money then
-        local money = getPlayerMoney(thePlayer)
-        setPlayerMoney(thePlayer, money + action.reward_money)
-    end
     
     triggerClientEvent(thePlayer, "collectibles:actionOnPickedUp", thePlayer, theType, count, total, action)
+
+    -- Custom Event (for Developers)
+    triggerEvent("collectibles:onCollected", thePlayer, account, accountID, accountName, collectibleTypes[theType].target, theType, count, total)
 end
 addEventHandler("collectibles:handlePickedUp", root, handlePickedUp)
 
 local function onPickupHit(thePlayer)
-    local collectibleInfo = spawnedCollectibles[source]
+    local collectibleInfo = spawnedServerCollectibles[source]
     if not collectibleInfo then return end
     if (getElementDimension(thePlayer) ~= getElementDimension(source) or getElementInterior(thePlayer) ~= getElementInterior(source)) then return end
-    destroyElement(source)
-    spawnedCollectibles[source] = nil
-    triggerEvent("collectibles:handlePickedUp", thePlayer, collectibleInfo)
+    triggerEvent("collectibles:handlePickedUp", source, thePlayer, collectibleInfo)
 end
 addEventHandler("onPickupHit", resourceRoot, onPickupHit)
 
@@ -750,15 +1617,36 @@ addEventHandler("onPickupHit", resourceRoot, function()
     cancelEvent()
 end)
 
-addEventHandler("onPlayerResourceStart", root, function(res)
-    if res == resource then
-        if type(clientsWaiting)=="table" then
-            clientsWaiting[#clientsWaiting+1] = source
-        else
-            sendCollectibles(source)
-        end
+addEventHandler("onPlayerLogin", root, function(_, newAccount)
+    if isGuestAccount(newAccount) then
+        despawnCollectibles(source)
+        return
+    end
+    if type(clientsWaiting)=="table" then
+        clientsWaiting[#clientsWaiting+1] = source
+    else
+        sendCollectibles(source, newAccount)
     end
 end)
+
+addEventHandler("onPlayerLogout", root, function(_, newAccount)
+    if isGuestAccount(newAccount) then
+        despawnCollectibles(source)
+        return
+    end
+    if type(clientsWaiting)=="table" then
+        clientsWaiting[#clientsWaiting+1] = source
+    else
+        sendCollectibles(source, newAccount)
+    end
+end)
+
+addEventHandler("collectibles:requestCollectibles", resourceRoot, function()
+    if not client then return end
+    local account = getPlayerAccount(client)
+    if (not account) or (isGuestAccount(account)) then return end
+    sendCollectibles(client, account)
+end, false)
 
 addEventHandler("onResourceStart", resourceRoot, function()
 
@@ -776,11 +1664,14 @@ addEventHandler("onResourceStart", resourceRoot, function()
     for i=1, #clientsWaiting do
         local player = clientsWaiting[i]
         if player then
-            sendCollectibles(player)
+            local account = getPlayerAccount(player)
+            if (account) and (not isGuestAccount(account)) then
+                sendCollectibles(player, account)
+            end
         end
     end
 
-    clientsWaiting = nil
+    clientsWaiting = nil -- clear memory
 
     setTimer(respawnAllClientCollectibles, 60000, 0)
-end)
+end, false)

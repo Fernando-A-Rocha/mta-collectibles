@@ -1,5 +1,5 @@
 <!-- 
-    Collectibles - Configuration
+    Collectibles - Configuration : DEMO
 
     Two types of collectibles:
         - Server collectibles
@@ -26,86 +26,63 @@
         - Players not logged in are not able to collect collectibles due it being impossible to store data on guest accounts
 -->
 <config>
+    <commands>
+        <command name="manage">managecollectibles</command>
+        <command name="spawn">spawncollectibles</command>
+        <command name="destroy">destroycollectibles</command>
+        <command name="resetplayer">resetplayercollectibles</command>
+        <command name="points">collectiblespawns</command>
+    </commands>
+    <texts>
+        <text name="command_syntax" color="255, 255, 255">SYNTAX: /%s %s</text>
+        <text name="ask_to_wait" color="200, 200, 200">Please wait a bit before doing this again.</text>
+        <text name="cant_pickup" color="255, 55, 55">You can&apos;t collect this now.</text>
+        
+        <text name="text_top" color="250, 189, 255">%s</text>
+        <text name="text_bottom" color="255, 255, 255">%s of %s</text>
+        <text name="cant_toggle" color="255, 0, 0">You can&apos;t toggle collectibles now.</text>
+        <text name="already_collected" color="255, 0, 0">You already collected all %s collectibles (total %s).</text>
+        <text name="toggle_on" color="255, 255, 255">You have found %s out of %s %s collectibles so far. Good luck!</text>
+        <text name="toggle_off" color="255, 255, 255">You have hidden %s %s collectible(s).</text>
+        <text name="respawned" color="255, 255, 255">%s collectible number %s has been respawned.</text>
+        <text name="reward_money" color="55, 255, 55">You have earned $%s for collecting this %s.</text>
+        
+        <text name="admin_no_permission" color="255, 55, 55">You don&apos;t have permission to execute this command.</text>
+        <text name="admin_count_spawned" color="255, 55, 55">There are currently %s %s collectibles spawned.</text>
+        <text name="admin_spawned" color="5, 255, 5">You have spawned %s %s collectibles on the server.</text>
+        <text name="admin_destroyed" color="5, 255, 5">You have destroyed the existing %s %s collectibles.</text>
+        <text name="admin_invalid_collectible_type" color="255, 0, 0">Collectible type &apos;%s&apos; does not exist.</text>
+        <text name="admin_invalid_account_id" color="255, 0, 0">User account ID %s does not exist.</text>
+        <text name="admin_reset_success" color="5, 255, 5">You have respawned %s client collectibles for %s (ID: %s).</text>
+    </texts>
     <types>
-        <type name="Totem" target="client"
-            toggle_command="totems"
-            respawn_after="1"
-            respawn_after_unit="minutes"
-            auto_load = "false"
-        />
-
-        <type name="Heart" target="client"
-            toggle_keybind="F7"
-            respawn_after="24"
-            respawn_after_unit="hours"
-            auto_load = "true"
-        />
-
-        <type name="Drug" target="server"
-            spawn_command="spawndrugs"
-            destroy_command="destroydrugs"
-            auto_load = "true"
-        />
+        <type name="Totem" target="client" auto_load="true" toggle_command="totems" respawn_after_unit="minutes" respawn_after="1" />
+        
+        <type name="Heart" target="client" auto_load="false" toggle_keybind="f7" />
+        
+        <type name="Hidden_Package" target="server" auto_load="false" />
     </types>
     <actions>
-        <action type="Totem" on="collect_one"
-            sound="files/sounds/vc/checkpoint.ogg"
-            sound_volume="1"
-            reward_money="100"
-        />
-        <action type="Totem" on="collect_all"
-            sound="files/sounds/vc/pickup.ogg"
-            sound_volume="1"
-        />
-
-        <action type="Heart" on="collect_one"
-            sound="files/sounds/vc/checkpoint.ogg"
-            sound_volume="1"
-        />
-        <action type="Heart" on="collect_all"
-            sound="files/sounds/vc/pickup.ogg"
-            sound_volume="1"
-        />
-
-        <action type="Drug" on="collect_one"
-            sound="files/sounds/vc/notification.ogg"
-            sound_volume="1"
-            reward_money="500"
-        />
-        <action type="Drug" on="collect_all"
-            sound="files/sounds/vc/pickup2.ogg"
-            sound_volume="1"
-        />
+        <action type="Totem" on="collect_one" sound="sounds/vc/pickup.ogg" sound_volume="1" reward_money="1000" />
+        <action type="Totem" on="collect_all" sound="sounds/vc/pickup2.ogg" sound_volume="1" />
+        
+        <action type="Heart" on="collect_one" sound="sounds/vc/checkpoint.ogg" sound_volume="1" />
+        <action type="Heart" on="collect_all" sound="sounds/vc/pickup.ogg" sound_volume="1" />
+        
+        <action type="Hidden_Package" on="collect_one" sound="sounds/vc/notification.ogg" sound_volume="1" />
+        <action type="Hidden_Package" on="collect_all" sound="sounds/vc/pickup2.ogg" sound_volume="1" />
     </actions>
     <spawnpoints>
-        <spawnpoint type="Totem" x="0" y="-10" z="3" model="1276" />
-        <spawnpoint type="Totem" x="5" y="-10" z="3" model="1276" />
-
-        <spawnpoint type="Heart" x="0" y="-5" z="3" model="1240" />
-        <spawnpoint type="Heart" x="5" y="-5" z="3" model="1240" />
-        <spawnpoint type="Heart" x="10" y="5" z="3" model="1240" />
-        <spawnpoint type="Heart" x="15" y="5" z="3" model="1240" />
-
-        <spawnpoint type="Drug" x="5" y="10" z="3" model="1279" />
-        <spawnpoint type="Drug" x="-5" y="10" z="3" model="1279" />
+        
+        <spawnpoint type="Heart" model="1240" x="0" y="-5" z="3" />
+        <spawnpoint type="Heart" model="1240" x="5" y="-5" z="3" />
+        <spawnpoint type="Heart" model="1240" x="10" y="5" z="3" />
+        <spawnpoint type="Heart" model="1240" x="15" y="5" z="3" />
+        <spawnpoint type="Heart" model="1240" x="-17.54" y="-90.11" z="1003.55" interior="18" dimension="0" />
+        
+        <spawnpoint type="Hidden_Package" model="1279" x="5" y="10" z="3" />
+        <spawnpoint type="Hidden_Package" model="1279" x="-5" y="10" z="3" />
+        <spawnpoint type="Totem" model="1276" x="-0.7236328125" y="18.712890625" z="3.1171875" interior="0" dimension="0"></spawnpoint>
+        <spawnpoint type="Totem" model="1276" x="-10.4775390625" y="20.3330078125" z="3.1171875" interior="0" dimension="0"></spawnpoint>
     </spawnpoints>
-    <texts>
-        <text name="command_syntax" color="255,255,255">USAGE: /%s %s</text>
-
-        <text name="collect_one" color="255,255,255">You collected %s out of %s %s collectibles.</text>
-        <text name="collect_all" color="255,255,255">You collected all %s %s collectibles.</text>
-        <text name="cant_toggle" color="255,0,0">You can't toggle collectibles now.</text>
-        <text name="already_collected" color="255,0,0">You already collected all %s collectibles (total %s).</text>
-        <text name="toggle_on" color="255,255,255">You have found %s out of %s %s collectibles. Good luck!</text>
-        <text name="toggle_off" color="255,255,255">You have hidden %s %s collectible(s).</text>
-        <text name="respawned" color="255,255,255">%s collectible number %s has been respawned.</text>
-
-        <text name="admin_no_permission" color="255,55,55">You don't have permission to execute this command.</text>
-        <text name="admin_already_spawned" color="255,55,55">There are currently %s %s collectibles spawned.</text>
-        <text name="admin_spawned" color="5,255,5">You have spawned %s %s collectibles on the server.</text>
-        <text name="admin_destroyed" color="5,255,5">You have destroyed the existing %s %s collectibles.</text>
-        <text name="admin_invalid_collectible_type" color="255,0,0">Collectible type '%s' does not exist.</text>
-        <text name="admin_invalid_account_name" color="255,0,0">User account '%s' does not exist.</text>
-        <text name="admin_reset_success" color="5,255,5">You have respawned client collectibles for %s (%s).</text>
-    </texts>
 </config>
