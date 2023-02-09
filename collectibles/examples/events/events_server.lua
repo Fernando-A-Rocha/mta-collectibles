@@ -65,7 +65,7 @@ local function handleCollect(account, accountID, accountName, collectibleTarget,
         end
         local winnerID = nil
         local winnerCount = 0
-        for accountID2, count in pairs(playerCollectedCounts) do
+        for accountID2, count2 in pairs(playerCollectedCounts) do
             if count2 > winnerCount then
                 winnerID = accountID2
                 winnerCount = count2

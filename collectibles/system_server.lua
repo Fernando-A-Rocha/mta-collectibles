@@ -398,11 +398,11 @@ local function parseOneNode(rootChildren, targetNodeName)
                             end
                             local colorTable = {}
                             for w=1, #color do
-                                local value = tonumber(color[w])
-                                if (not value) or (value < 0) or (value > 255) then
+                                local theColor = tonumber(color[w])
+                                if (not theColor) or (theColor < 0) or (theColor > 255) then
                                     return false, "Invalid attribute 'color' of 'text' node - must be a string in the format 'r,g,b' e.g. 255,255,0."
                                 end
-                                colorTable[w] = value
+                                colorTable[w] = theColor
                             end
                             texts[name] = {
                                 text = value,
