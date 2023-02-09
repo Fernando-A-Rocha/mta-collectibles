@@ -70,7 +70,8 @@ local function createOnePickup(theType, index, spawnpoint)
     return pickup
 end
 
--- [Exported]
+--- **(Exported)**
+--
 -- This may be customized
 function canToggleCollectibles()
     return (not isPedDead(localPlayer))

@@ -28,7 +28,7 @@ local preventPicking = {}
 -- x,y,z,interior,dimension for default & temporary spawnpoint
 local NEW_SPAWNPOINT_DEFAULT = {0,0,-10,0,0}
 
--- [Exported]
+--- **(Exported)**
 function setPlayerPreventPicking(player, interval)
     assert(type(interval) == "number", "Bad argument @ setPlayerPreventPicking (number expected, got " .. type(interval) .. ")")
     assert(interval > 50, "Bad argument @ setPlayerPreventPicking (interval must be greater than 50ms)")
@@ -37,7 +37,7 @@ function setPlayerPreventPicking(player, interval)
     return true
 end
 
--- [Exported]
+--- **(Exported)**
 function getCollectibleTypes()
     return collectibleTypes
 end
@@ -80,7 +80,8 @@ function outputCustomText(player, name, ...)
     end
 end
 
--- [Exported]
+--- **(Exported)**
+--
 -- This may be customized
 function canManageCollectibles(player)
     assert(isElement(player) and getElementType(player)=="player", "Bad argument @ canManageCollectibles (player expected, got " .. type(player) .. ")")
@@ -92,8 +93,11 @@ function canManageCollectibles(player)
     return isObjectInACLGroup("user." .. accountName, aclGetGroup("Admin"))
 end
 
+--- **(Exported)**
+--
 -- This may be customized
--- PS. it checks for valid player account elsewhere in the code already
+--
+-- PS: Valid player account check is elsewhere in the code already
 function canCollectPickup(player, account, theType)
     assert(isElement(player) and getElementType(player)=="player", "Bad argument @ canCollectPickup (player expected, got " .. type(player) .. ")")
     return (preventPicking[player] == nil)
@@ -1033,7 +1037,7 @@ local function createOnePickup(theType, index, spawnpoint)
     return pickup
 end
 
--- [Exported]
+--- **(Exported)**
 function spawnCollectibles(theType, thePlayer)
     assert(type(theType) == "string", "Bad argument @ spawnCollectibles [expected string at argument 1, got " .. type(theType) .. "]")
     local info = collectibleTypes[theType]
@@ -1077,7 +1081,7 @@ function spawnCollectibles(theType, thePlayer)
     return true
 end
 
--- [Exported]
+--- **(Exported)**
 function destroyCollectibles(theType, thePlayer)
     assert(type(theType) == "string", "Bad argument @ destroyCollectibles [expected string at argument 1, got " .. type(theType) .. "]")
     local info = collectibleTypes[theType]
@@ -1201,7 +1205,7 @@ local function resendClientCollectibles()
     end
 end
 
--- [Exported]
+--- **(Exported)**
 function removeSpawnpoint(theType, index)
     assert(type(theType) == "string", "Bad argument @ removeSpawnpoint [expected string at argument 1, got " .. type(theType) .. "]")
     assert(type(index) == "number", "Bad argument @ removeSpawnpoint [expected number at argument 2, got " .. type(index) .. "]")
@@ -1300,7 +1304,7 @@ function removeSpawnpoint(theType, index)
     return true
 end
 
--- [Exported]
+--- **(Exported)**
 function createNewSpawnpoint(theType, model, x,y,z, interior, dimension)
     assert(type(theType) == "string", "Bad argument @ createNewSpawnpoint [expected string at argument 1, got " .. type(theType) .. "]")
     assert(type(model) == "number", "Bad argument @ createNewSpawnpoint [expected number at argument 2, got " .. type(model) .. "]")
@@ -1439,7 +1443,7 @@ local function countCollectedClient(thePlayer, account, theType, respawn_after)
     return count
 end
 
--- [Exported]
+--- **(Exported)**
 function getCollectedCounts(account)
     local accountID = getAccountID(account)
     assert(type(accountID)=="number", "Bad argument @ getCollectedCounts [valid account expected, got " .. tostring(account) .. "]")
@@ -1481,7 +1485,7 @@ local function respawnAllClientCollectibles()
     end
 end
 
--- [Exported]
+--- **(Exported)**
 function resetClientCollectibles(targetAccount, theType, thePlayer)
     local targetAccountID = getAccountID(targetAccount)
     assert(type(targetAccountID)=="number", "Bad argument @ getCollectedCounts [valid account expected, got " .. tostring(targetAccount) .. "]")
