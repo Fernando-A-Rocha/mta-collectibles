@@ -1115,8 +1115,8 @@ addEventHandler("collectibles:manage", localPlayer, function(serverInfo)
                                     return showValidationError("Sound for '"..name.." - "..on.."' cannot be empty")
                                 end
                                 local found = false
-                                for i=1, #serverInfo.metaFileSrcs do
-                                    local src = serverInfo.metaFileSrcs[i]
+                                for w=1, #serverInfo.metaFileSrcs do
+                                    local src = serverInfo.metaFileSrcs[w]
                                     if src and src == sound then
                                         found = true
                                         break
