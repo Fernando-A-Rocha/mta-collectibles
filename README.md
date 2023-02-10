@@ -9,4 +9,4 @@ Fun and customizable collectibles system for Multi Theft Auto: San Andreas.
 
 ## Documentation
 
-Everything you need to know about this resource is in the [Project Wiki](https://github.com/Fernando-A-Rocha/mta-collectibles/wiki).
+Everything you need to know is in the [Project's Wiki](https://github.com/Fernando-A-Rocha/mta-collectibles/wiki).
