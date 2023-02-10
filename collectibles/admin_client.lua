@@ -1182,8 +1182,8 @@ addEventHandler("collectibles:admin", localPlayer, function(serverInfo)
 
             guiSetEnabled(mainWin, false)
             local win = guiCreateWindow((SW-500)/2, (SH-160)/2, 500, 160, "Duplicate Backup", false)
-            local desc = guiCreateLabel(10, 30, 500, 40, "Enter a path for the new backup:\nYou can use %s for the current server date-time string.", false, win)
-            guiLabelSetHorizontalAlign(desc, "center")
+            local labeldesc = guiCreateLabel(10, 30, 500, 40, "Enter a path for the new backup:\nYou can use %s for the current server date-time string.", false, win)
+            guiLabelSetHorizontalAlign(labeldesc, "center")
             local PLACEHOLDER_PATH = "backup/%s/config.xml"
             local timeNow = getRealTime()
             local name = guiCreateEdit(10, 80, 500-20, 30, PLACEHOLDER_PATH, false, win)
