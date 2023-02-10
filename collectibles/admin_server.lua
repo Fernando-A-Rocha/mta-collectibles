@@ -149,7 +149,7 @@ function commandAdminCollectibles(thePlayer, cmd)
         commands = commands,
         collectibleTypes = collectibleTypes,
         collectedCounts = collectedCounts,
-        backupExists = fileExists("backup/config.xml"),
+        backupExists = fileExists("backups/config.xml"),
         metaFileSrcs = metaFileSrcs
     }
     
