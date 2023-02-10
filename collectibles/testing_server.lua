@@ -19,7 +19,7 @@ addCommandHandler("shop", function(thePlayer)
 end)
 
 addCommandHandler("collectiblesdata", function(thePlayer, cmd, targetAccountID)
-    if not canManageCollectibles(thePlayer) then
+    if not canAdminCollectibles(thePlayer) then
         return outputChatBox("You do not have permission to use this command.", thePlayer, 255, 0, 0)
     end
     local targetAccount

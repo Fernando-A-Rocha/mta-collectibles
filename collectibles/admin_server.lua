@@ -21,7 +21,7 @@ local antiSpam = {}
 local goingToRestart = false
 
 function commandSpawnCollectibles(thePlayer, cmd, theType)
-    if not canManageCollectibles(thePlayer) then
+    if not canAdminCollectibles(thePlayer) then
         outputCustomText(thePlayer, "admin_no_permission")
         return
     end
@@ -33,7 +33,7 @@ function commandSpawnCollectibles(thePlayer, cmd, theType)
 end
 
 function commandDestroyCollectibles(thePlayer, cmd, theType)
-    if not canManageCollectibles(thePlayer) then
+    if not canAdminCollectibles(thePlayer) then
         outputCustomText(thePlayer, "admin_no_permission")
         return
     end
@@ -45,7 +45,7 @@ function commandDestroyCollectibles(thePlayer, cmd, theType)
 end
 
 function commandResetCollectibles(thePlayer, cmd, targetAccountID, theType)
-    if not canManageCollectibles(thePlayer) then
+    if not canAdminCollectibles(thePlayer) then
         outputCustomText(thePlayer, "admin_no_permission")
         return
     end
@@ -66,7 +66,7 @@ function commandResetCollectibles(thePlayer, cmd, targetAccountID, theType)
 end
 
 function commandConfigureSpawnpoints(thePlayer, cmd, theType)
-    if not canManageCollectibles(thePlayer) then
+    if not canAdminCollectibles(thePlayer) then
         outputCustomText(thePlayer, "admin_no_permission")
         return
     end
@@ -90,7 +90,7 @@ addEventHandler("collectibles:requestConfigureSpawnpoints", resourceRoot, functi
     commandConfigureSpawnpoints(client, commands.points, theType)
 end, false)
 
-function commandManageCollectibles(thePlayer, cmd)
+function commandAdminCollectibles(thePlayer, cmd)
     if antiSpam[thePlayer] then
         outputCustomText(thePlayer, "ask_to_wait")
         return
@@ -99,7 +99,7 @@ function commandManageCollectibles(thePlayer, cmd)
         outputCustomText(thePlayer, "ask_to_wait")
         return
     end
-    if not canManageCollectibles(thePlayer) then
+    if not canAdminCollectibles(thePlayer) then
         outputCustomText(thePlayer, "admin_no_permission")
         return
     end
@@ -152,7 +152,7 @@ function commandManageCollectibles(thePlayer, cmd)
         metaFileSrcs = metaFileSrcs
     }
     
-    triggerClientEvent(thePlayer, "collectibles:manage", thePlayer, info)
+    triggerClientEvent(thePlayer, "collectibles:admin", thePlayer, info)
     
     setTimer(function()
         antiSpam[thePlayer] = nil
@@ -164,7 +164,7 @@ local function requestUpdateConfiguration(updateNodes)
 
     local success, reason = updateConfiguration(updateNodes)
     if not success then
-        return triggerClientEvent(client, "collectibles:manageResponse", client, false, reason, "OK")
+        return triggerClientEvent(client, "collectibles:adminResponse", client, false, reason, "OK")
     end
 
     goingToRestart = true
@@ -172,7 +172,7 @@ local function requestUpdateConfiguration(updateNodes)
         restartResource(getThisResource())
     end, 5000, 1)
 
-    triggerClientEvent(client, "collectibles:manageResponse", client, "Changes saved successfully. The resource will now restart...\nPay attention to the server console.")
+    triggerClientEvent(client, "collectibles:adminResponse", client, "Changes saved successfully. The resource will now restart...\nPay attention to the server console.")
 end
 addEventHandler("collectibles:updateConfig", resourceRoot, requestUpdateConfiguration, false)
 
@@ -181,7 +181,7 @@ local function requestDeleteType(theType)
 
     local success, reason = deleteType(theType)
     if not success then
-        return triggerClientEvent(client, "collectibles:manageResponse", client, false, reason, "OK")
+        return triggerClientEvent(client, "collectibles:adminResponse", client, false, reason, "OK")
     end
 
     goingToRestart = true
@@ -189,7 +189,7 @@ local function requestDeleteType(theType)
         restartResource(getThisResource())
     end, 5000, 1)
 
-    triggerClientEvent(client, "collectibles:manageResponse", client, "Collectible type deleted successfully. The resource will now restart...\nPay attention to the server console.")
+    triggerClientEvent(client, "collectibles:adminResponse", client, "Collectible type deleted successfully. The resource will now restart...\nPay attention to the server console.")
 end
 addEventHandler("collectibles:deleteType", resourceRoot, requestDeleteType, false)
 
@@ -198,7 +198,7 @@ local function requestCreateNewType(typeInfo)
 
     local success, reason = createNewType(typeInfo)
     if not success then
-        return triggerClientEvent(client, "collectibles:manageResponse", client, false, reason, "OK")
+        return triggerClientEvent(client, "collectibles:adminResponse", client, false, reason, "OK")
     end
 
     goingToRestart = true
@@ -206,7 +206,7 @@ local function requestCreateNewType(typeInfo)
         restartResource(getThisResource())
     end, 5000, 1)
 
-    triggerClientEvent(client, "collectibles:manageResponse", client, "Collectible type created successfully. The resource will now restart...\nPay attention to the server console.")
+    triggerClientEvent(client, "collectibles:adminResponse", client, "Collectible type created successfully. The resource will now restart...\nPay attention to the server console.")
 end
 addEventHandler("collectibles:createNewType", resourceRoot, requestCreateNewType, false)
 
@@ -215,10 +215,10 @@ local function requestBackupConfiguration()
 
     local success, reason = backupConfiguration()
     if not success then
-        return triggerClientEvent(client, "collectibles:manageResponse", client, false, reason, "OK")
+        return triggerClientEvent(client, "collectibles:adminResponse", client, false, reason, "OK")
     end
 
-    triggerClientEvent(client, "collectibles:manageResponse", client, "Configuration backup created successfully.", false, "OK")
+    triggerClientEvent(client, "collectibles:adminResponse", client, "Configuration backup created successfully.", false, "OK")
 end
 addEventHandler("collectibles:backupConfig", resourceRoot, requestBackupConfiguration, false)
 
@@ -227,7 +227,7 @@ local function requestRestoreConfigBackup()
 
     local success, reason = restoreConfigBackup()
     if not success then
-        return triggerClientEvent(client, "collectibles:manageResponse", client, false, reason, "OK")
+        return triggerClientEvent(client, "collectibles:adminResponse", client, false, reason, "OK")
     end
 
     goingToRestart = true
@@ -235,7 +235,7 @@ local function requestRestoreConfigBackup()
         restartResource(getThisResource())
     end, 5000, 1)
 
-    triggerClientEvent(client, "collectibles:manageResponse", client, "Configuration restored successfully. The resource will now restart...\nPay attention to the server console.")
+    triggerClientEvent(client, "collectibles:adminResponse", client, "Configuration restored successfully. The resource will now restart...\nPay attention to the server console.")
 end
 addEventHandler("collectibles:restoreConfigBackup", resourceRoot, requestRestoreConfigBackup, false)
 
@@ -243,13 +243,13 @@ local function requestGotoSpawnpoint(theType, spID)
     if not client then return end
 
     if type(spID) ~= "number" then
-        return triggerClientEvent(client, "collectibles:manageResponse", client, false, "Invalid spawnpoint spID.", "OK")
+        return triggerClientEvent(client, "collectibles:adminResponse", client, false, "Invalid spawnpoint spID.", "OK")
     end
 
     local collectibleTypes = getCollectibleTypes() or {}
     local info = collectibleTypes[theType]
     if not info then
-        return triggerClientEvent(client, "collectibles:manageResponse", client, false, "Invalid collectible type.", "OK")
+        return triggerClientEvent(client, "collectibles:adminResponse", client, false, "Invalid collectible type.", "OK")
     end
     
     local spawnpoint
@@ -261,7 +261,7 @@ local function requestGotoSpawnpoint(theType, spID)
         end
     end
     if not spawnpoint then
-        return triggerClientEvent(client, "collectibles:manageResponse", client, false, "Invalid spawnpoint spID for '"..theType.."'", "OK")
+        return triggerClientEvent(client, "collectibles:adminResponse", client, false, "Invalid spawnpoint spID for '"..theType.."'", "OK")
     end
 
     -- Prevent the player from picking up the collectible
@@ -274,7 +274,7 @@ local function requestGotoSpawnpoint(theType, spID)
     setElementInterior(client, interior)
     setElementDimension(client, dimension)
 
-    triggerClientEvent(client, "collectibles:manageResponse", client, "Teleported to '"..theType.."' spawnpoint #"..spID..".", false, "OK")
+    triggerClientEvent(client, "collectibles:adminResponse", client, "Teleported to '"..theType.."' spawnpoint #"..spID..".", false, "OK")
 end
 addEventHandler("collectibles:gotoSpawnpoint", resourceRoot, requestGotoSpawnpoint, false)
 
@@ -282,13 +282,13 @@ local function requestRemoveSpawnpoint(theType, spID)
     if not client then return end
 
     if type(spID) ~= "number" then
-        return triggerClientEvent(client, "collectibles:manageResponse", client, false, "Invalid spawnpoint spID.", "OK")
+        return triggerClientEvent(client, "collectibles:adminResponse", client, false, "Invalid spawnpoint spID.", "OK")
     end
 
     local collectibleTypes = getCollectibleTypes() or {}
     local info = collectibleTypes[theType]
     if not info then
-        return triggerClientEvent(client, "collectibles:manageResponse", client, false, "Invalid collectible type.", "OK")
+        return triggerClientEvent(client, "collectibles:adminResponse", client, false, "Invalid collectible type.", "OK")
     end
     
     local spawnpoint
@@ -300,15 +300,15 @@ local function requestRemoveSpawnpoint(theType, spID)
         end
     end
     if not spawnpoint then
-        return triggerClientEvent(client, "collectibles:manageResponse", client, false, "Invalid spawnpoint spID for '"..theType.."'", "OK")
+        return triggerClientEvent(client, "collectibles:adminResponse", client, false, "Invalid spawnpoint spID for '"..theType.."'", "OK")
     end
 
     local success, reason = removeSpawnpoint(theType, spID)
     if not success then
-        return triggerClientEvent(client, "collectibles:manageResponse", client, false, reason, "OK")
+        return triggerClientEvent(client, "collectibles:adminResponse", client, false, reason, "OK")
     end
 
-    triggerClientEvent(client, "collectibles:manageResponse", client, "'"..theType.."' spawnpoint #"..spID.." removed successfully.", false, "OK")
+    triggerClientEvent(client, "collectibles:adminResponse", client, "'"..theType.."' spawnpoint #"..spID.." removed successfully.", false, "OK")
 end
 addEventHandler("collectibles:removeSpawnpoint", resourceRoot, requestRemoveSpawnpoint, false)
 
@@ -323,9 +323,9 @@ local function requestCreateSpawnpoint(theType, model)
 
     local success, reason = createNewSpawnpoint(theType, model, x,y,z, interior, dimension)
     if not success then
-        return triggerClientEvent(client, "collectibles:manageResponse", client, false, reason, "OK")
+        return triggerClientEvent(client, "collectibles:adminResponse", client, false, reason, "OK")
     end
 
-    triggerClientEvent(client, "collectibles:manageResponse", client, "'"..theType.."' spawnpoint created successfully.", false, "OK")
+    triggerClientEvent(client, "collectibles:adminResponse", client, "'"..theType.."' spawnpoint created successfully.", false, "OK")
 end
 addEventHandler("collectibles:createSpawnpoint", resourceRoot, requestCreateSpawnpoint, false)

@@ -9,9 +9,9 @@
 ]]
 
 -- Internal Events
-addEvent("collectibles:manage", true) -- source: always the local player
-addEvent("collectibles:manageConfirm", true) -- source: always the local player
-addEvent("collectibles:manageResponse", true) -- source: always the local player
+addEvent("collectibles:admin", true) -- source: always the local player
+addEvent("collectibles:adminConfirm", true) -- source: always the local player
+addEvent("collectibles:adminResponse", true) -- source: always the local player
 addEvent("collectibles:configureSpawnpoints", true) -- source: always the local player
 
 local KEY_NAMES = { "mouse1", "mouse2", "mouse3", "mouse4", "mouse5", "mouse_wheel_up", "mouse_wheel_down", "arrow_l", "arrow_u", --escape
@@ -68,7 +68,7 @@ local guiSetEnabled_ = guiSetEnabled
 function guiSetEnabled(element, state)
     guiSetEnabled_(element, state or false)
     if state then
-        guiSetAlpha(element, 0.8)
+        guiSetAlpha(element, 0.85)
     else
         if element == mainWin and isElement(createWin) then
             guiSetAlpha(element, 0)
@@ -76,6 +76,15 @@ function guiSetEnabled(element, state)
             guiSetAlpha(element, 0.4)
         end
     end
+end
+
+local guiCreateWindow_ = guiCreateWindow
+function guiCreateWindow(x, y, w, h, title, relative, parent)
+    local win = guiCreateWindow_(x, y, w, h, title, relative, parent)
+    if win then
+        guiSetAlpha(win, 0.85)
+    end
+    return win
 end
 
 function createConfirmPopup(title, titleColor, description, confirmText, cancelText, confirmEvent, confirmType, ...)
@@ -498,12 +507,12 @@ local function openCreateCollectible(metaFileSrcs)
             if typeAutoLoad then
                 desc = desc.."\nIt will be automatically loaded on "..(target).." start."
             end
-            createConfirmPopup("Confirm Creation", "FFFFFF00", desc, "Confirm", "Cancel", "collectibles:manageConfirm", "create", theType)
+            createConfirmPopup("Confirm Creation", "FFFFFF00", desc, "Confirm", "Cancel", "collectibles:adminConfirm", "create", theType)
         end
     end)
 end
 
-addEventHandler("collectibles:manage", localPlayer, function(serverInfo)
+addEventHandler("collectibles:admin", localPlayer, function(serverInfo)
     if isElement(mainWin) then
         destroyElement(mainWin)
     end
@@ -834,7 +843,7 @@ addEventHandler("collectibles:manage", localPlayer, function(serverInfo)
             local deleteTypeButton = guiCreateButton(0, y, 160, 24, "Delete This Type", false, tabScroll)
             addEventHandler("onClientGUIClick", deleteTypeButton, function()
                 local desc = "Are you sure you want to delete collectible type:\n"..theType.."\nThis will delete all corresponding spawnpoints and\ncollected counts of all player accounts."
-                createConfirmPopup("Delete Collectible Type", "FFFF0000", desc, "Confirm", "Cancel", "collectibles:manageConfirm", "remove", theType)
+                createConfirmPopup("Delete Collectible Type", "FFFF0000", desc, "Confirm", "Cancel", "collectibles:adminConfirm", "remove", theType)
             end, false)
             guiSetProperty(deleteTypeButton, "NormalTextColour", "FFFF0000")
             y = y + 24 + 5
@@ -1141,7 +1150,7 @@ addEventHandler("collectibles:manage", localPlayer, function(serverInfo)
             end
     
             local saveDesc = "Are you sure you want to save these changes?\nThis will restart the resource if successful."
-            createConfirmPopup("Save Changes", "FFFFFF00", saveDesc, "Save", "Cancel", "collectibles:manageConfirm", "save", updateNodes)
+            createConfirmPopup("Save Changes", "FFFFFF00", saveDesc, "Save", "Cancel", "collectibles:adminConfirm", "save", updateNodes)
 
         elseif source == close then
            
@@ -1156,12 +1165,12 @@ addEventHandler("collectibles:manage", localPlayer, function(serverInfo)
             if serverInfo.backupExists then
                 desc = desc .."\n\nWARNING: This will overwrite the existing backup."
             end
-            createConfirmPopup("Create Backup", "FFFFFF00", desc, "Create", "Cancel", "collectibles:manageConfirm", "backupCreate")
+            createConfirmPopup("Create Backup", "FFFFFF00", desc, "Create", "Cancel", "collectibles:adminConfirm", "backupCreate")
 
         elseif source == backupRestoreButton then
 
             local desc = "Are you sure you want to restore the configuration from the backup?"
-            createConfirmPopup("Restore Backup", "FFFFFF00", desc, "Restore", "Cancel", "collectibles:manageConfirm", "backupRestore")
+            createConfirmPopup("Restore Backup", "FFFFFF00", desc, "Restore", "Cancel", "collectibles:adminConfirm", "backupRestore")
 
         end
     end)
@@ -1255,7 +1264,7 @@ local function openCreateNewSpawnpoint(theType, lastModelID)
             end
 
             local desc = "Are you sure you want to create a new\n'"..theType.."' (model: "..chosenModelID..")\nspawnpoint at your current location?"
-            createConfirmPopup("Create Spawnpoint", "FF00FF00", desc, "Confirm", "Cancel", "collectibles:manageConfirm", "createSpawnpoint", theType, chosenModelID)
+            createConfirmPopup("Create Spawnpoint", "FF00FF00", desc, "Confirm", "Cancel", "collectibles:adminConfirm", "createSpawnpoint", theType, chosenModelID)
         
         elseif source == customModelEdit then
             if guiGetText(source) == MODEL_EDIT_PLACEHOLDER then
@@ -1375,13 +1384,13 @@ addEventHandler("collectibles:configureSpawnpoints", localPlayer, function(comma
 
                 local spID = guiGridListGetItemText(spList, row, 1)
                 local desc = "Are you sure you want to remove spawnpoint #"..tostring(spID).."?"
-                createConfirmPopup("Remove Spawnpoint", "FF00FF00", desc, "Confirm", "Cancel", "collectibles:manageConfirm", "removeSpawnpoint", theType, tonumber(spID))
+                createConfirmPopup("Remove Spawnpoint", "FF00FF00", desc, "Confirm", "Cancel", "collectibles:adminConfirm", "removeSpawnpoint", theType, tonumber(spID))
             end
         end
     end)
 end, false)
 
-addEventHandler("collectibles:manageConfirm", localPlayer, function(confirmType, eventArgs)
+addEventHandler("collectibles:adminConfirm", localPlayer, function(confirmType, eventArgs)
     if isElement(popupWin) then
         destroyElement(popupWin)
         popupWin = nil
@@ -1450,10 +1459,10 @@ addEventHandler("collectibles:manageConfirm", localPlayer, function(confirmType,
     end
 end, false)
 
-addEventHandler("collectibles:manageResponse", localPlayer, function(success, failureReason, okText)
+addEventHandler("collectibles:adminResponse", localPlayer, function(success, failureReason, okText)
     if (success) then
         if okText then
-            createConfirmPopup("Success", "FF00FF00", success, okText, false, "collectibles:manageConfirm", "closeMainWindow")
+            createConfirmPopup("Success", "FF00FF00", success, okText, false, "collectibles:adminConfirm", "closeMainWindow")
         else
             createConfirmPopup("Success", "FF00FF00", success, false, false)
         end

@@ -27,7 +27,7 @@
 -->
 <config>
     <commands>
-        <command name="manage">managecollectibles</command>
+        <command name="admin">admincollectibles</command>
         <command name="spawn">spawncollectibles</command>
         <command name="destroy">destroycollectibles</command>
         <command name="resetplayer">resetplayercollectibles</command>

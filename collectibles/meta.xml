@@ -23,7 +23,7 @@
     <export function="canCollectPickup" type="client" />
     <export function="setPlayerPreventPicking" type="server" />
     <export function="canToggleCollectibles" type="client" />
-    <export function="canManageCollectibles" type="server" />
+    <export function="canAdminCollectibles" type="server" />
 
     <!-- (Optional) Example Implementations -->
     <file src="examples/events/notification.mp3" />

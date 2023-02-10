@@ -80,8 +80,8 @@ end
 --- **(Exported)**
 --
 -- This may be customized
-function canManageCollectibles(player)
-    assert(isElement(player) and getElementType(player)=="player", "Bad argument @ canManageCollectibles (player expected, got " .. type(player) .. ")")
+function canAdminCollectibles(player)
+    assert(isElement(player) and getElementType(player)=="player", "Bad argument @ canAdminCollectibles (player expected, got " .. type(player) .. ")")
     local account = getPlayerAccount(player)
     if (not account) or isGuestAccount(account) then
         return false
@@ -524,7 +524,7 @@ local function loadConfiguration()
         xmlUnloadFile(config)
         return false, "Failed to parse <commands>: " .. reason
     end
-    local EXPECTED_COMMANDS = {"manage", "spawn", "destroy", "resetplayer", "points"}
+    local EXPECTED_COMMANDS = {"admin", "spawn", "destroy", "resetplayer", "points"}
     for i=1, #EXPECTED_COMMANDS do
         local name = EXPECTED_COMMANDS[i]
         if not commands[name] then
@@ -532,7 +532,7 @@ local function loadConfiguration()
             return false, "Missing command '" .. name .. "'."
         end
     end
-    addCommandHandler(commands.manage, commandManageCollectibles)
+    addCommandHandler(commands.admin, commandAdminCollectibles)
     addCommandHandler(commands.spawn, commandSpawnCollectibles)
     addCommandHandler(commands.destroy, commandDestroyCollectibles)
     addCommandHandler(commands.resetplayer, commandResetCollectibles)

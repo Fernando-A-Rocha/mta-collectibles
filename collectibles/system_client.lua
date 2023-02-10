@@ -134,13 +134,13 @@ local function createCollectibles(initial)
         end
         if (initial == true) then
             if info.toggle_keybind then
-                outputConsole("Keybind set: "..(string.upper(info.toggle_keybind)))
+                -- outputConsole("Keybind set: "..(string.upper(info.toggle_keybind)))
                 bindKey(info.toggle_keybind, "down", function()
                     toggleCollectibles(theType)
                 end)
             end
             if info.toggle_command then
-                outputConsole("Command set: /"..info.toggle_command)
+                -- outputConsole("Command set: /"..info.toggle_command)
                 addCommandHandler(info.toggle_command, function(cmd)
                     toggleCollectibles(theType)
                 end, false, false)

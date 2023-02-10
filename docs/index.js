@@ -4,7 +4,7 @@ var docs = [
 {path:"module/system_client.html#system_client.canToggleCollectibles", type:"function", title:"system_client.canToggleCollectibles", text:"*(Exported)* This may be customized"},
 {path:"module/system_server.html#system_server.setPlayerPreventPicking", type:"function", title:"system_server.setPlayerPreventPicking", text:"*(Exported)*"},
 {path:"module/system_server.html#system_server.getCollectibleTypes", type:"function", title:"system_server.getCollectibleTypes", text:"*(Exported)*"},
-{path:"module/system_server.html#system_server.canManageCollectibles", type:"function", title:"system_server.canManageCollectibles", text:"*(Exported)* This may be customized"},
+{path:"module/system_server.html#system_server.canAdminCollectibles", type:"function", title:"system_server.canAdminCollectibles", text:"*(Exported)* This may be customized"},
 {path:"module/system_server.html#system_server.canCollectPickup", type:"function", title:"system_server.canCollectPickup", text:"*(Exported)* This may be customized PS: Valid player account check is elsewhere in the code already"},
 {path:"module/system_server.html#system_server.loadConfiguration", type:"function", title:"system_server.loadConfiguration", text:"Loads the configuration file and parses it Errors are usually caused by incorrectly formatted XML file (caused by editing it manually) and file IO operations."},
 {path:"module/system_server.html#system_server.spawnCollectibles", type:"function", title:"system_server.spawnCollectibles", text:"*(Exported)*"},
