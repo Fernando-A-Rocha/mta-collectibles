@@ -971,7 +971,7 @@ addEventHandler("collectibles:admin", localPlayer, function(serverInfo)
 
     -- Backups
 
-    local tabBackups = guiCreateTab("Backup", tabPanel)
+    local tabBackups = guiCreateTab("Backups", tabPanel)
 
     x = 10
     y = 15
