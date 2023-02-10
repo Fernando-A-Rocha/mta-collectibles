@@ -7,4 +7,6 @@ Fun and customizable collectibles system for Multi Theft Auto: San Andreas.
 - Heaviliy [customizable and translatable](/collectibles/config.xml)
 - Contains [example implementations](/collectibles/examples/)
 
+## Documentation
+
 Everything you need to know about this resource is in the [Project Wiki](https://github.com/Fernando-A-Rocha/mta-collectibles/wiki).
