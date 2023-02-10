@@ -543,14 +543,14 @@ local function loadConfiguration()
 end
 
 function backupConfiguration()
-    if fileExists("config.xml.backup") then
-        if not fileDelete("config.xml.backup") then
-            return false, "Failed to delete file 'config.xml.backup' - check permissions."
+    if fileExists("backup/config.xml") then
+        if not fileDelete("backup/config.xml") then
+            return false, "Failed to delete file 'backup/config.xml' - check permissions."
         end
     end
-    local backup = fileCreate("config.xml.backup")
+    local backup = fileCreate("backup/config.xml")
     if not backup then
-        return false, "Failed to create file 'config.xml.backup' - check permissions."
+        return false, "Failed to create file 'backup/config.xml' - check permissions."
     end
     local config = fileOpen("config.xml")
     if not config then
@@ -560,6 +560,28 @@ function backupConfiguration()
     fileWrite(backup, fileRead(config, fileGetSize(config)))
     fileClose(config)
     fileClose(backup)
+    return true
+end
+
+function duplicateConfigBackup(newPath)
+    if not fileExists("backup/config.xml") then
+        return false, "File 'backup/config.xml' does not exist."
+    end
+    if fileExists(newPath) then
+        return false, "File '" .. newPath .. "' already exists, will not override."
+    end
+    local new = fileCreate(newPath)
+    if not new then
+        return false, "Failed to create file '" .. newPath .. "' - check permissions."
+    end
+    local backup = fileOpen("backup/config.xml")
+    if not backup then
+        fileClose(new)
+        return false, "Failed to open file 'backup/config.xml' - check permissions."
+    end
+    fileWrite(new, fileRead(backup, fileGetSize(backup)))
+    fileClose(backup)
+    fileClose(new)
     return true
 end
 
@@ -581,8 +603,8 @@ function restoreConfigBackup()
     fileWrite(old, fileRead(config, fileGetSize(config)))
     fileClose(config)
     fileClose(old)
-    if not fileCopy("config.xml.backup", "config.xml", true) then -- Overwrite
-        return false, "Failed to copy file 'config.xml.backup' to 'config.xml' - check permissions."
+    if not fileCopy("backup/config.xml", "config.xml", true) then -- Overwrite
+        return false, "Failed to copy file 'backup/config.xml' to 'config.xml' - check permissions."
     end
     return true
 end
@@ -1699,7 +1721,11 @@ addEventHandler("onResourceStart", resourceRoot, function()
     local success, reason = loadConfiguration()
     if not success then
         outputInfoMessage(reason)
-        outputInfoMessage("Restore the backed up configuration file 'config.xml.backup' if needed.")
+        if fileExists("backup/config.xml") then
+            outputInfoMessage("Restore the backed up configuration file 'backup/config.xml' if needed.")
+        else
+            outputInfoMessage("Oops, you didn't backup your configuration file so you don't have anything to restore.")
+        end
         return cancelEvent()
     end
 

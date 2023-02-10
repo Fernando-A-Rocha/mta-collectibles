@@ -12,6 +12,7 @@ addEvent("collectibles:createNewType", true) -- source: always resourceRoot
 addEvent("collectibles:deleteType", true) -- source: always resourceRoot
 addEvent("collectibles:backupConfig", true) -- source: always resourceRoot
 addEvent("collectibles:restoreConfigBackup", true) -- source: always resourceRoot
+addEvent("collectibles:duplicateConfigBackup", true) -- source: always resourceRoot
 addEvent("collectibles:requestConfigureSpawnpoints", true) -- source: always resourceRoot
 addEvent("collectibles:gotoSpawnpoint", true) -- source: always resourceRoot
 addEvent("collectibles:removeSpawnpoint", true) -- source: always resourceRoot
@@ -148,7 +149,7 @@ function commandAdminCollectibles(thePlayer, cmd)
         commands = commands,
         collectibleTypes = collectibleTypes,
         collectedCounts = collectedCounts,
-        backupExists = fileExists("config.xml.backup"),
+        backupExists = fileExists("backup/config.xml"),
         metaFileSrcs = metaFileSrcs
     }
     
@@ -238,6 +239,21 @@ local function requestRestoreConfigBackup()
     triggerClientEvent(client, "collectibles:adminResponse", client, "Configuration restored successfully. The resource will now restart...\nPay attention to the server console.")
 end
 addEventHandler("collectibles:restoreConfigBackup", resourceRoot, requestRestoreConfigBackup, false)
+
+local function requestDuplicateConfigBackup(newPath)
+    if not client then return end
+    
+    local dateTimeString = os.date("%Y-%m-%d_%H-%M-%S")
+    newPath = string.format(newPath, dateTimeString)
+
+    local success, reason = duplicateConfigBackup(newPath)
+    if not success then
+        return triggerClientEvent(client, "collectibles:adminResponse", client, false, reason, "OK")
+    end
+
+    triggerClientEvent(client, "collectibles:adminResponse", client, "Configuration backup successfully copied to:\n"..newPath, false, "OK")
+end
+addEventHandler("collectibles:duplicateConfigBackup", resourceRoot, requestDuplicateConfigBackup, false)
 
 local function requestGotoSpawnpoint(theType, spID)
     if not client then return end

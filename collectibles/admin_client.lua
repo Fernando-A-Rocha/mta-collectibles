@@ -976,7 +976,7 @@ addEventHandler("collectibles:admin", localPlayer, function(serverInfo)
     x = 10
     y = 15
 
-    local backupLabel = guiCreateLabel(x, y, TW-(x*2), 20, "Configuration Backup - config.xml.backup", false, tabBackups)
+    local backupLabel = guiCreateLabel(x, y, TW-(x*2), 20, "Configuration Backup - backup/config.xml", false, tabBackups)
     y = y + 20 + 5
 
     x = x + 10
@@ -997,6 +997,12 @@ addEventHandler("collectibles:admin", localPlayer, function(serverInfo)
     guiSetProperty(backupRestoreButton, "NormalTextColour", "FFFFFF00")
     if not serverInfo.backupExists then
         guiSetEnabled(backupRestoreButton, false)
+    end
+
+    local backupDuplicateButton = guiCreateButton(x + (TW*(1/3)) - x + (TW*(1/3)), y + 20 + 5, (TW*(1/3)) - x, 24, "Duplicate Backup", false, tabBackups)
+    guiSetProperty(backupDuplicateButton, "NormalTextColour", "FF00FFFF")
+    if not serverInfo.backupExists then
+        guiSetEnabled(backupDuplicateButton, false)
     end
 
     -- Bottom buttons
@@ -1172,6 +1178,39 @@ addEventHandler("collectibles:admin", localPlayer, function(serverInfo)
             local desc = "Are you sure you want to restore the configuration from the backup?"
             createConfirmPopup("Restore Backup", "FFFFFF00", desc, "Restore", "Cancel", "collectibles:adminConfirm", "backupRestore")
 
+        elseif source == backupDuplicateButton then
+
+            guiSetEnabled(mainWin, false)
+            local win = guiCreateWindow((SW-500)/2, (SH-160)/2, 500, 160, "Duplicate Backup", false)
+            local desc = guiCreateLabel(10, 30, 500, 40, "Enter a path for the new backup:\nYou can use %s for the current server date-time string.", false, win)
+            guiLabelSetHorizontalAlign(desc, "center")
+            local PLACEHOLDER_PATH = "backup/%s/config.xml"
+            local timeNow = getRealTime()
+            local name = guiCreateEdit(10, 80, 500-20, 30, PLACEHOLDER_PATH, false, win)
+            addEventHandler("onClientGUIClick", name, function()
+                if guiGetText(source) == PLACEHOLDER_PATH then
+                    guiSetText(source, "")
+                end
+            end, false)
+            local cancel = guiCreateButton(10, 120, 140, 30, "Cancel", false, win)
+            local ok = guiCreateButton(160, 120, 140, 30, "Confirm", false, win)
+            guiSetProperty(ok, "NormalTextColour", "FF00FF00")
+            addEventHandler("onClientGUIClick", ok, function()
+                local newName = guiGetText(name)
+                if newName == "" then
+                    return showValidationError("Backup name cannot be empty")
+                end
+                if newName:find(" ") then
+                    return showValidationError("Backup name cannot contain spaces")
+                end
+                destroyElement(win)
+                local desc = "Are you sure you want to duplicate the backup to:\n"..newName
+                createConfirmPopup("Duplicate Backup", "FFFFFF00", desc, "Duplicate", "Cancel", "collectibles:adminConfirm", "backupDuplicate", newName)
+            end, false)
+            addEventHandler("onClientGUIClick", cancel, function()
+                destroyElement(win)
+                guiSetEnabled(mainWin, true)
+            end, false)
         end
     end)
 end, false)
@@ -1450,6 +1489,9 @@ addEventHandler("collectibles:adminConfirm", localPlayer, function(confirmType, 
 
         elseif confirmType == "backupRestore" then
             triggerServerEvent("collectibles:restoreConfigBackup", resourceRoot)
+
+        elseif confirmType == "backupDuplicate" then
+            triggerServerEvent("collectibles:duplicateConfigBackup", resourceRoot, eventArgs[1])
         
         elseif confirmType == "createSpawnpoint" then
             triggerServerEvent("collectibles:createSpawnpoint", resourceRoot, eventArgs[1], eventArgs[2])
