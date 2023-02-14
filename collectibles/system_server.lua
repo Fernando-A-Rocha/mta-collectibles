@@ -25,6 +25,12 @@ local commands = {}
 local spawnedServerCollectibles = {}
 local preventPicking = {}
 
+function getAccountDataNames()
+    return {
+        client_counts = "collectibiles.client",
+    }
+end
+
 --- **(Exported)**
 function setPlayerPreventPicking(player, interval)
     assert(type(interval) == "number", "Bad argument @ setPlayerPreventPicking (number expected, got " .. type(interval) .. ")")
@@ -844,14 +850,15 @@ function deleteType(theType)
         for i=1, #accounts do
             local account = accounts[i]
             if account then
-                local data = getAccountData(account, "collectibiles.client")
+                local dataName = getAccountDataNames().client_counts
+                local data = getAccountData(account, dataName)
                 if not data then
                     data = {}
                 else
                     data = fromJSON(data) or {}
                 end
                 data[theType] = nil
-                setAccountData(account, "collectibiles.client", toJSON(data))
+                setAccountData(account, dataName, toJSON(data))
             end
         end
     end
@@ -1150,7 +1157,8 @@ local function spawnClientCollectible(theType, spID, thePlayer)
 end
 
 local function isCollectedClient(thePlayer, account, theType, respawn_after, spID)
-    local data = getAccountData(account, "collectibiles.client")
+    local dataName = getAccountDataNames().client_counts
+    local data = getAccountData(account, dataName)
     if not data then
         return false
     end
@@ -1165,7 +1173,7 @@ local function isCollectedClient(thePlayer, account, theType, respawn_after, spI
     local now = getRealTime().timestamp
     if (respawn_after) and ((now - collectedAt) > respawn_after) then
         data[theType][tostring(spID)] = nil
-        setAccountData(account, "collectibiles.client", toJSON(data))
+        setAccountData(account, dataName, toJSON(data))
         spawnClientCollectible(theType, tonumber(spID), thePlayer)
         return false
     end
@@ -1320,21 +1328,21 @@ function removeSpawnpoint(theType, spID)
     end
 
     if info.target == "client" then
-
         -- reset all accounts' collected counts of this type
+        local dataName = getAccountDataNames().client_counts
         local accounts = getAccounts()
         local collectedCounts = {}
         for i=1, #accounts do
             local account = accounts[i]
             if account then
-                local data = getAccountData(account, "collectibiles.client")
+                local data = getAccountData(account, dataName)
                 if not data then
                     data = {}
                 else
                     data = fromJSON(data) or {}
                 end
                 data[theType] = nil
-                setAccountData(account, "collectibiles.client", toJSON(data))
+                setAccountData(account, dataName, toJSON(data))
             end
         end
 
@@ -1454,7 +1462,8 @@ local function countCollectedServer(accountID, theType)
 end
 
 local function saveCollectedClient(account, theType, spID)
-    local data = getAccountData(account, "collectibiles.client")
+    local dataName = getAccountDataNames().client_counts
+    local data = getAccountData(account, dataName)
     if not data then
         data = {}
     else
@@ -1464,7 +1473,7 @@ local function saveCollectedClient(account, theType, spID)
         data[theType] = {}
     end
     data[theType][tostring(spID)] = getRealTime().timestamp
-    setAccountData(account, "collectibiles.client", toJSON(data))
+    setAccountData(account, dataName, toJSON(data))
 end
 
 local function despawnCollectibles(player)
@@ -1472,7 +1481,8 @@ local function despawnCollectibles(player)
 end
 
 local function countCollectedClient(thePlayer, account, theType, respawn_after)
-    local data = getAccountData(account, "collectibiles.client")
+    local dataName = getAccountDataNames().client_counts
+    local data = getAccountData(account, dataName)
     if not data then
         return 0
     end
@@ -1487,7 +1497,7 @@ local function countCollectedClient(thePlayer, account, theType, respawn_after)
         if collectedAt then
             if (respawn_after) and ((now - collectedAt) > respawn_after) then
                 data[theType][tostring(spID)] = nil
-                setAccountData(account, "collectibiles.client", toJSON(data))
+                setAccountData(account, dataName, toJSON(data))
 
                 if isElement(thePlayer) then
                     spawnClientCollectible(theType, tonumber(spID), thePlayer)
@@ -1558,7 +1568,8 @@ function resetClientCollectibles(targetAccount, theType, thePlayer)
         end
         return false, "admin_invalid_collectible_type"
     end
-    local data = getAccountData(targetAccount, "collectibiles.client")
+    local dataName = getAccountDataNames().client_counts
+    local data = getAccountData(targetAccount, dataName)
     if not data then
         data = {}
     else
@@ -1573,7 +1584,7 @@ function resetClientCollectibles(targetAccount, theType, thePlayer)
     else
         data[theType] = {}
     end
-    setAccountData(targetAccount, "collectibiles.client", toJSON(data))
+    setAccountData(targetAccount, dataName, toJSON(data))
     local targetPlayer = nil
     local playersTable = getElementsByType("player")
     for i=1, #playersTable do
