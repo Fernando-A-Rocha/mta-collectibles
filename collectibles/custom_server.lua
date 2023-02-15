@@ -39,10 +39,6 @@ CONSTANTS = {
         ["respawned"] = {value="%s collectible #%s has been respawned.", rgb={255, 255, 255}},
         ["reward_money"] = {value="You have earned $%s for collecting this %s.", rgb={55, 255, 55}},
 
-        -- Client only - Special:
-        ["text_top"] = {value="%s"}, -- Color used defined in collectible type
-        ["text_bottom"] = {value="%s of %s"}, -- Color used defined in collectible type
-
         -- Server only:
         ["admin_no_permission"] = {value="You don't have permission to do this.", rgb={255, 55, 55}},
         ["admin_count_spawned"] = {value="There are currently %s %s collectibles spawned.", rgb={255, 55, 55}},
