@@ -369,6 +369,68 @@ local function commandResetCollectibles(thePlayer, cmd, targetAccountID, theType
     resetClientCollectibles(targetAccount, theType, thePlayer)
 end
 
+local function commandCreateSpawnpoint(thePlayer, cmd, theType, model)
+    if not canAdminCollectibles(thePlayer) then
+        outputCustomText(thePlayer, "admin_no_permission")
+        return
+    end
+    model = tonumber(model)
+    if not theType or not model then
+        outputCustomText(thePlayer, "command_syntax", cmd, "[collectible type] [pickup object model ID]")
+        return
+    end
+    if not collectibleTypes[theType] then
+        outputCustomText(thePlayer, "admin_invalid_collectible_type", theType)
+        return
+    end
+    if not isDefaultObjectID(model) then
+        outputCustomText(thePlayer, "admin_invalid_object_model_id", tostring(model))
+        return
+    end
+    local x,y,z = getElementPosition(thePlayer)
+    local interior, dimension = getElementInterior(thePlayer), getElementDimension(thePlayer)
+    setPlayerPreventPicking(thePlayer, 5000)
+    local newSpID, reason = createNewSpawnpoint(theType, model, x,y,z, interior, dimension)
+    if not newSpID then
+        outputCustomText(thePlayer, "admin_error", reason)
+        return
+    end
+    outputCustomText(thePlayer, "admin_spawnpoint_created", tostring(newSpID), (string.gsub(theType, "_", " ")))
+end
+
+local function commandRemoveSpawnpoint(thePlayer, cmd, theType, spID)
+    if not canAdminCollectibles(thePlayer) then
+        outputCustomText(thePlayer, "admin_no_permission")
+        return
+    end
+    spID = tonumber(spID)
+    if not theType or not spID then
+        outputCustomText(thePlayer, "command_syntax", cmd, "[collectible type] [spawnpoint ID]")
+        return
+    end
+    if not collectibleTypes[theType] then
+        outputCustomText(thePlayer, "admin_invalid_collectible_type", theType)
+        return
+    end
+    if #collectibleTypes[theType].spawnpoints == 0 then
+        outputCustomText(thePlayer, "admin_no_spawnpoints", (string.gsub(theType, "_", " ")))
+        return
+    end
+    for i=1, #collectibleTypes[theType].spawnpoints do
+        local spawnpoint = collectibleTypes[theType].spawnpoints[i]
+        if spawnpoint and spawnpoint.spID == spID then
+            local success, reason = removeSpawnpoint(theType, spID)
+            if not success then
+                outputCustomText(thePlayer, "admin_error", reason)
+                return
+            end
+            outputCustomText(thePlayer, "admin_removed_spawnpoint", tostring(spID), (string.gsub(theType, "_", " ")))
+            return
+        end
+    end
+    outputCustomText(thePlayer, "admin_invalid_spawnpoint_id", (string.gsub(theType, "_", " ")), spID)
+end
+
 --- Validates all custom settings
 --
 --- returns true if successful, false + error message otherwise.
@@ -411,6 +473,16 @@ local function parseCustomSettings()
         return false, "Failed to parse constants - CONSTANTS.COMMANDS.RESETPLAYER is not a string."
     end
     addCommandHandler(commands.RESETPLAYER, commandResetCollectibles, false, false)
+
+    if type(commands.CREATESPAWN) ~= "string" then
+        return false, "Failed to parse constants - CONSTANTS.COMMANDS.CREATESPAWN is not a string."
+    end
+    addCommandHandler(commands.CREATESPAWN, commandCreateSpawnpoint, false, false)
+
+    if type(commands.REMOVESPAWN) ~= "string" then
+        return false, "Failed to parse constants - CONSTANTS.COMMANDS.REMOVESPAWN is not a string."
+    end
+    addCommandHandler(commands.REMOVESPAWN, commandRemoveSpawnpoint, false, false)
 
     -- Optional Commands
     if (CONFIG_EDITOR_LOADED) then
@@ -1179,11 +1251,12 @@ function removeSpawnpoint(theType, spID)
     if (not info) then
         return false, "admin_invalid_collectible_type"
     end
-    local spawnpoint
+    local spawnpoint, theIndex
     for i=1, #info.spawnpoints do
         local sp = info.spawnpoints[i]
         if sp and sp.spID == spID then
             spawnpoint = sp
+            theIndex = i
             break
         end
     end
@@ -1232,19 +1305,6 @@ function removeSpawnpoint(theType, spID)
     if not found then
         xmlUnloadFile(config)
         return false, "Failed to find spawnpoint in 'config.xml'."
-    end
-
-    local theIndex
-    for i=1, #collectibleTypes[theType].spawnpoints do
-        local sp = collectibleTypes[theType].spawnpoints[i]
-        if sp and sp.spID == spID then
-            theIndex = i
-            break
-        end
-    end
-    if not theIndex then
-        xmlUnloadFile(config)
-        return false, "Failed to find spawnpoint of type '" .. theType .. "' in collectibleTypes."
     end
 
     if not xmlSaveFile(config) then
@@ -1356,10 +1416,18 @@ function createNewSpawnpoint(theType, model, x,y,z, interior, dimension)
 
     if info.target == "client" then
         resendClientCollectibles()
-    elseif (info.auto_load == true) then
-        createOnePickup(theType, lastSpID, collectibleTypes[theType].spawnpoints[newIndex])
+    else
+        local pickupsSpawned = {}
+        for pickup, info2 in pairs(spawnedServerCollectibles) do
+            if info2.type == theType then
+                pickupsSpawned[#pickupsSpawned+1] = pickup
+            end
+        end
+        if (info.auto_load == true or #pickupsSpawned > 0) then
+            createOnePickup(theType, lastSpID, collectibleTypes[theType].spawnpoints[newIndex])
+        end
     end
-    return true
+    return lastSpID
 end
 
 local function createServerCollectibles()

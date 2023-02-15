@@ -57,6 +57,7 @@
         <spawnpoint type="Package" id="1" model="1279" x="5" y="10" z="3" />
         <spawnpoint type="Package" id="2" model="1279" x="-5" y="10" z="3" />
         <spawnpoint type="Package" id="3" model="1279" x="-24.5029296875" y="-83.2822265625" z="1003.546875" interior="18" dimension="0"></spawnpoint>
-        <spawnpoint type="Package" id="4" model="1279" x="-34.6337890625" y="-75.2451171875" z="1003.546875" interior="18" dimension="0"></spawnpoint>
+        <spawnpoint type="Package" id="4" model="1279" x="3.001953125" y="5.7529296875" z="3.1096496582031" interior="0" dimension="0"></spawnpoint>
+        <spawnpoint type="Package" id="6" model="1279" x="16.166015625" y="-8.615234375" z="3.1171875" interior="0" dimension="0"></spawnpoint>
     </spawnpoints>
 </config>

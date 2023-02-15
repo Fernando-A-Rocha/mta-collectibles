@@ -150,8 +150,8 @@ local function drawCollectible()
     local text_top = drawing.text_top
     local text_bottom = drawing.text_bottom
 
-    local top_text = text_top.text
-    local bottom_text = text_bottom.text
+    local top_text = drawing.text_top_text
+    local bottom_text = drawing.text_bottom_text
 
     local top_font, top_scale, top_alignX, top_alignY, top_color, top_x_left, top_y_top, top_x_right, top_y_bottom, top_outline_color = text_top.font, text_top.scale, text_top.alignX, text_top.alignY, text_top.color, text_top.x_left, text_top.y_top, text_top.x_right, text_top.y_bottom, text_top.outline_color
     local bottom_font, bottom_scale, bottom_alignX, bottom_alignY, bottom_color, bottom_x_left, bottom_y_top, bottom_x_right, bottom_y_bottom, bottom_outline_color = text_bottom.font, text_bottom.scale, text_bottom.alignX, text_bottom.alignY, text_bottom.color, text_bottom.x_left, text_bottom.y_top, text_bottom.x_right, text_bottom.y_bottom, text_bottom.outline_color
@@ -175,26 +175,13 @@ local function drawCollectible()
     dxDrawText(bottom_text, bottom_x_left, bottom_y_top, bottom_x_right, bottom_y_bottom, bottom_color, bottom_scale, bottom_font, bottom_alignX, bottom_alignY, false, false, true, true)
 end
 
-local function copyTable(tab, recursive)
-    local ret = {}
-    for key, value in pairs(tab) do
-        if (type(value) == "table") and recursive then ret[key] = copyTable(value)
-        else ret[key] = value end
-    end
-    return ret
-end
-
 local function getDefaultOrCustomStyle(theType)
     local text_top, text_bottom
-    if type(CUSTOM_DRAWING.DEFAULT)~="table" then
+    if type(DRAWING_STYLES.DEFAULT)~="table" then
         outputDebugMsg("Failed to find default drawing style.", "ERROR")
     else
-        local default = copyTable(CUSTOM_DRAWING.DEFAULT, true)
-        if type(CUSTOM_DRAWING.CUSTOM) ~= "table" then
-            outputDebugMsg("Failed to find custom drawing styles table.", "ERROR")
-            CUSTOM_DRAWING.CUSTOM = {}
-        end
-        local custom = copyTable(CUSTOM_DRAWING.CUSTOM, true)
+        local default = DRAWING_STYLES.DEFAULT
+        local custom = DRAWING_STYLES.CUSTOM or {}
         custom = custom[theType] or {}
         local custom_top, custom_bottom = custom["text_top"], custom["text_bottom"]
         if custom_top then
@@ -225,13 +212,13 @@ local function actionOnPickedUp(theType, collected, total, action)
     end
     local text_top, text_bottom = getDefaultOrCustomStyle(theType)
     if text_top then
-        text_top.text = string.format(text_top.text, string.gsub(theType, "_", " "))
-        text_bottom.text = string.format(text_bottom.text, collected, total)
         local notDrawing = (drawing == nil)
         drawing = {
             startedAt = getTickCount(),
             text_top = text_top,
+            text_top_text = text_top.text:format(string.gsub(theType, "_", " ")),
             text_bottom = text_bottom,
+            text_bottom_text = text_bottom.text:format(collected, total),
         }
         if (notDrawing == true) then
             addEventHandler("onClientRender", root, drawCollectible)

@@ -43,3 +43,20 @@ else
         end
     end
 end
+
+function isDefaultObjectID(id)
+	if id < 321 or id > 18630 then
+		return false
+	end
+	-- exclude unused/reserved for other purposes IDs
+	if id >= 374 and id <= 614 then
+		return false
+	end
+	if id >= 11682 and id <= 12799 then
+		return false
+	end
+	if id >= 15065 and id <= 15999 then
+		return false
+	end
+	return true
+end

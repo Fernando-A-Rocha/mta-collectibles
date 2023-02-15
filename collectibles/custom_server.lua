@@ -16,6 +16,8 @@ CONSTANTS = {
         SPAWN = "spawncollectibles",
         DESTROY = "destroycollectibles",
         RESETPLAYER = "resetplayercollectibles",
+        CREATESPAWN = "createspawnpoint",
+        REMOVESPAWN = "removespawnpoint",
 
         -- For the 'editor' scripts (Optional):
         EDITOR = "editcollectibles",
@@ -40,11 +42,17 @@ CONSTANTS = {
         ["reward_money"] = {value="You have earned $%s for collecting this %s.", rgb={55, 255, 55}},
 
         -- Server only:
+        ["admin_error"] = {value="Error: %s", rgb={255, 0, 0}},
         ["admin_no_permission"] = {value="You don't have permission to do this.", rgb={255, 55, 55}},
         ["admin_count_spawned"] = {value="There are currently %s %s collectibles spawned.", rgb={255, 55, 55}},
         ["admin_spawned"] = {value="You have spawned %s %s collectibles on the server.", rgb={5, 255, 5}},
         ["admin_destroyed"] = {value="You have destroyed the existing %s %s collectibles.", rgb={5, 255, 5}},
+        ["admin_spawnpoint_created"] = {value="You have created a new spawnpoint with ID %s (%s).", rgb={5, 255, 5}},
+        ["admin_removed_spawnpoint"] = {value="You have deleted spawnpoint ID %s (%s).", rgb={5, 255, 5}},
         ["admin_invalid_collectible_type"] = {value="Collectible type '%s' does not exist.", rgb={255, 0, 0}},
+        ["admin_invalid_object_model_id"] = {value="Model ID %s is not a valid object ID.", rgb={255, 0, 0}},
+        ["admin_invalid_spawnpoint_id"] = {value="Collectible type '%s' doesn't have a spawnpoint with ID %s.", rgb={255, 0, 0}},
+        ["admin_no_spawnpoints"] = {value="Collectible type '%s' has 0 spawnpoints defined.", rgb={255, 0, 0}},
         ["admin_invalid_account_id"] = {value="User account ID %s does not exist.", rgb={255, 0, 0}},
         ["admin_reset_success"] = {value="You have reset and respawned %s client collectibles for %s (ID: %s).", rgb={5, 255, 5}},
         ["admin_reset_success_player"] = {value="An admin has reset and respawned your collectibles (%s).", rgb={88, 255, 88}},

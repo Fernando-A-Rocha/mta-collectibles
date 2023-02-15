@@ -12,7 +12,7 @@
 
 local SW, SH = guiGetScreenSize()
 
-CUSTOM_DRAWING = {
+DRAWING_STYLES = {
     DEFAULT = {
         ["text_top"] = {
             text = "%s", -- replaced with collectible type name
