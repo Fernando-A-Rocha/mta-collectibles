@@ -1,2 +1,0 @@
-- better and more Lua code documentation
-- ability to translate literally every string
