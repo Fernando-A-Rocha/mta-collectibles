@@ -17,7 +17,7 @@
 <div class="button iconleft"><a href="https://github.com/Fernando-A-Rocha/mta-collectibles" title=""><img src="../img/i-github.svg?7653a2d" alt=""/><span>GitHub (Download and Documentation)</span></a></div>
 </div>
 <div class="group three">
-<div class="button iconleft"><a href="../module/system_client.html" title="system_client"><img src="../img/i-left.svg?7653a2d" alt=""/><span>Previous</span></a></div>
+<div class="button iconleft"><a href="../module/custom_server.html" title="custom_server"><img src="../img/i-left.svg?7653a2d" alt=""/><span>Previous</span></a></div>
 </div>
 </div>
 <div class="sidebar">
@@ -33,7 +33,7 @@
 <div class="modules">
 <div class="heading">Modules</div>
 <ul>
-<li><a href="../module/system_client.html">system_client</a></li>
+<li><a href="../module/custom_server.html">custom_server</a></li>
 <li class="selected"><a href="../module/system_server.html">system_server</a></li>
 </ul>
 </div>
@@ -49,26 +49,14 @@
 <div class="heading">Functions</div>
 <table class="functions ">
 <tr>
-<td class="name"><a href="#system_server.setPlayerPreventPicking"><var>system_server.setPlayerPreventPicking</var></a>()</td>
-<td class="doc"><p><strong>(Exported)</strong></p>
-</td>
-</tr>
-<tr>
 <td class="name"><a href="#system_server.getCollectibleTypes"><var>system_server.getCollectibleTypes</var></a>()</td>
 <td class="doc"><p><strong>(Exported)</strong></p>
 </td>
 </tr>
 <tr>
-<td class="name"><a href="#system_server.canAdminCollectibles"><var>system_server.canAdminCollectibles</var></a>()</td>
-<td class="doc"><p><strong>(Exported)</strong></p>
-<p>This may be customized</p>
-</td>
-</tr>
-<tr>
-<td class="name"><a href="#system_server.canCollectPickup"><var>system_server.canCollectPickup</var></a>()</td>
-<td class="doc"><p><strong>(Exported)</strong></p>
-<p>This may be customized</p>
-<p>PS: Valid player account check is elsewhere in the code already</p>
+<td class="name"><a href="#system_server.parseCustomSettings"><var>system_server.parseCustomSettings</var></a>()</td>
+<td class="doc"><p>Validates all custom settings</p>
+<p>returns true if successful, false + error message otherwise</p>
 </td>
 </tr>
 <tr>
@@ -110,14 +98,6 @@
 </table>
 </div>
 <dl class="functions">
-<dt id="system_server.setPlayerPreventPicking">
-<span class="icon"></span><var>system_server.setPlayerPreventPicking</var>(<em>player</em>, <em>interval</em>)
-<a class="permalink" href="#system_server.setPlayerPreventPicking" title="Permalink to this definition">¶</a>
-</dt>
-<dd>
-<p><strong>(Exported)</strong></p>
-
-</dd>
 <dt id="system_server.getCollectibleTypes">
 <span class="icon"></span><var>system_server.getCollectibleTypes</var>()
 <a class="permalink" href="#system_server.getCollectibleTypes" title="Permalink to this definition">¶</a>
@@ -126,23 +106,13 @@
 <p><strong>(Exported)</strong></p>
 
 </dd>
-<dt id="system_server.canAdminCollectibles">
-<span class="icon"></span><var>system_server.canAdminCollectibles</var>(<em>player</em>)
-<a class="permalink" href="#system_server.canAdminCollectibles" title="Permalink to this definition">¶</a>
+<dt id="system_server.parseCustomSettings">
+<span class="icon"></span><var>system_server.parseCustomSettings</var>()
+<a class="permalink" href="#system_server.parseCustomSettings" title="Permalink to this definition">¶</a>
 </dt>
 <dd>
-<p><strong>(Exported)</strong></p>
-<p>This may be customized</p>
-
-</dd>
-<dt id="system_server.canCollectPickup">
-<span class="icon"></span><var>system_server.canCollectPickup</var>(<em>player</em>, <em>account</em>, <em>theType</em>)
-<a class="permalink" href="#system_server.canCollectPickup" title="Permalink to this definition">¶</a>
-</dt>
-<dd>
-<p><strong>(Exported)</strong></p>
-<p>This may be customized</p>
-<p>PS: Valid player account check is elsewhere in the code already</p>
+<p>Validates all custom settings</p>
+<p>returns true if successful, false + error message otherwise.</p>
 
 </dd>
 <dt id="system_server.loadConfiguration">
