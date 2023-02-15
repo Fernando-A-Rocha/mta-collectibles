@@ -44,7 +44,7 @@ CUSTOM_DRAWING = {
     CUSTOM = {
 
         -- Use exact collectible type name as key, and set the same parameters as the default
-        ["Hidden_Package"] = {
+        ["Package"] = {
             ["text_top"] = {
                 text = "%s", -- replaced with collectible type name
                 font = "pricedown",

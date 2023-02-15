@@ -419,10 +419,10 @@ local function parseCustomSettings()
         end
         addCommandHandler(commands.SPAWNPOINTS, commandConfigureSpawnpoints, false, false)
 
-        if type(commands.ADMIN) ~= "string" then
-            return false, "Failed to parse constants - CONSTANTS.COMMANDS.ADMIN is not a string."
+        if type(commands.EDITOR) ~= "string" then
+            return false, "Failed to parse constants - CONSTANTS.COMMANDS.EDITOR is not a string."
         end
-        addCommandHandler(commands.ADMIN, commandAdminCollectibles, false, false)
+        addCommandHandler(commands.EDITOR, commandOpenEditor, false, false)
     end
 
     -- STRINGS

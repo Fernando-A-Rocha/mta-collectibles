@@ -18,7 +18,7 @@ CONSTANTS = {
         RESETPLAYER = "resetplayercollectibles",
 
         -- For the 'editor' scripts (Optional):
-        ADMIN = "admincollectibles",
+        EDITOR = "editcollectibles",
         SPAWNPOINTS = "collectiblespawns",
     },
 

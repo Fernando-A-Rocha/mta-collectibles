@@ -31,7 +31,7 @@
         
         <type name="Heart" target="client" auto_load="false" toggle_keybind="f7" />
         
-        <type name="Hidden_Package" target="server" auto_load="false" />
+        <type name="Package" target="server" auto_load="false" />
     </types>
     <actions>
         <action type="Totem" on="collect_one" sound="sounds/vc/pickup.ogg" sound_volume="1" reward_money="1000" />
@@ -40,8 +40,8 @@
         <action type="Heart" on="collect_one" sound="sounds/vc/checkpoint.ogg" sound_volume="1" />
         <action type="Heart" on="collect_all" sound="sounds/vc/pickup.ogg" sound_volume="1" />
         
-        <action type="Hidden_Package" on="collect_one" sound="sounds/vc/notification.ogg" sound_volume="1" />
-        <action type="Hidden_Package" on="collect_all" sound="sounds/vc/pickup2.ogg" sound_volume="1" />
+        <action type="Package" on="collect_one" sound="sounds/vc/notification.ogg" sound_volume="1" />
+        <action type="Package" on="collect_all" sound="sounds/vc/pickup2.ogg" sound_volume="1" />
     </actions>
     <spawnpoints>
         <spawnpoint type="Totem" id="1" model="1276" x="-3.1806640625" y="21.4326171875" z="3.1171875" interior="0" dimension="0"></spawnpoint>
@@ -54,9 +54,9 @@
         <spawnpoint type="Heart" id="4" model="1240" x="15" y="5" z="3" />
         <spawnpoint type="Heart" id="5" model="1240" x="-17.54" y="-90.11" z="1003.55" interior="18" dimension="0" />
         
-        <spawnpoint type="Hidden_Package" id="1" model="1279" x="5" y="10" z="3" />
-        <spawnpoint type="Hidden_Package" id="2" model="1279" x="-5" y="10" z="3" />
-        <spawnpoint type="Hidden_Package" id="3" model="1279" x="-24.5029296875" y="-83.2822265625" z="1003.546875" interior="18" dimension="0"></spawnpoint>
-        <spawnpoint type="Hidden_Package" id="4" model="1279" x="-34.6337890625" y="-75.2451171875" z="1003.546875" interior="18" dimension="0"></spawnpoint>
+        <spawnpoint type="Package" id="1" model="1279" x="5" y="10" z="3" />
+        <spawnpoint type="Package" id="2" model="1279" x="-5" y="10" z="3" />
+        <spawnpoint type="Package" id="3" model="1279" x="-24.5029296875" y="-83.2822265625" z="1003.546875" interior="18" dimension="0"></spawnpoint>
+        <spawnpoint type="Package" id="4" model="1279" x="-34.6337890625" y="-75.2451171875" z="1003.546875" interior="18" dimension="0"></spawnpoint>
     </spawnpoints>
 </config>

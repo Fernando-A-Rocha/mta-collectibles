@@ -29,7 +29,7 @@ local function handlePermissionMismatch(thePlayer)
     outputCustomText(thePlayer, "admin_no_permission")
 end
 
-function commandAdminCollectibles(thePlayer, cmd)
+function commandOpenEditor(thePlayer, cmd)
     if not canAdminCollectibles(thePlayer) then
         outputCustomText(thePlayer, "admin_no_permission")
         return

@@ -4,7 +4,7 @@
     Example Implementation (Server-Side)
 ]]
 local EVENTS = {
-    ["Hidden_Package"] = {
+    ["Package"] = {
         friendlyName = "Package Collectibles",
         announce = "#ffffffWhoever finds the most #ffa12e%s#ffffff wins #ffa12e$%d#ffffff. Good luck!",
         rewardMoney = 500000,
