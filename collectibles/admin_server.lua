@@ -21,6 +21,200 @@ addEvent("collectibles:createSpawnpoint", true) -- source: always resourceRoot
 local antiSpam = {}
 local goingToRestart = false
 
+local function handlePermissionMismatch(thePlayer)
+    outputInfoMessage("CRITICAL WARNING: "..getPlayerName(thePlayer).." ("..getAccountName(getPlayerAccount(thePlayer))
+    ..") triggered an event"..(eventName and (" ("..eventName..")") or "").." for which they don't have permission.")
+    outputCustomText(thePlayer, "admin_no_permission")
+end
+
+function commandAdminCollectibles(thePlayer, cmd)
+    if not canAdminCollectibles(thePlayer) then
+        outputCustomText(thePlayer, "admin_no_permission")
+        return
+    end
+    if antiSpam[thePlayer] then
+        outputCustomText(thePlayer, "ask_to_wait")
+        return
+    end
+    if (goingToRestart == true) then
+        outputCustomText(thePlayer, "ask_to_wait")
+        return
+    end
+    antiSpam[thePlayer] = true
+
+    local metaFileSrcs = {}
+    local meta = xmlLoadFile("meta.xml", true)
+    if not meta then
+        antiSpam[thePlayer] = nil
+        return outputChatBox("ERROR #1 (/"..cmd..").", thePlayer, 255, 0, 0)
+    end
+    local metaChildren = xmlNodeGetChildren(meta)
+    if not metaChildren then
+        antiSpam[thePlayer] = nil
+        return outputChatBox("ERROR #2 (/"..cmd..").", thePlayer, 255, 0, 0)
+    end
+    for i=1, #metaChildren do
+        local metaChild = metaChildren[i]
+        if xmlNodeGetName(metaChild) == "file" then
+            local src = xmlNodeGetAttribute(metaChild, "src")
+            if src then
+                metaFileSrcs[#metaFileSrcs + 1] = src
+            end
+        end
+    end
+    xmlUnloadFile(meta)
+
+    local collectibleTypes = getCollectibleTypes()
+    local texts = getCustomTexts()
+    local commands = getCustomCommands()
+    local accounts = getAccounts()
+    local collectedCounts = {}
+    for i=1, #accounts do
+        local account = accounts[i]
+        if account then
+            collectedCounts[#collectedCounts + 1] = {
+                accountID = getAccountID(account),
+                accountName = getAccountName(account),
+                counts = getCollectedCounts(account)
+            }
+        end
+    end
+
+    local info = {
+        texts = texts,
+        commands = commands,
+        collectibleTypes = collectibleTypes,
+        collectedCounts = collectedCounts,
+        backupExists = fileExists("backups/config.xml"),
+        metaFileSrcs = metaFileSrcs
+    }
+    
+    triggerClientEvent(thePlayer, "collectibles:admin", thePlayer, info)
+    
+    setTimer(function()
+        antiSpam[thePlayer] = nil
+    end, 1000, 1)
+end
+
+local function requestUpdateConfiguration(updateNodes)
+    if not client then return end
+    if not canAdminCollectibles(client) then
+        handlePermissionMismatch(client)
+        return
+    end
+
+    local success, reason = updateConfiguration(updateNodes)
+    if not success then
+        return triggerClientEvent(client, "collectibles:adminResponse", client, false, reason, "OK")
+    end
+
+    goingToRestart = true
+    setTimer(function()
+        restartResource(getThisResource())
+    end, 5000, 1)
+
+    triggerClientEvent(client, "collectibles:adminResponse", client, "Changes saved successfully. The resource will now restart...\nPay attention to the server console.")
+end
+addEventHandler("collectibles:updateConfig", resourceRoot, requestUpdateConfiguration, false)
+
+local function requestDeleteType(theType)
+    if not client then return end
+    if not canAdminCollectibles(client) then
+        handlePermissionMismatch(client)
+        return
+    end
+
+    local success, reason = deleteType(theType)
+    if not success then
+        return triggerClientEvent(client, "collectibles:adminResponse", client, false, reason, "OK")
+    end
+
+    goingToRestart = true
+    setTimer(function()
+        restartResource(getThisResource())
+    end, 5000, 1)
+
+    triggerClientEvent(client, "collectibles:adminResponse", client, "Collectible type deleted successfully. The resource will now restart...\nPay attention to the server console.")
+end
+addEventHandler("collectibles:deleteType", resourceRoot, requestDeleteType, false)
+
+local function requestCreateNewType(typeInfo)
+    if not client then return end
+    if not canAdminCollectibles(client) then
+        handlePermissionMismatch(client)
+        return
+    end
+
+    local success, reason = createNewType(typeInfo)
+    if not success then
+        return triggerClientEvent(client, "collectibles:adminResponse", client, false, reason, "OK")
+    end
+
+    goingToRestart = true
+    setTimer(function()
+        restartResource(getThisResource())
+    end, 5000, 1)
+
+    triggerClientEvent(client, "collectibles:adminResponse", client, "Collectible type created successfully. The resource will now restart...\nPay attention to the server console.")
+end
+addEventHandler("collectibles:createNewType", resourceRoot, requestCreateNewType, false)
+
+local function requestBackupConfiguration()
+    if not client then return end
+    if not canAdminCollectibles(client) then
+        handlePermissionMismatch(client)
+        return
+    end
+
+    local success, reason = backupConfiguration()
+    if not success then
+        return triggerClientEvent(client, "collectibles:adminResponse", client, false, reason, "OK")
+    end
+
+    triggerClientEvent(client, "collectibles:adminResponse", client, "Configuration backup created successfully.", false, "OK")
+end
+addEventHandler("collectibles:backupConfig", resourceRoot, requestBackupConfiguration, false)
+
+local function requestRestoreConfigBackup()
+    if not client then return end
+    if not canAdminCollectibles(client) then
+        handlePermissionMismatch(client)
+        return
+    end
+
+    local success, reason = restoreConfigBackup()
+    if not success then
+        return triggerClientEvent(client, "collectibles:adminResponse", client, false, reason, "OK")
+    end
+
+    goingToRestart = true
+    setTimer(function()
+        restartResource(getThisResource())
+    end, 5000, 1)
+
+    triggerClientEvent(client, "collectibles:adminResponse", client, "Configuration restored successfully. The resource will now restart...\nPay attention to the server console.")
+end
+addEventHandler("collectibles:restoreConfigBackup", resourceRoot, requestRestoreConfigBackup, false)
+
+local function requestDuplicateConfigBackup(newPath)
+    if not client then return end
+    if not canAdminCollectibles(client) then
+        handlePermissionMismatch(client)
+        return
+    end
+    
+    local dateTimeString = os.date("%Y-%m-%d_%H-%M-%S")
+    newPath = string.format(newPath, dateTimeString)
+
+    local success, reason = duplicateConfigBackup(newPath)
+    if not success then
+        return triggerClientEvent(client, "collectibles:adminResponse", client, false, reason, "OK")
+    end
+
+    triggerClientEvent(client, "collectibles:adminResponse", client, "Configuration backup successfully copied to:\n"..newPath, false, "OK")
+end
+addEventHandler("collectibles:duplicateConfigBackup", resourceRoot, requestDuplicateConfigBackup, false)
+
 function commandSpawnCollectibles(thePlayer, cmd, theType)
     if not canAdminCollectibles(thePlayer) then
         outputCustomText(thePlayer, "admin_no_permission")
@@ -86,177 +280,21 @@ end
 
 addEventHandler("collectibles:requestConfigureSpawnpoints", resourceRoot, function(theType)
     if not client then return end
+    if not canAdminCollectibles(client) then
+        handlePermissionMismatch(client)
+        return
+    end
 
     local commands = getCustomCommands()
     commandConfigureSpawnpoints(client, commands.points, theType)
 end, false)
 
-function commandAdminCollectibles(thePlayer, cmd)
-    if antiSpam[thePlayer] then
-        outputCustomText(thePlayer, "ask_to_wait")
-        return
-    end
-    if (goingToRestart == true) then
-        outputCustomText(thePlayer, "ask_to_wait")
-        return
-    end
-    if not canAdminCollectibles(thePlayer) then
-        outputCustomText(thePlayer, "admin_no_permission")
-        return
-    end
-    antiSpam[thePlayer] = true
-
-    local metaFileSrcs = {}
-    local meta = xmlLoadFile("meta.xml", true)
-    if not meta then
-        antiSpam[thePlayer] = nil
-        return outputChatBox("ERROR #1 (/"..cmd..").", thePlayer, 255, 0, 0)
-    end
-    local metaChildren = xmlNodeGetChildren(meta)
-    if not metaChildren then
-        antiSpam[thePlayer] = nil
-        return outputChatBox("ERROR #2 (/"..cmd..").", thePlayer, 255, 0, 0)
-    end
-    for i=1, #metaChildren do
-        local metaChild = metaChildren[i]
-        if xmlNodeGetName(metaChild) == "file" then
-            local src = xmlNodeGetAttribute(metaChild, "src")
-            if src then
-                metaFileSrcs[#metaFileSrcs + 1] = src
-            end
-        end
-    end
-    xmlUnloadFile(meta)
-
-    local collectibleTypes = getCollectibleTypes()
-    local texts = getCustomTexts()
-    local commands = getCustomCommands()
-    local accounts = getAccounts()
-    local collectedCounts = {}
-    for i=1, #accounts do
-        local account = accounts[i]
-        if account then
-            collectedCounts[#collectedCounts + 1] = {
-                accountID = getAccountID(account),
-                accountName = getAccountName(account),
-                counts = getCollectedCounts(account)
-            }
-        end
-    end
-
-    local info = {
-        texts = texts,
-        commands = commands,
-        collectibleTypes = collectibleTypes,
-        collectedCounts = collectedCounts,
-        backupExists = fileExists("backups/config.xml"),
-        metaFileSrcs = metaFileSrcs
-    }
-    
-    triggerClientEvent(thePlayer, "collectibles:admin", thePlayer, info)
-    
-    setTimer(function()
-        antiSpam[thePlayer] = nil
-    end, 1000, 1)
-end
-
-local function requestUpdateConfiguration(updateNodes)
-    if not client then return end
-
-    local success, reason = updateConfiguration(updateNodes)
-    if not success then
-        return triggerClientEvent(client, "collectibles:adminResponse", client, false, reason, "OK")
-    end
-
-    goingToRestart = true
-    setTimer(function()
-        restartResource(getThisResource())
-    end, 5000, 1)
-
-    triggerClientEvent(client, "collectibles:adminResponse", client, "Changes saved successfully. The resource will now restart...\nPay attention to the server console.")
-end
-addEventHandler("collectibles:updateConfig", resourceRoot, requestUpdateConfiguration, false)
-
-local function requestDeleteType(theType)
-    if not client then return end
-
-    local success, reason = deleteType(theType)
-    if not success then
-        return triggerClientEvent(client, "collectibles:adminResponse", client, false, reason, "OK")
-    end
-
-    goingToRestart = true
-    setTimer(function()
-        restartResource(getThisResource())
-    end, 5000, 1)
-
-    triggerClientEvent(client, "collectibles:adminResponse", client, "Collectible type deleted successfully. The resource will now restart...\nPay attention to the server console.")
-end
-addEventHandler("collectibles:deleteType", resourceRoot, requestDeleteType, false)
-
-local function requestCreateNewType(typeInfo)
-    if not client then return end
-
-    local success, reason = createNewType(typeInfo)
-    if not success then
-        return triggerClientEvent(client, "collectibles:adminResponse", client, false, reason, "OK")
-    end
-
-    goingToRestart = true
-    setTimer(function()
-        restartResource(getThisResource())
-    end, 5000, 1)
-
-    triggerClientEvent(client, "collectibles:adminResponse", client, "Collectible type created successfully. The resource will now restart...\nPay attention to the server console.")
-end
-addEventHandler("collectibles:createNewType", resourceRoot, requestCreateNewType, false)
-
-local function requestBackupConfiguration()
-    if not client then return end
-
-    local success, reason = backupConfiguration()
-    if not success then
-        return triggerClientEvent(client, "collectibles:adminResponse", client, false, reason, "OK")
-    end
-
-    triggerClientEvent(client, "collectibles:adminResponse", client, "Configuration backup created successfully.", false, "OK")
-end
-addEventHandler("collectibles:backupConfig", resourceRoot, requestBackupConfiguration, false)
-
-local function requestRestoreConfigBackup()
-    if not client then return end
-
-    local success, reason = restoreConfigBackup()
-    if not success then
-        return triggerClientEvent(client, "collectibles:adminResponse", client, false, reason, "OK")
-    end
-
-    goingToRestart = true
-    setTimer(function()
-        restartResource(getThisResource())
-    end, 5000, 1)
-
-    triggerClientEvent(client, "collectibles:adminResponse", client, "Configuration restored successfully. The resource will now restart...\nPay attention to the server console.")
-end
-addEventHandler("collectibles:restoreConfigBackup", resourceRoot, requestRestoreConfigBackup, false)
-
-local function requestDuplicateConfigBackup(newPath)
-    if not client then return end
-    
-    local dateTimeString = os.date("%Y-%m-%d_%H-%M-%S")
-    newPath = string.format(newPath, dateTimeString)
-
-    local success, reason = duplicateConfigBackup(newPath)
-    if not success then
-        return triggerClientEvent(client, "collectibles:adminResponse", client, false, reason, "OK")
-    end
-
-    triggerClientEvent(client, "collectibles:adminResponse", client, "Configuration backup successfully copied to:\n"..newPath, false, "OK")
-end
-addEventHandler("collectibles:duplicateConfigBackup", resourceRoot, requestDuplicateConfigBackup, false)
-
 local function requestGotoSpawnpoint(theType, spID)
     if not client then return end
+    if not canAdminCollectibles(client) then
+        handlePermissionMismatch(client)
+        return
+    end
 
     if type(spID) ~= "number" then
         return triggerClientEvent(client, "collectibles:adminResponse", client, false, "Invalid spawnpoint spID.", "OK")
@@ -296,6 +334,10 @@ addEventHandler("collectibles:gotoSpawnpoint", resourceRoot, requestGotoSpawnpoi
 
 local function requestRemoveSpawnpoint(theType, spID)
     if not client then return end
+    if not canAdminCollectibles(client) then
+        handlePermissionMismatch(client)
+        return
+    end
 
     if type(spID) ~= "number" then
         return triggerClientEvent(client, "collectibles:adminResponse", client, false, "Invalid spawnpoint spID.", "OK")
@@ -330,6 +372,10 @@ addEventHandler("collectibles:removeSpawnpoint", resourceRoot, requestRemoveSpaw
 
 local function requestCreateSpawnpoint(theType, model)
     if not client then return end
+    if not canAdminCollectibles(client) then
+        handlePermissionMismatch(client)
+        return
+    end
 
     local x,y,z = getElementPosition(client)
     local interior, dimension = getElementInterior(client), getElementDimension(client)

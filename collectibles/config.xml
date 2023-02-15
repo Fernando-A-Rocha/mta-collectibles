@@ -47,7 +47,7 @@
         <text name="respawned" color="255, 255, 255">%s collectible #%s has been respawned.</text>
         <text name="reward_money" color="55, 255, 55">You have earned $%s for collecting this %s.</text>
         
-        <text name="admin_no_permission" color="255, 55, 55">You don&apos;t have permission to execute this command.</text>
+        <text name="admin_no_permission" color="255, 55, 55">You don&apos;t have permission to do this.</text>
         <text name="admin_count_spawned" color="255, 55, 55">There are currently %s %s collectibles spawned.</text>
         <text name="admin_spawned" color="5, 255, 5">You have spawned %s %s collectibles on the server.</text>
         <text name="admin_destroyed" color="5, 255, 5">You have destroyed the existing %s %s collectibles.</text>
