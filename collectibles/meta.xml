@@ -3,14 +3,11 @@
     <min_mta_version server="1.5.8-9.20957"></min_mta_version>
     
     <!-- Core Scripts -->
+    <script src="custom_client.lua" type="client" />
+    <script src="custom_server.lua" type="server" />
+    <script src="system_shared.lua" type="shared" />
     <script src="system_client.lua" type="client" />
     <script src="system_server.lua" type="server" />
-    <file src="images/1pixelwhite.png" />
-    <script src="admin_client.lua" type="client" />
-    <script src="admin_server.lua" type="server" />
-
-    <!-- (Optional) Testing Scripts -->
-    <script src="testing_server.lua" type="server" />
 
     <!-- Exported Functions (for Developers) -->
     <export function="getCollectibleTypes" type="server" />
@@ -22,18 +19,7 @@
     <export function="removeSpawnpoint" type="server" />
     <export function="canCollectPickup" type="client" />
     <export function="setPlayerPreventPicking" type="server" />
-    <export function="canToggleCollectibles" type="client" />
     <export function="canAdminCollectibles" type="server" />
-
-    <!-- (Optional) Example Implementations -->
-    <file src="examples/events/notification.mp3" />
-    <file src="examples/events/congrats.mp3" />
-    <script src="examples/events/events_client.lua" type="client" />
-    <script src="examples/events/events_server.lua" type="server" />
-    <script src="examples/gui/gui_client.lua" type="client" />
-    <script src="examples/gui/gui_server.lua" type="server" />
-    <script src="examples/godmode/godmode_server.lua" type="server" />
-    <script src="examples/godmode/godmode_client.lua" type="client" />
 
     <!-- Sounds (must be in meta.xml in order to be played) -->
     <file src="sounds/vc/checkpoint.ogg" />
@@ -42,4 +28,21 @@
     <file src="sounds/vc/pickup2.ogg" />
     <file src="sounds/vc/back.ogg" />
     <file src="sounds/vc/error.ogg" />
+
+    <!-- (Optional) Configuration Editor -->
+    <script src="optional/editor/editor_client.lua" type="client" />
+    <script src="optional/editor/editor_server.lua" type="server" />
+
+    <!-- (Optional) Testing Scripts -->
+    <script src="optional/testing/testing_server.lua" type="server" />
+
+    <!-- (Optional) Example Implementations -->
+    <file src="optional/examples/events/notification.mp3" />
+    <file src="optional/examples/events/congrats.mp3" />
+    <script src="optional/examples/events/events_client.lua" type="client" />
+    <script src="optional/examples/events/events_server.lua" type="server" />
+    <script src="optional/examples/gui/gui_client.lua" type="client" />
+    <script src="optional/examples/gui/gui_server.lua" type="server" />
+    <script src="optional/examples/godmode/godmode_server.lua" type="server" />
+    <script src="optional/examples/godmode/godmode_client.lua" type="client" />
 </meta>

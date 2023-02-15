@@ -16,13 +16,15 @@ addEvent("collectibles:pickupDenied", true) -- source: always the local player
 local SW, SH = guiGetScreenSize()
 
 local receivedCollectibles = {}
-local texts = {}
 local spawnedCollectibles = nil
 local lastActionAt = nil
 local drawing = nil
-
 local waitingPickup = nil
+local CONSTANTS = {}
 
+function getConstants()
+    return CONSTANTS
+end
 function outputDebugMsg(msg, theType)
     msg = "[Collectibles] " .. msg
     local r,g,b = 255, 255, 255
@@ -32,27 +34,6 @@ function outputDebugMsg(msg, theType)
         r,g,b = 255, 255, 25
     end
     outputDebugString(msg, 4, r,g,b)
-end
-
-function getCustomText(name, ...)
-    local info = texts[name]
-    if not info then
-        return
-    end
-    local text = info.text
-    local r,g,b = info.r, info.g, info.b
-    local formatWith = {...}
-    if #formatWith > 0 then
-        text = string.format(text, unpack(formatWith))
-    end
-    return text, r, g, b
-end
-
-function outputCustomText(name, ...)
-    local text, r, g, b = getCustomText(name, ...)
-    if text then
-        outputChatBox(text, r, g, b, true)
-    end
 end
 
 local function createOnePickup(theType, spID, spawnpoint)
@@ -70,23 +51,12 @@ local function createOnePickup(theType, spID, spawnpoint)
     return pickup
 end
 
---- **(Exported)**
---
--- This may be customized
-function canToggleCollectibles()
-    return (not isPedDead(localPlayer))
-end
-
 local function toggleCollectibles(theType)
-    if not canToggleCollectibles() then
-        outputCustomText("cant_toggle")
-        return
-    end
     local info = receivedCollectibles[theType]
     if not info then
         return
     end
-    if (not lastActionAt or getTickCount() - lastActionAt > 1000) then
+    if (not lastActionAt or getTickCount() - lastActionAt > 500) then
         lastActionAt = getTickCount()
     else
         return
@@ -143,7 +113,7 @@ local function createCollectibles(initial)
                 -- outputConsole("Command set: /"..info.toggle_command)
                 addCommandHandler(info.toggle_command, function(cmd)
                     toggleCollectibles(theType)
-                end, false, false)
+                end, false)
             end
         end
     end
@@ -177,26 +147,68 @@ local function drawCollectible()
         return
     end
 
-    local text_top, text_top_color = drawing.text_top, drawing.text_top_color
-    local text_bottom, text_bottom_color = drawing.text_bottom, drawing.text_bottom_color
+    local text_top = drawing.text_top
+    local text_bottom = drawing.text_bottom
 
-    local width_top, height_top = SW, (SH*0.6)-120
+    local top_text = text_top.text
+    local bottom_text = text_bottom.text
 
-    dxDrawText(text_top, 1, 1, width_top + 1, height_top + 1, 0xff000000, 2, "pricedown", "center", "center", false, false, true, true)
-    dxDrawText(text_top, 1, -1, width_top + 1, height_top - 1, 0xff000000, 2, "pricedown", "center", "center", false, false, true, true)
-    dxDrawText(text_top, -1, 1, width_top - 1, height_top + 1, 0xff000000, 2, "pricedown", "center", "center", false, false, true, true)
-    dxDrawText(text_top, 1, 1, width_top - 1, height_top - 1, 0xff000000, 2, "pricedown", "center", "center", false, false, true, true)
+    local top_font, top_scale, top_alignX, top_alignY, top_color, top_x_left, top_y_top, top_x_right, top_y_bottom, top_outline_color = text_top.font, text_top.scale, text_top.alignX, text_top.alignY, text_top.color, text_top.x_left, text_top.y_top, text_top.x_right, text_top.y_bottom, text_top.outline_color
+    local bottom_font, bottom_scale, bottom_alignX, bottom_alignY, bottom_color, bottom_x_left, bottom_y_top, bottom_x_right, bottom_y_bottom, bottom_outline_color = text_bottom.font, text_bottom.scale, text_bottom.alignX, text_bottom.alignY, text_bottom.color, text_bottom.x_left, text_bottom.y_top, text_bottom.x_right, text_bottom.y_bottom, text_bottom.outline_color
+
+    if (top_outline_color) then
+        dxDrawText(top_text, top_x_left+1, top_y_top+1, top_x_right + 1, top_y_bottom + 1, top_outline_color, top_scale, top_font, top_alignX, top_alignY, false, false, true, true)
+        dxDrawText(top_text, top_x_left+1, top_y_top-1, top_x_right + 1, top_y_bottom - 1, top_outline_color, top_scale, top_font, top_alignX, top_alignY, false, false, true, true)
+        dxDrawText(top_text, top_x_left-1, top_y_top+1, top_x_right - 1, top_y_bottom + 1, top_outline_color, top_scale, top_font, top_alignX, top_alignY, false, false, true, true)
+        dxDrawText(top_text, top_x_left+1, top_y_top+1, top_x_right - 1, top_y_bottom - 1, top_outline_color, top_scale, top_font, top_alignX, top_alignY, false, false, true, true)
+    end
     
-    dxDrawText(text_top, 0, 0, width_top, height_top, text_top_color, 2, "pricedown", "center", "center", false, false, true, true)
+    dxDrawText(top_text, top_x_left, top_y_top, top_x_right, top_y_bottom, top_color, top_scale, top_font, top_alignX, top_alignY, false, false, true, true)
     
-    local width_bottom, height_bottom = SW, (SH*0.6)
+    if (bottom_outline_color) then
+        dxDrawText(bottom_text, bottom_x_left+1, bottom_y_top+1, bottom_x_right + 1, bottom_y_bottom + 1, bottom_outline_color, bottom_scale, bottom_font, bottom_alignX, bottom_alignY, false, false, true, true)
+        dxDrawText(bottom_text, bottom_x_left+1, bottom_y_top-1, bottom_x_right + 1, bottom_y_bottom - 1, bottom_outline_color, bottom_scale, bottom_font, bottom_alignX, bottom_alignY, false, false, true, true)
+        dxDrawText(bottom_text, bottom_x_left-1, bottom_y_top+1, bottom_x_right - 1, bottom_y_bottom + 1, bottom_outline_color, bottom_scale, bottom_font, bottom_alignX, bottom_alignY, false, false, true, true)
+        dxDrawText(bottom_text, bottom_x_left+1, bottom_y_top+1, bottom_x_right - 1, bottom_y_bottom - 1, bottom_outline_color, bottom_scale, bottom_font, bottom_alignX, bottom_alignY, false, false, true, true)
+    end
 
-    dxDrawText(text_bottom, 1, 1, width_bottom + 1, height_bottom + 1, 0xff000000, 2, "pricedown", "center", "center", false, false, true, true)
-    dxDrawText(text_bottom, 1, -1, width_bottom + 1, height_bottom - 1, 0xff000000, 2, "pricedown", "center", "center", false, false, true, true)
-    dxDrawText(text_bottom, -1, 1, width_bottom - 1, height_bottom + 1, 0xff000000, 2, "pricedown", "center", "center", false, false, true, true)
-    dxDrawText(text_bottom, 1, 1, width_bottom - 1, height_bottom - 1, 0xff000000, 2, "pricedown", "center", "center", false, false, true, true)
+    dxDrawText(bottom_text, bottom_x_left, bottom_y_top, bottom_x_right, bottom_y_bottom, bottom_color, bottom_scale, bottom_font, bottom_alignX, bottom_alignY, false, false, true, true)
+end
 
-    dxDrawText(text_bottom, 0, 0, width_bottom, height_bottom, text_bottom_color, 2, "pricedown", "center", "center", false, false, true, true)
+local function copyTable(tab, recursive)
+    local ret = {}
+    for key, value in pairs(tab) do
+        if (type(value) == "table") and recursive then ret[key] = copyTable(value)
+        else ret[key] = value end
+    end
+    return ret
+end
+
+local function getDefaultOrCustomStyle(theType)
+    local text_top, text_bottom
+    if type(CUSTOM_DRAWING.DEFAULT)~="table" then
+        outputDebugMsg("Failed to find default drawing style.", "ERROR")
+    else
+        local default = copyTable(CUSTOM_DRAWING.DEFAULT, true)
+        if type(CUSTOM_DRAWING.CUSTOM) ~= "table" then
+            outputDebugMsg("Failed to find custom drawing styles table.", "ERROR")
+            CUSTOM_DRAWING.CUSTOM = {}
+        end
+        local custom = copyTable(CUSTOM_DRAWING.CUSTOM, true)
+        custom = custom[theType] or {}
+        local custom_top, custom_bottom = custom["text_top"], custom["text_bottom"]
+        if custom_top then
+            text_top = custom_top
+        else
+            text_top = default.text_top
+        end
+        if custom_bottom then
+            text_bottom = custom_bottom
+        else
+            text_bottom = default.text_bottom
+        end
+    end
+    return text_top, text_bottom
 end
 
 local function actionOnPickedUp(theType, collected, total, action)
@@ -211,18 +223,19 @@ local function actionOnPickedUp(theType, collected, total, action)
             setSoundVolume(soundElement, sound_volume)
         end
     end
-    local notDrawing = (drawing == nil)
-    local text_top = { getCustomText("text_top", (string.gsub(theType, "_", " "))) }
-    local text_bottom = { getCustomText("text_bottom", collected, total) }
-    drawing = {
-        startedAt = getTickCount(),
-        text_top = text_top[1],
-        text_top_color = tocolor(text_top[2], text_top[3], text_top[4], 255),
-        text_bottom = text_bottom[1],
-        text_bottom_color = tocolor(text_bottom[2], text_bottom[3], text_bottom[4], 255),
-    }
-    if (notDrawing == true) then
-        addEventHandler("onClientRender", root, drawCollectible)
+    local text_top, text_bottom = getDefaultOrCustomStyle(theType)
+    if text_top then
+        text_top.text = string.format(text_top.text, string.gsub(theType, "_", " "))
+        text_bottom.text = string.format(text_bottom.text, collected, total)
+        local notDrawing = (drawing == nil)
+        drawing = {
+            startedAt = getTickCount(),
+            text_top = text_top,
+            text_bottom = text_bottom,
+        }
+        if (notDrawing == true) then
+            addEventHandler("onClientRender", root, drawCollectible)
+        end
     end
 
     if waitingPickup and waitingPickup.type == theType then
@@ -246,12 +259,12 @@ local function actionOnPickedUp(theType, collected, total, action)
 end
 addEventHandler("collectibles:actionOnPickedUp", localPlayer, actionOnPickedUp, false)
 
-addEventHandler("collectibles:receive", localPlayer, function(list, texts_)
+addEventHandler("collectibles:receive", localPlayer, function(list, CONSTANTS_)
     if type(list) ~= "table" then
         return
     end
     receivedCollectibles = list
-    texts = texts_
+    CONSTANTS = CONSTANTS_
 
     local initial = true
     if type(spawnedCollectibles) == "table" then

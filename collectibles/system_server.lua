@@ -20,10 +20,7 @@ addEvent("collectibles:onDestroyedServer", true) -- source: always root
 
 local clientsWaiting = {} -- initial startup
 local collectibleTypes = {}
-local texts = {}
-local commands = {}
 local spawnedServerCollectibles = {}
-local preventPicking = {}
 
 function getAccountDataNames()
     return {
@@ -32,25 +29,12 @@ function getAccountDataNames()
 end
 
 --- **(Exported)**
-function setPlayerPreventPicking(player, interval)
-    assert(type(interval) == "number", "Bad argument @ setPlayerPreventPicking (number expected, got " .. type(interval) .. ")")
-    assert(interval > 50, "Bad argument @ setPlayerPreventPicking (interval must be greater than 50ms)")
-    if isTimer(preventPicking[player]) then killTimer(preventPicking[player]) end
-    preventPicking[player] = setTimer(function() preventPicking[player] = nil end, interval, 1)
-    return true
-end
-
---- **(Exported)**
 function getCollectibleTypes()
     return collectibleTypes
 end
 
-function getCustomTexts()
-    return texts
-end
-
-function getCustomCommands()
-    return commands
+function getConstants()
+    return CONSTANTS
 end
 
 function getSpawnedServerCollectibles()
@@ -60,50 +44,6 @@ end
 function outputInfoMessage(msg)
     msg = "[Collectibles] " .. msg
     outputServerLog(msg)
-end
-
-function getCustomText(name, ...)
-    local info = texts[name]
-    if not info then
-        return
-    end
-    local text = info.text
-    local r,g,b = info.r, info.g, info.b
-    local formatWith = {...}
-    if #formatWith > 0 then
-        text = string.format(text, unpack(formatWith))
-    end
-    return text, r, g, b
-end
-
-function outputCustomText(player, name, ...)
-    local text, r, g, b = getCustomText(name, ...)
-    if text then
-        outputChatBox(text, player, r, g, b, true)
-    end
-end
-
---- **(Exported)**
---
--- This may be customized
-function canAdminCollectibles(player)
-    assert(isElement(player) and getElementType(player)=="player", "Bad argument @ canAdminCollectibles (player expected, got " .. type(player) .. ")")
-    local account = getPlayerAccount(player)
-    if (not account) or isGuestAccount(account) then
-        return false
-    end
-    local accountName = getAccountName(account)
-    return isObjectInACLGroup("user." .. accountName, aclGetGroup("Admin"))
-end
-
---- **(Exported)**
---
--- This may be customized
---
--- PS: Valid player account check is elsewhere in the code already
-function canCollectPickup(player, account, theType)
-    assert(isElement(player) and getElementType(player)=="player", "Bad argument @ canCollectPickup (player expected, got " .. type(player) .. ")")
-    return (preventPicking[player] == nil)
 end
 
 local function parseOneNode(rootChildren, targetNodeName)
@@ -377,87 +317,119 @@ local function parseOneNode(rootChildren, targetNodeName)
                             }
                         end
                     end
-                elseif nodeName == "texts" then
-                    local children = xmlNodeGetChildren(node)
-                    if not children then
-                        return false, "Failed to get children of 'texts' node."
-                    end
-                    for j=1, #children do
-                        local child = children[j]
-                        if child then
-                            local childName = xmlNodeGetName(child)
-                            if childName ~= "text" then
-                                return false, "Invalid child node '" .. childName .. "' of 'texts' node."
-                            end
-                            local name = xmlNodeGetAttribute(child, "name")
-                            if not name then
-                                return false, "Missing attribute 'name' of 'text' node."
-                            end
-                            if texts[name] then
-                                return false, "Duplicate attribute 'name' of 'text' node."
-                            end
-                            local value = xmlNodeGetValue(child)
-                            if not value then
-                                return false, "Missing value of 'text' node."
-                            end
-                            if value == "" then
-                                return false, "Invalid value of 'text' node - must not be empty."
-                            end
-                            local color = xmlNodeGetAttribute(child, "color")
-                            if not color then
-                                return false, "Missing attribute 'color' of 'text' node."
-                            end
-                            color = string.gsub(color, " ", "")
-                            color = split(color, ",")
-                            if #color ~= 3 then
-                                return false, "Invalid attribute 'color' of 'text' node - must be a string in the format 'r,g,b' e.g. 255,255,0."
-                            end
-                            local colorTable = {}
-                            for w=1, #color do
-                                local theColor = tonumber(color[w])
-                                if (not theColor) or (theColor < 0) or (theColor > 255) then
-                                    return false, "Invalid attribute 'color' of 'text' node - must be a string in the format 'r,g,b' e.g. 255,255,0."
-                                end
-                                colorTable[w] = theColor
-                            end
-                            texts[name] = {
-                                text = value,
-                                r = colorTable[1],
-                                g = colorTable[2],
-                                b = colorTable[3],
-                            }
-                        end
-                    end
-                elseif nodeName == "commands" then
-                    local children = xmlNodeGetChildren(node)
-                    if not children then
-                        return false, "Failed to get children of 'commands' node."
-                    end
-                    for j=1, #children do
-                        local child = children[j]
-                        if child then
-                            local childName = xmlNodeGetName(child)
-                            if childName ~= "command" then
-                                return false, "Invalid child node '" .. childName .. "' of 'commands' node."
-                            end
-                            local name = xmlNodeGetAttribute(child, "name")
-                            if not name then
-                                return false, "Missing attribute 'name' of 'command' node."
-                            end
-                            local value = xmlNodeGetValue(child)
-                            if not value then
-                                return false, "Missing value of 'command' node."
-                            end
-                            if value == "" then
-                                return false, "Invalid value of 'command' node - must not be empty."
-                            end
-                            commands[name] = value
-                        end
-                    end
                 end
             end
         end
     end
+    return true
+end
+
+local function commandSpawnCollectibles(thePlayer, cmd, theType)
+    if not canAdminCollectibles(thePlayer) then
+        outputCustomText(thePlayer, "admin_no_permission")
+        return
+    end
+    if not theType then
+        outputCustomText(thePlayer, "command_syntax", cmd, "[collectible type]")
+        return
+    end
+    spawnCollectibles(theType, thePlayer)
+end
+
+local function commandDestroyCollectibles(thePlayer, cmd, theType)
+    if not canAdminCollectibles(thePlayer) then
+        outputCustomText(thePlayer, "admin_no_permission")
+        return
+    end
+    if not theType then
+        outputCustomText(thePlayer, "command_syntax", cmd, "[collectible type]")
+        return
+    end
+    destroyCollectibles(theType, thePlayer)
+end
+
+local function commandResetCollectibles(thePlayer, cmd, targetAccountID, theType)
+    if not canAdminCollectibles(thePlayer) then
+        outputCustomText(thePlayer, "admin_no_permission")
+        return
+    end
+    targetAccountID = tonumber(targetAccountID)
+    if not targetAccountID then
+        outputCustomText(thePlayer, "command_syntax", cmd, "[target account ID] (optional: [collectible type name])")
+        return
+    end
+    local targetAccount = getAccountByID(targetAccountID)
+    if not targetAccount then
+        outputCustomText(thePlayer, "admin_invalid_account_id", tostring(targetAccount))
+        return
+    end
+    if not theType then
+        theType = "all"
+    end
+    resetClientCollectibles(targetAccount, theType, thePlayer)
+end
+
+--- Validates all custom settings
+--
+--- returns true if successful, false + error message otherwise.
+local function parseCustomSettings()
+
+    --[[
+        CUSTOM FUNCTIONS
+    --]]
+    if type(canAdminCollectibles) ~= "function" then
+        return false, "Failed to parse custom settings - canAdminCollectibles is not a function."
+    end
+    if type(canCollectPickup) ~= "function" then
+        return false, "Failed to parse custom settings - canCollectPickup is not a function."
+    end
+
+    --[[
+        CONSTANTS TABLE
+    --]]
+    if type(CONSTANTS) ~= "table" then
+        return false, "Failed to parse constants - CONSTANTS is not a table."
+    end
+
+    -- COMMANDS
+    if type(CONSTANTS.COMMANDS) ~= "table" then
+        return false, "Failed to parse constants - CONSTANTS.COMMANDS is not a table."
+    end
+
+    local commands = CONSTANTS.COMMANDS
+    if type(commands.SPAWN) ~= "string" then
+        return false, "Failed to parse constants - CONSTANTS.COMMANDS.SPAWN is not a string."
+    end
+    addCommandHandler(commands.SPAWN, commandSpawnCollectibles, false, false)
+
+    if type(commands.DESTROY) ~= "string" then
+        return false, "Failed to parse constants - CONSTANTS.COMMANDS.DESTROY is not a string."
+    end
+    addCommandHandler(commands.DESTROY, commandDestroyCollectibles, false, false)
+
+    if type(commands.RESETPLAYER) ~= "string" then
+        return false, "Failed to parse constants - CONSTANTS.COMMANDS.RESETPLAYER is not a string."
+    end
+    addCommandHandler(commands.RESETPLAYER, commandResetCollectibles, false, false)
+
+    -- Optional Commands
+    if (CONFIG_EDITOR_LOADED) then
+        if type(commands.SPAWNPOINTS) ~= "string" then
+            return false, "Failed to parse constants - CONSTANTS.COMMANDS.SPAWNPOINTS is not a string."
+        end
+        addCommandHandler(commands.SPAWNPOINTS, commandConfigureSpawnpoints, false, false)
+
+        if type(commands.ADMIN) ~= "string" then
+            return false, "Failed to parse constants - CONSTANTS.COMMANDS.ADMIN is not a string."
+        end
+        addCommandHandler(commands.ADMIN, commandAdminCollectibles, false, false)
+    end
+
+    -- STRINGS
+    if type(CONSTANTS.STRINGS) ~= "table" then
+        return false, "Failed to parse constants - CONSTANTS.STRINGS is not a table."
+    end
+
     return true
 end
 
@@ -508,41 +480,6 @@ local function loadConfiguration()
         end
         collectibleTypes[theType2].total = #collectibleTypes[theType2].spawnpoints
     end
-    success, reason = parseOneNode(children, "texts")
-    if not success then
-        xmlUnloadFile(config)
-        return false, "Failed to parse <texts>: " .. reason
-    end
-    local EXPECTED_TEXTS = {
-        "command_syntax", "ask_to_wait", "cant_pickup",
-        "cant_toggle", "toggle_on", "toggle_off", "respawned", "already_collected", "text_top", "text_bottom", "reward_money",
-        "admin_no_permission", "admin_count_spawned", "admin_spawned", "admin_destroyed", "admin_invalid_collectible_type", "admin_invalid_account_id", "admin_reset_success_player", "admin_reset_success"
-    }
-    for i=1, #EXPECTED_TEXTS do
-        local name = EXPECTED_TEXTS[i]
-        if not texts[name] then
-            xmlUnloadFile(config)
-            return false, "Missing text '" .. name .. "'."
-        end
-    end
-    success, reason = parseOneNode(children, "commands")
-    if not success then
-        xmlUnloadFile(config)
-        return false, "Failed to parse <commands>: " .. reason
-    end
-    local EXPECTED_COMMANDS = {"admin", "spawn", "destroy", "resetplayer", "points"}
-    for i=1, #EXPECTED_COMMANDS do
-        local name = EXPECTED_COMMANDS[i]
-        if not commands[name] then
-            xmlUnloadFile(config)
-            return false, "Missing command '" .. name .. "'."
-        end
-    end
-    addCommandHandler(commands.admin, commandAdminCollectibles)
-    addCommandHandler(commands.spawn, commandSpawnCollectibles)
-    addCommandHandler(commands.destroy, commandDestroyCollectibles)
-    addCommandHandler(commands.resetplayer, commandResetCollectibles)
-    addCommandHandler(commands.points, commandConfigureSpawnpoints)
 
     xmlUnloadFile(config)
     return true
@@ -1190,8 +1127,7 @@ local function sendCollectibles(player, account, thisType)
                 if spawnpoint then
                     local alreadyCollected = isCollectedClient(player, account, theType, info.respawn_after, spawnpoint.spID)
                     if not alreadyCollected then
-                        -- no longer ipairs list because some may already be collected (won't spawn)
-                        spawnpoints[i] = {
+                        spawnpoints[#spawnpoints+1] = {
                             spID = spawnpoint.spID,
                             x = spawnpoint.x,
                             y = spawnpoint.y,
@@ -1218,7 +1154,7 @@ local function sendCollectibles(player, account, thisType)
     end
     triggerClientEvent(player, "collectibles:receive", player,
         collectibleTypesClient,
-        texts
+        CONSTANTS
     )
 end
 
@@ -1649,7 +1585,7 @@ local function handlePickedUp(thePlayer_, collectibleInfo)
         count = countCollectedServer(accountID, theType) + 1
         for i=1, #collectibleTypes[theType].spawnpoints do
             local spawnpoint = collectibleTypes[theType].spawnpoints[i]
-            if spawnpoint and (spawnpoint.id == spID) then
+            if spawnpoint and (spawnpoint.spID == spID) then
                 collectibleTypes[theType].spawnpoints[i].collected_by = accountID
                 break
             end
@@ -1728,6 +1664,12 @@ addEventHandler("collectibles:requestCollectibles", resourceRoot, function()
 end, false)
 
 addEventHandler("onResourceStart", resourceRoot, function()
+
+    local success1, reason1 = parseCustomSettings()
+    if not success1 then
+        outputInfoMessage(reason1)
+        return cancelEvent()
+    end
 
     local success, reason = loadConfiguration()
     if not success then
