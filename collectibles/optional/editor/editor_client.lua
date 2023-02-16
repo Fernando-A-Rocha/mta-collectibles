@@ -161,7 +161,7 @@ end
 
 local function openCreateCollectible(metaFileSrcs)
     local WW, WH = 750, 550
-    createWin = guiCreateWindow((SW-WW)/2, (SH-WH)/2, WW, WH, "Create New Collectible", false)
+    createWin = guiCreateWindow((SW-WW)/2, (SH-WH)/2, WW, WH, gct("editor_create_new"), false)
     guiSetEnabled(mainWin, false)
 
     local x, y = 15, 0
@@ -173,16 +173,16 @@ local function openCreateCollectible(metaFileSrcs)
     guiCreateLabel(0, y, PW2, 20, " ", false, scrollPane)
     y = y + 40
 
-    local typeNameLabel = guiCreateLabel(0, y, PW2, 20, "Name (use '_' instead of space):", false, scrollPane)
+    local typeNameLabel = guiCreateLabel(0, y, PW2, 20, gct("Name (use '_' instead of space):"), false, scrollPane)
     y = y + 20 + 5
 
     local typeNameEdit = guiCreateEdit(0, y, PW2*(1/3), 24, "", false, scrollPane)
     y = y + 24 + 10
 
-    local autoLoadCheckbox = guiCreateCheckBox(0, y, PW2*(1/3), 24, "Spawn Automatically", true, false, scrollPane)
+    local autoLoadCheckbox = guiCreateCheckBox(0, y, PW2*(1/3), 24, gct("Spawn Automatically"), true, false, scrollPane)
     y = y + 24 + 10
 
-    local targetLabel = guiCreateLabel(0, y, (PW2*(1/3))/2, 20, "Target:", false, scrollPane)
+    local targetLabel = guiCreateLabel(0, y, (PW2*(1/3))/2, 20, gct("Target:"), false, scrollPane)
     y = y + 20 + 5
 
     local targetDropdown = guiCreateComboBox(0, y, (PW2*(1/3))/2, 24*3, "", false, scrollPane)
@@ -191,7 +191,7 @@ local function openCreateCollectible(metaFileSrcs)
     guiComboBoxSetSelected(targetDropdown, 0) -- default: client
     y = y + 24 + 6
 
-    local respawnAfterCheckbox = guiCreateCheckBox(0, y, PW2*(1/3), 20, "(Optional)  Respawn After:", false, false, scrollPane)
+    local respawnAfterCheckbox = guiCreateCheckBox(0, y, PW2*(1/3), 20, gct("(Optional)  Respawn After:"), false, false, scrollPane)
     y = y + 20 + 5
 
     local respawnAfterEdit = guiCreateEdit(0, y, (PW2*(1/3)) * (1/3), 24, "", false, scrollPane)
@@ -206,14 +206,14 @@ local function openCreateCollectible(metaFileSrcs)
     guiSetEnabled(respawnAfterUnitDropdown, false)
     y = y + 24 + 6
 
-    local toggleCommandCheckbox = guiCreateCheckBox(0, y, PW2*(1/3), 20, "(Optional)  Toggle Command:", false, false, scrollPane)
+    local toggleCommandCheckbox = guiCreateCheckBox(0, y, PW2*(1/3), 20, gct("(Optional)  Toggle Command:"), false, false, scrollPane)
     y = y + 20 + 5
 
     local toggleCommandEdit = guiCreateEdit(0, y, PW2*(1/3), 24, "", false, scrollPane)
     guiSetEnabled(toggleCommandEdit, false)
     y = y + 24 + 6
 
-    local toggleKeyBindCheckbox = guiCreateCheckBox(0, y, PW2*(1/3), 20, "(Optional)  Toggle Key Bind:", false, false, scrollPane)
+    local toggleKeyBindCheckbox = guiCreateCheckBox(0, y, PW2*(1/3), 20, gct("(Optional)  Toggle Key Bind:"), false, false, scrollPane)
     y = y + 20 + 5
 
     local toggleKeyBindEdit = guiCreateEdit(0, y, PW2*(1/3), 24, "", false, scrollPane)
@@ -282,24 +282,24 @@ local function openCreateCollectible(metaFileSrcs)
     x = x + (PW2/2) + 10
     y = 40
 
-    local actionsTitle = guiCreateLabel(x, y, PW2*(1/3), 20, "Actions", false, scrollPane)
+    local actionsTitle = guiCreateLabel(x, y, PW2*(1/3), 20, gct("Actions"), false, scrollPane)
     guiSetFont(actionsTitle, "default-bold-small")
     y = y + 20 + 5
 
-    local actionsText = "Here you can define what happens when a collectible is picked up and when it's the last one found."
+    local actionsText = gct("Here you can define what happens when a collectible is picked up and when it's the last one found.")
     local actionsLabel = guiCreateLabel(x, y, PW2*(1/3) + 55, 40, actionsText, false, scrollPane)
     guiLabelSetHorizontalAlign(actionsLabel, "left", true)
     y = y + 40 + 6
 
-    local onCollectLabel = guiCreateLabel(x, y, PW2*(1/3), 20, "On Collect:", false, scrollPane)
+    local onCollectLabel = guiCreateLabel(x, y, PW2*(1/3), 20, gct("On Collect:"), false, scrollPane)
     guiLabelSetColor(onCollectLabel, 255, 0, 255)
     y = y + 20 + 5
 
-    local playSoundCheckbox = guiCreateCheckBox(x+10, y, PW2*(1/3), 20, "(Optional)  Play Sound", false, false, scrollPane)
+    local playSoundCheckbox = guiCreateCheckBox(x+10, y, PW2*(1/3), 20, gct("(Optional)  Play Sound"), false, false, scrollPane)
     y = y + 20 + 5
 
-    local soundLabel = guiCreateLabel(x+10, y, PW2*(1/3), 20, "Sound File Path:", false, scrollPane)
-    local soundVolumeLabel = guiCreateLabel(x+10 + (PW2*(1/3)) + 5, y, 60, 24, "Volume:", false, scrollPane)
+    local soundLabel = guiCreateLabel(x+10, y, PW2*(1/3), 20, gct("Sound File Path:"), false, scrollPane)
+    local soundVolumeLabel = guiCreateLabel(x+10 + (PW2*(1/3)) + 5, y, 60, 24, gct("Volume:"), false, scrollPane)
 
     local soundEdit = guiCreateEdit(x+10, y + 20 + 5, PW2*(1/3), 24, "", false, scrollPane)
     local soundVolumeEdit = guiCreateEdit(x+10 + (PW2*(1/3)) + 5, y + 20 + 5, 50, 24, "", false, scrollPane)
@@ -308,15 +308,15 @@ local function openCreateCollectible(metaFileSrcs)
     guiSetEnabled(soundEdit, false)
     guiSetEnabled(soundVolumeEdit, false)
 
-    local onCollectAllLabel = guiCreateLabel(x, y, PW2*(1/3), 20, "On Collect Last:", false, scrollPane)
+    local onCollectAllLabel = guiCreateLabel(x, y, PW2*(1/3), 20, gct("On Collect Last:"), false, scrollPane)
     guiLabelSetColor(onCollectAllLabel, 255, 0, 255)
     y = y + 20 + 5
 
-    local playSoundAllCheckbox = guiCreateCheckBox(x+10, y, PW2*(1/3), 20, "(Optional)  Play Sound", false, false, scrollPane)
+    local playSoundAllCheckbox = guiCreateCheckBox(x+10, y, PW2*(1/3), 20, gct("(Optional)  Play Sound"), false, false, scrollPane)
     y = y + 20 + 5
 
-    local soundAllLabel = guiCreateLabel(x+10, y, PW2*(1/3), 20, "Sound File Path:", false, scrollPane)
-    local soundAllVolumeLabel = guiCreateLabel(x+10 + (PW2*(1/3)) + 5, y, 60, 24, "Volume:", false, scrollPane)
+    local soundAllLabel = guiCreateLabel(x+10, y, PW2*(1/3), 20, gct("Sound File Path:"), false, scrollPane)
+    local soundAllVolumeLabel = guiCreateLabel(x+10 + (PW2*(1/3)) + 5, y, 60, 24, gct("Volume:"), false, scrollPane)
 
     local soundAllEdit = guiCreateEdit(x+10, y + 20 + 5, PW2*(1/3), 24, "", false, scrollPane)
     local soundAllVolumeEdit = guiCreateEdit(x+10 + (PW2*(1/3)) + 5, y + 20 + 5, 50, 24, "", false, scrollPane)
@@ -352,8 +352,8 @@ local function openCreateCollectible(metaFileSrcs)
 
     -- Bottom buttons
 
-    local cancel = guiCreateButton(WW - 10 - 100, WH - 10 - 30, 100, 30, "Cancel", false, createWin)
-    local confirm = guiCreateButton(WW - 10 - 100 - 10 - 100, WH - 10 - 30, 100, 30, "Create", false, createWin)
+    local cancel = guiCreateButton(WW - 10 - 100, WH - 10 - 30, 100, 30, gct("Cancel"), false, createWin)
+    local confirm = guiCreateButton(WW - 10 - 100 - 10 - 100, WH - 10 - 30, 100, 30, gct("Create"), false, createWin)
     guiSetProperty(confirm, "NormalTextColour", "FF00FF00")
 
     addEventHandler("onClientGUIClick", createWin, function()
@@ -366,7 +366,7 @@ local function openCreateCollectible(metaFileSrcs)
         elseif source == confirm then
             local typeName = guiGetText(typeNameEdit)
             if typeName == "" then
-                return showValidationError("Name cannot be empty")
+                return showValidationError(gct("Name cannot be empty"))
             end
             typeName = string.gsub(typeName, " ", "_")
             
@@ -380,7 +380,7 @@ local function openCreateCollectible(metaFileSrcs)
                 respawnAfter = guiGetText(respawnAfterEdit)
                 respawnAfter = tonumber(respawnAfter)
                 if (not respawnAfter) or (respawnAfter < 0) then
-                    return showValidationError("Respawn After must be a positive number")
+                    return showValidationError(gct("Respawn After must be a positive number"))
                 end
                 respawnAfter = tostring(respawnAfter)
                 respawnAfterUnit = guiComboBoxGetItemText(respawnAfterUnitDropdown, guiComboBoxGetSelected(respawnAfterUnitDropdown))
@@ -388,19 +388,19 @@ local function openCreateCollectible(metaFileSrcs)
             if guiCheckBoxGetSelected(toggleCommandCheckbox) then
                 toggleCommand = guiGetText(toggleCommandEdit)
                 if toggleCommand == "" then
-                    return showValidationError("Toggle command cannot be empty")
+                    return showValidationError(gct("Toggle command cannot be empty"))
                 end
                 if toggleCommand:find(" ") then
-                    return showValidationError("Toggle command cannot contain spaces")
+                    return showValidationError(gct("Toggle command cannot contain spaces"))
                 end
             end
             if guiCheckBoxGetSelected(toggleKeyBindCheckbox) then
                 toggleKeyBind = guiGetText(toggleKeyBindEdit)
                 if toggleKeyBind == "" then
-                    return showValidationError("Toggle keybind cannot be empty")
+                    return showValidationError(gct("Toggle keybind cannot be empty"))
                 end
                 if toggleKeyBind:find(" ") then
-                    return showValidationError("Toggle keybind cannot contain spaces")
+                    return showValidationError(gct("Toggle keybind cannot contain spaces"))
                 end
                 toggleKeyBind = string.lower(toggleKeyBind)
                 local found = false
@@ -411,7 +411,7 @@ local function openCreateCollectible(metaFileSrcs)
                     end
                 end
                 if not found then
-                    return showValidationError("Toggle keybind must be a valid key name")
+                    return showValidationError(gct("Toggle keybind must be a valid key name"))
                 end
             end
 
@@ -419,12 +419,12 @@ local function openCreateCollectible(metaFileSrcs)
             if guiCheckBoxGetSelected(playSoundCheckbox) then
                 oneVolume = tonumber(guiGetText(soundVolumeEdit))
                 if (not oneVolume) or (oneVolume < 0) then
-                    return showValidationError("Sound volume on 'collect_one' must be a positive number")
+                    return showValidationError(gct("Sound volume on 'collect_one' must be a positive number"))
                 end
                 oneVolume = tostring(oneVolume)
                 oneSound = guiGetText(soundEdit)
                 if oneSound == "" then
-                    return showValidationError("Sound on 'collect_one' cannot be empty")
+                    return showValidationError(gct("Sound on 'collect_one' cannot be empty"))
                 end
                 local found = false
                 for i=1, #metaFileSrcs do
@@ -435,7 +435,7 @@ local function openCreateCollectible(metaFileSrcs)
                     end
                 end
                 if not found then
-                    return showValidationError("Sound file path on 'collect_one' does not exist")
+                    return showValidationError(gct("Sound file path on 'collect_one' does not exist"))
                 end
             end
 
@@ -443,12 +443,12 @@ local function openCreateCollectible(metaFileSrcs)
             if guiCheckBoxGetSelected(playSoundAllCheckbox) then
                 allVolume = tonumber(guiGetText(soundAllVolumeEdit))
                 if (not allVolume) or (allVolume < 0) then
-                    return showValidationError("Sound volume on 'collect_last' must be a positive number")
+                    return showValidationError(gct("Sound volume on 'collect_last' must be a positive number"))
                 end
                 allVolume = tostring(allVolume)
                 allSound = guiGetText(soundAllEdit)
                 if allSound == "" then
-                    return showValidationError("Sound on 'collect_last' cannot be empty")
+                    return showValidationError(gct("Sound on 'collect_last' cannot be empty"))
                 end
                 local found = false
                 for i=1, #metaFileSrcs do
@@ -459,7 +459,7 @@ local function openCreateCollectible(metaFileSrcs)
                     end
                 end
                 if not found then
-                    return showValidationError("Sound file path on 'collect_last' does not exist")
+                    return showValidationError(gct("Sound file path on 'collect_last' does not exist"))
                 end
             end
 
@@ -487,7 +487,7 @@ local function openCreateCollectible(metaFileSrcs)
             if typeAutoLoad then
                 desc = desc.."\nIt will be automatically loaded on "..(target).." start."
             end
-            createConfirmPopup("Confirm Creation", "FFFFFF00", desc, "Confirm", "Cancel", "collectibles:adminConfirm", "create", theType)
+            createConfirmPopup(gct("Confirm Creation"), "FFFFFF00", desc, gct("Confirm"), gct("Cancel"), "collectibles:adminConfirm", "create", theType)
         end
     end)
 end
@@ -503,7 +503,7 @@ addEventHandler("collectibles:admin", localPlayer, function(serverInfo)
     showCursor(true)
 
     local WW, WH = 800, 600
-    mainWin = guiCreateWindow((SW-WW)/2, (SH-WH)/2, WW, WH, "Collectibles - System Administration", false)
+    mainWin = guiCreateWindow((SW-WW)/2, (SH-WH)/2, WW, WH, "Collectibles - Editor", false)
 
     local x, y = 15, 20
     
@@ -527,15 +527,15 @@ addEventHandler("collectibles:admin", localPlayer, function(serverInfo)
     else
         x, y = 5, 5
 
-        local targetExplanation = ""
-        targetExplanation = targetExplanation.. "There are two possible collectible 'targets':"
-        targetExplanation = targetExplanation.. "\n   • [client]: The collectibles are created on each client only. Toggle command/bind and respawn time can be defined."
-        targetExplanation = targetExplanation.. "\n      Don't forget to define a toggle command/keybind if 'Spawn Automatically' is disabled."
-        targetExplanation = targetExplanation.. "\n   • [server]: The collectibles are created on the server and all players will compete for them."
-        local targetExplanationLabel = guiCreateLabel(x+10, y, TW-20, (16*4), targetExplanation, false, tabTypes)
+        local targetExplanation = gct("editor_target_explained")
+        
+        local _, countLines = targetExplanation:gsub("\n","")
+        countLines = countLines + 1
+
+        local targetExplanationLabel = guiCreateLabel(x+10, y, TW-20, (16*countLines), targetExplanation, false, tabTypes)
         guiLabelSetColor(targetExplanationLabel, 245, 227, 66)
         guiLabelSetVerticalAlign(targetExplanationLabel, "center")
-        y = y + (16*4) + 10
+        y = y + (16*countLines) + 5
 
         local createTypeButton = guiCreateButton(x, y, 160, 24, "Create Collectible Type", false, tabTypes)
         addEventHandler("onClientGUIClick", createTypeButton, function()
@@ -1372,11 +1372,11 @@ end, false)
 addEventHandler("collectibles:adminResponse", localPlayer, function(success, failureReason, okText)
     if (success) then
         if okText then
-            createConfirmPopup(getCustomText("error"), "FF00FF00", success, okText, false, "collectibles:adminConfirm", "closeMainWindow")
+            createConfirmPopup(gct("error"), "FF00FF00", success, okText, false, "collectibles:adminConfirm", "closeMainWindow")
         else
-            createConfirmPopup(getCustomText("success"), "FF00FF00", success, false, false)
+            createConfirmPopup(gct("success"), "FF00FF00", success, false, false)
         end
     else
-        createConfirmPopup(getCustomText("error"), "FFFF0000", tostring(failureReason), false, okText or false)
+        createConfirmPopup(gct("error"), "FFFF0000", tostring(failureReason), false, okText or false)
     end
 end, false)

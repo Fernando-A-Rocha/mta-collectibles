@@ -39,16 +39,12 @@ CONSTANTS = {
         ["syntax_spawnpoint_id"] = {value = "[spawnpoint ID]"},
         ["syntax_optional_after"] = {value = "optional:"},
         ["ask_to_wait"] = {value = "Please wait a bit before doing this again.", rgb={200,200,200}},
-
-        -- Client only:
         ["cant_toggle"] = {value="You can't toggle collectibles now.", rgb={255, 0, 0}},
         ["already_collected"] = {value="You already collected all %s collectibles (total %s).", rgb={255, 0, 0}},
         ["toggle_on"] = {value="You have found %s out of %s %s collectibles so far. Good luck!"},
         ["toggle_off"] = {value="You have hidden %s %s collectible(s)."},
         ["reward_money"] = {value="You have earned $%s for collecting this %s.", rgb={55, 255, 55}},
         ["cant_pickup"] = {value="You can't collect this now.", rgb={255, 55, 55}},
-
-        -- Server only:
         ["admin_error"] = {value="Error: %s", rgb={255, 0, 0}},
         ["admin_no_permission"] = {value="You don't have permission to do this.", rgb={255, 55, 55}},
         ["admin_count_spawned"] = {value="There are currently %s %s collectibles spawned.", rgb={255, 55, 55}},
@@ -70,6 +66,12 @@ CONSTANTS = {
         ["admin_config_backup_created"] = {value="Configuration backup created successfully."},
         ["admin_config_backup_restored"] = {value="Configuration restored successfully."},
         ["admin_config_backup_copied"] = {value="Configuration backup copied to: %s"},
+        ["editor_target_explained"] = {value=[[There are two possible collectible 'targets':
+   • [client]: The collectibles are created on each client only. Toggle command/bind and respawn time can be defined.
+      Don't forget to define a toggle command/keybind if 'Spawn Automatically' is disabled.
+   • [server]: The collectibles are created on the server and all players will compete for them.
+        ]], rgb={255, 55, 55}},
+        ["editor_create_new"] = {value="Create New Collectible"},
     },
 }
 

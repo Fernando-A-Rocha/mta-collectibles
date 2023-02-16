@@ -111,7 +111,7 @@ local function requestUpdateConfiguration(updateNodes)
         restartResource(getThisResource())
     end, 5000, 1)
 
-    triggerClientEvent(client, "collectibles:adminResponse", client, getCustomText("admin_changes_saved").."\n\n"..getCustomText("admin_resource_restart"))
+    triggerClientEvent(client, "collectibles:adminResponse", client, gct("admin_changes_saved").."\n\n"..gct("admin_resource_restart"))
 end
 addEventHandler("collectibles:updateConfig", resourceRoot, requestUpdateConfiguration, false)
 
@@ -132,7 +132,7 @@ local function requestDeleteType(theType)
         restartResource(getThisResource())
     end, 5000, 1)
 
-    triggerClientEvent(client, "collectibles:adminResponse", client, getCustomText("admin_collectible_type_deleted", theType).."\n\n"..getCustomText("admin_resource_restart"))
+    triggerClientEvent(client, "collectibles:adminResponse", client, gct("admin_collectible_type_deleted", theType).."\n\n"..gct("admin_resource_restart"))
 end
 addEventHandler("collectibles:deleteType", resourceRoot, requestDeleteType, false)
 
@@ -153,7 +153,7 @@ local function requestCreateNewType(typeInfo)
         restartResource(getThisResource())
     end, 5000, 1)
 
-    triggerClientEvent(client, "collectibles:adminResponse", client, getCustomText("admin_collectible_type_created", typeInfo.name).."\n\n"..getCustomText("admin_resource_restart"))
+    triggerClientEvent(client, "collectibles:adminResponse", client, gct("admin_collectible_type_created", typeInfo.name).."\n\n"..gct("admin_resource_restart"))
 end
 addEventHandler("collectibles:createNewType", resourceRoot, requestCreateNewType, false)
 
@@ -169,7 +169,7 @@ local function requestBackupConfiguration()
         return triggerClientEvent(client, "collectibles:adminResponse", client, false, reason, "OK")
     end
 
-    triggerClientEvent(client, "collectibles:adminResponse", client, getCustomText("admin_config_backup_created"), false, "OK")
+    triggerClientEvent(client, "collectibles:adminResponse", client, gct("admin_config_backup_created"), false, "OK")
 end
 addEventHandler("collectibles:backupConfig", resourceRoot, requestBackupConfiguration, false)
 
@@ -190,7 +190,7 @@ local function requestRestoreConfigBackup()
         restartResource(getThisResource())
     end, 5000, 1)
 
-    triggerClientEvent(client, "collectibles:adminResponse", client, getCustomText("admin_config_backup_restored").."\n\n"..getCustomText("admin_resource_restart"))
+    triggerClientEvent(client, "collectibles:adminResponse", client, gct("admin_config_backup_restored").."\n\n"..gct("admin_resource_restart"))
 end
 addEventHandler("collectibles:restoreConfigBackup", resourceRoot, requestRestoreConfigBackup, false)
 
@@ -209,7 +209,7 @@ local function requestDuplicateConfigBackup(newPath)
         return triggerClientEvent(client, "collectibles:adminResponse", client, false, reason, "OK")
     end
 
-    triggerClientEvent(client, "collectibles:adminResponse", client, getCustomText("admin_config_backup_copied", newPath), false, "OK")
+    triggerClientEvent(client, "collectibles:adminResponse", client, gct("admin_config_backup_copied", newPath), false, "OK")
 end
 addEventHandler("collectibles:duplicateConfigBackup", resourceRoot, requestDuplicateConfigBackup, false)
 
@@ -219,7 +219,7 @@ function commandConfigureSpawnpoints(thePlayer, cmd, theType)
         return
     end
     if not theType then
-        outputCustomText(thePlayer, "command_syntax", cmd, getCustomText("syntax_collectible_type"))
+        outputCustomText(thePlayer, "command_syntax", cmd, gct("syntax_collectible_type"))
         return
     end
     local collectibleTypes = getCollectibleTypes()
@@ -256,7 +256,7 @@ local function requestGotoSpawnpoint(theType, spID)
     local collectibleTypes = getCollectibleTypes() or {}
     local info = collectibleTypes[theType]
     if not info then
-        return triggerClientEvent(client, "collectibles:adminResponse", client, false, getCustomText("admin_invalid_collectible_type", tostring(theType)), "OK")
+        return triggerClientEvent(client, "collectibles:adminResponse", client, false, gct("admin_invalid_collectible_type", tostring(theType)), "OK")
     end
     
     local spawnpoint
@@ -268,7 +268,7 @@ local function requestGotoSpawnpoint(theType, spID)
         end
     end
     if not spawnpoint then
-        return triggerClientEvent(client, "collectibles:adminResponse", client, false, getCustomText("admin_invalid_spawnpoint_id", (string.gsub(theType, "_", " ")), spID), "OK")
+        return triggerClientEvent(client, "collectibles:adminResponse", client, false, gct("admin_invalid_spawnpoint_id", (string.gsub(theType, "_", " ")), spID), "OK")
     end
 
     -- Prevent the player from picking up the collectible
@@ -299,7 +299,7 @@ local function requestRemoveSpawnpoint(theType, spID)
     local collectibleTypes = getCollectibleTypes() or {}
     local info = collectibleTypes[theType]
     if not info then
-        return triggerClientEvent(client, "collectibles:adminResponse", client, false, getCustomText("admin_invalid_collectible_type", tostring(theType)), "OK")
+        return triggerClientEvent(client, "collectibles:adminResponse", client, false, gct("admin_invalid_collectible_type", tostring(theType)), "OK")
     end
     
     local spawnpoint
@@ -311,7 +311,7 @@ local function requestRemoveSpawnpoint(theType, spID)
         end
     end
     if not spawnpoint then
-        return triggerClientEvent(client, "collectibles:adminResponse", client, false, getCustomText("admin_invalid_spawnpoint_id", (string.gsub(theType, "_", " ")), spID), "OK")
+        return triggerClientEvent(client, "collectibles:adminResponse", client, false, gct("admin_invalid_spawnpoint_id", (string.gsub(theType, "_", " ")), spID), "OK")
     end
 
     local success, reason = removeSpawnpoint(theType, spID)
@@ -341,6 +341,6 @@ local function requestCreateSpawnpoint(theType, model)
         return triggerClientEvent(client, "collectibles:adminResponse", client, false, reason, "OK")
     end
 
-    triggerClientEvent(client, "collectibles:adminResponse", client, getCustomText("admin_spawnpoint_created", tostring(newSpID), (string.gsub(theType, "_", " "))), false, "OK")
+    triggerClientEvent(client, "collectibles:adminResponse", client, gct("admin_spawnpoint_created", tostring(newSpID), (string.gsub(theType, "_", " "))), false, "OK")
 end
 addEventHandler("collectibles:createSpawnpoint", resourceRoot, requestCreateSpawnpoint, false)
