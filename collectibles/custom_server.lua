@@ -26,17 +26,21 @@ CONSTANTS = {
 
     --[[
         Customizable texts (translation possible)
+
+        rgb color is optional - defaults to white (255,255,255)
     --]]
     STRINGS = {
         -- Shared:
-        ["command_syntax"] = {value = "SYNTAX: /%s %s", rgb={255,255,255}},
+        ["error"] = {value = "Error"},
+        ["success"] = {value = "Success"},
+        ["command_syntax"] = {value = "SYNTAX: /%s %s"},
         ["ask_to_wait"] = {value = "Please wait a bit before doing this again.", rgb={200,200,200}},
 
         -- Client only:
         ["cant_toggle"] = {value="You can't toggle collectibles now.", rgb={255, 0, 0}},
         ["already_collected"] = {value="You already collected all %s collectibles (total %s).", rgb={255, 0, 0}},
-        ["toggle_on"] = {value="You have found %s out of %s %s collectibles so far. Good luck!", rgb={255, 255, 255}},
-        ["toggle_off"] = {value="You have hidden %s %s collectible(s).", rgb={255, 255, 255}},
+        ["toggle_on"] = {value="You have found %s out of %s %s collectibles so far. Good luck!"},
+        ["toggle_off"] = {value="You have hidden %s %s collectible(s)."},
         ["reward_money"] = {value="You have earned $%s for collecting this %s.", rgb={55, 255, 55}},
         ["cant_pickup"] = {value="You can't collect this now.", rgb={255, 55, 55}},
 
@@ -55,6 +59,8 @@ CONSTANTS = {
         ["admin_invalid_account_id"] = {value="User account ID %s does not exist.", rgb={255, 0, 0}},
         ["admin_reset_success"] = {value="You have reset and respawned %s client collectibles for %s (ID: %s).", rgb={5, 255, 5}},
         ["admin_reset_success_player"] = {value="An admin has reset and respawned your collectibles (%s).", rgb={88, 255, 88}},
+
+        ["admin_resource_restart"] = {value="The resource will now restart...\nPay attention to the server console."},
     },
 }
 

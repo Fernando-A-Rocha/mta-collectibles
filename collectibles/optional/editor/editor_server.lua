@@ -111,7 +111,7 @@ local function requestUpdateConfiguration(updateNodes)
         restartResource(getThisResource())
     end, 5000, 1)
 
-    triggerClientEvent(client, "collectibles:adminResponse", client, "Changes saved successfully. The resource will now restart...\nPay attention to the server console.")
+    triggerClientEvent(client, "collectibles:adminResponse", client, "Changes saved successfully.\n\n"..getCustomText("admin_resource_restart"))
 end
 addEventHandler("collectibles:updateConfig", resourceRoot, requestUpdateConfiguration, false)
 
@@ -132,7 +132,7 @@ local function requestDeleteType(theType)
         restartResource(getThisResource())
     end, 5000, 1)
 
-    triggerClientEvent(client, "collectibles:adminResponse", client, "Collectible type deleted successfully. The resource will now restart...\nPay attention to the server console.")
+    triggerClientEvent(client, "collectibles:adminResponse", client, "Collectible type deleted successfully.\n\n"..getCustomText("admin_resource_restart"))
 end
 addEventHandler("collectibles:deleteType", resourceRoot, requestDeleteType, false)
 
@@ -153,7 +153,7 @@ local function requestCreateNewType(typeInfo)
         restartResource(getThisResource())
     end, 5000, 1)
 
-    triggerClientEvent(client, "collectibles:adminResponse", client, "Collectible type created successfully. The resource will now restart...\nPay attention to the server console.")
+    triggerClientEvent(client, "collectibles:adminResponse", client, "Collectible type created successfully.\n\n"..getCustomText("admin_resource_restart"))
 end
 addEventHandler("collectibles:createNewType", resourceRoot, requestCreateNewType, false)
 
@@ -190,7 +190,7 @@ local function requestRestoreConfigBackup()
         restartResource(getThisResource())
     end, 5000, 1)
 
-    triggerClientEvent(client, "collectibles:adminResponse", client, "Configuration restored successfully. The resource will now restart...\nPay attention to the server console.")
+    triggerClientEvent(client, "collectibles:adminResponse", client, "Configuration restored successfully.\n\n"..getCustomText("admin_resource_restart"))
 end
 addEventHandler("collectibles:restoreConfigBackup", resourceRoot, requestRestoreConfigBackup, false)
 

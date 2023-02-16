@@ -308,7 +308,7 @@ local function openCreateCollectible(metaFileSrcs)
     guiSetEnabled(soundEdit, false)
     guiSetEnabled(soundVolumeEdit, false)
 
-    local onCollectAllLabel = guiCreateLabel(x, y, PW2*(1/3), 20, "On Collect All:", false, scrollPane)
+    local onCollectAllLabel = guiCreateLabel(x, y, PW2*(1/3), 20, "On Collect Last:", false, scrollPane)
     guiLabelSetColor(onCollectAllLabel, 255, 0, 255)
     y = y + 20 + 5
 
@@ -443,12 +443,12 @@ local function openCreateCollectible(metaFileSrcs)
             if guiCheckBoxGetSelected(playSoundAllCheckbox) then
                 allVolume = tonumber(guiGetText(soundAllVolumeEdit))
                 if (not allVolume) or (allVolume < 0) then
-                    return showValidationError("Sound volume on 'collect_all' must be a positive number")
+                    return showValidationError("Sound volume on 'collect_last' must be a positive number")
                 end
                 allVolume = tostring(allVolume)
                 allSound = guiGetText(soundAllEdit)
                 if allSound == "" then
-                    return showValidationError("Sound on 'collect_all' cannot be empty")
+                    return showValidationError("Sound on 'collect_last' cannot be empty")
                 end
                 local found = false
                 for i=1, #metaFileSrcs do
@@ -459,7 +459,7 @@ local function openCreateCollectible(metaFileSrcs)
                     end
                 end
                 if not found then
-                    return showValidationError("Sound file path on 'collect_all' does not exist")
+                    return showValidationError("Sound file path on 'collect_last' does not exist")
                 end
             end
 
@@ -476,7 +476,7 @@ local function openCreateCollectible(metaFileSrcs)
                         sound = oneSound,
                         sound_volume = oneVolume
                     },
-                    collect_all = {
+                    collect_last = {
                         sound = allSound,
                         sound_volume = allVolume
                     }
@@ -801,7 +801,7 @@ addEventHandler("collectibles:admin", localPlayer, function(serverInfo)
             end
             y = y + 20 + 24 + 25
 
-            local onCollectAllLabel = guiCreateLabel(x, y, PW2*(1/3), 20, "On Collect All:", false, tabScroll)
+            local onCollectAllLabel = guiCreateLabel(x, y, PW2*(1/3), 20, "On Collect Last:", false, tabScroll)
             guiLabelSetColor(onCollectAllLabel, 255, 0, 255)
             y = y + 20 + 5
 
@@ -815,10 +815,10 @@ addEventHandler("collectibles:admin", localPlayer, function(serverInfo)
             local soundAllVolumeEdit = guiCreateEdit(x+10 + (PW2*(1/3)) + 5, y + 20 + 5, 50, 24, "", false, tabScroll)
             -- y = y + 20 + 24 + 25
 
-            if info.collect_all.sound and info.collect_all.sound_volume then
+            if info.collect_last.sound and info.collect_last.sound_volume then
                 guiCheckBoxSetSelected(playSoundAllCheckbox, true)
-                guiSetText(soundAllEdit, tostring(info.collect_all.sound))
-                guiSetText(soundAllVolumeEdit, tostring(info.collect_all.sound_volume))
+                guiSetText(soundAllEdit, tostring(info.collect_last.sound))
+                guiSetText(soundAllVolumeEdit, tostring(info.collect_last.sound_volume))
             else
                 guiSetEnabled(soundAllEdit, false)
                 guiSetEnabled(soundAllVolumeEdit, false)
@@ -855,7 +855,7 @@ addEventHandler("collectibles:admin", localPlayer, function(serverInfo)
                     sound = soundEdit,
                     soundVolume = soundVolumeEdit,
                 },
-                collect_all = {
+                collect_last = {
                     playSound = playSoundAllCheckbox,
                     sound = soundAllEdit,
                     soundVolume = soundAllVolumeEdit,
@@ -984,8 +984,8 @@ addEventHandler("collectibles:admin", localPlayer, function(serverInfo)
                         end
                     elseif settingType == "actions" then
                         local collect_one = info.collect_one
-                        local collect_all = info.collect_all
-                        for on, info2 in pairs({collect_one = info.collect_one, collect_all = info.collect_all}) do
+                        local collect_last = info.collect_last
+                        for on, info2 in pairs({collect_one = info.collect_one, collect_last = info.collect_last}) do
                             local i = #updateNodes[settingType]+1
                             updateNodes[settingType][i] = { attributeNames = {type=name, on=on} }
                             if guiCheckBoxGetSelected(info2.playSound) then
@@ -1372,11 +1372,11 @@ end, false)
 addEventHandler("collectibles:adminResponse", localPlayer, function(success, failureReason, okText)
     if (success) then
         if okText then
-            createConfirmPopup("Success", "FF00FF00", success, okText, false, "collectibles:adminConfirm", "closeMainWindow")
+            createConfirmPopup(getCustomText("error"), "FF00FF00", success, okText, false, "collectibles:adminConfirm", "closeMainWindow")
         else
-            createConfirmPopup("Success", "FF00FF00", success, false, false)
+            createConfirmPopup(getCustomText("success"), "FF00FF00", success, false, false)
         end
     else
-        createConfirmPopup("Error", "FFFF0000", "An error occurred: "..tostring(failureReason), false, okText or false)
+        createConfirmPopup(getCustomText("error"), "FFFF0000", tostring(failureReason), false, okText or false)
     end
 end, false)

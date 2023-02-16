@@ -27,7 +27,7 @@
 -->
 <config>
     <types>
-        <type name="Totem" target="client" auto_load="true" toggle_command="totems" respawn_after_unit="minutes" respawn_after="0.3" />
+        <type name="Totem" target="client" auto_load="true" toggle_command="totems" respawn_after_unit="minutes" respawn_after="0.5" />
         
         <type name="Heart" target="client" auto_load="false" toggle_keybind="f7" />
         
@@ -35,13 +35,13 @@
     </types>
     <actions>
         <action type="Totem" on="collect_one" sound="sounds/vc/pickup.ogg" sound_volume="1" reward_money="1000" />
-        <action type="Totem" on="collect_all" sound="sounds/vc/pickup2.ogg" sound_volume="1" />
+        <action type="Totem" on="collect_last" sound="sounds/vc/pickup2.ogg" sound_volume="1" />
         
         <action type="Heart" on="collect_one" sound="sounds/vc/checkpoint.ogg" sound_volume="1" />
-        <action type="Heart" on="collect_all" sound="sounds/vc/pickup.ogg" sound_volume="1" />
+        <action type="Heart" on="collect_last" sound="sounds/vc/pickup.ogg" sound_volume="1" />
         
         <action type="Package" on="collect_one" sound="sounds/vc/notification.ogg" sound_volume="1" />
-        <action type="Package" on="collect_all" sound="sounds/vc/pickup2.ogg" sound_volume="1" />
+        <action type="Package" on="collect_last" sound="sounds/vc/pickup2.ogg" sound_volume="1" />
     </actions>
     <spawnpoints>
         <spawnpoint type="Totem" id="1" model="1276" x="-3.1806640625" y="21.4326171875" z="3.1171875" interior="0" dimension="0"></spawnpoint>

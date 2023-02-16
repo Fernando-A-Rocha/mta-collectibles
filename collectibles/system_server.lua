@@ -189,7 +189,7 @@ local function parseOneNode(rootChildren, targetNodeName)
                             if not on then
                                 return false, "Missing attribute 'on' of 'action' node."
                             end
-                            if not (on == "collect_one" or on == "collect_all") then
+                            if not (on == "collect_one" or on == "collect_last") then
                                 return false, "Invalid attribute 'on' of 'action' node."
                             end
                             local sound = xmlNodeGetAttribute(child, "sound") or false
@@ -210,10 +210,12 @@ local function parseOneNode(rootChildren, targetNodeName)
                                     return false, "Invalid attribute 'reward_money' of 'action' node - must be a number greater than 0."
                                 end
                             end
+                            local empty = (not sound) and (not reward_money)
                             collectibleTypes[theType][on] = {
                                 sound = sound,
                                 sound_volume = sound_volume,
                                 reward_money = reward_money,
+                                empty = empty,
                             }
                         end
                     end
@@ -536,9 +538,9 @@ local function loadConfiguration()
             xmlUnloadFile(config)
             return false, "Missing action 'collect_one' for type '" .. theType2 .. "'."
         end
-        if not info2.collect_all then
+        if not info2.collect_last then
             xmlUnloadFile(config)
-            return false, "Missing action 'collect_all' for type '" .. theType2 .. "'."
+            return false, "Missing action 'collect_last' for type '" .. theType2 .. "'."
         end
     end
     success, reason = parseOneNode(children, "spawnpoints")
@@ -923,9 +925,9 @@ function createNewType(typeInfo)
         return false, "Failed to create new type - no collect_one actions specified."
     end
 
-    if type(typeInfo.actions.collect_all) ~= "table" then
+    if type(typeInfo.actions.collect_last) ~= "table" then
         xmlUnloadFile(config)
-        return false, "Failed to create new type - no collect_all actions specified."
+        return false, "Failed to create new type - no collect_last actions specified."
     end
 
     -- Check if type with that name already exists
@@ -1023,18 +1025,18 @@ function createNewType(typeInfo)
     end
 
     xmlNodeSetAttribute(newActionNodeAll, "type", newName)
-    xmlNodeSetAttribute(newActionNodeAll, "on", "collect_all")
+    xmlNodeSetAttribute(newActionNodeAll, "on", "collect_last")
 
-    if typeInfo.actions.collect_all.sound ~= nil then
-        if type(typeInfo.actions.collect_all.sound) ~= "string" then
+    if typeInfo.actions.collect_last.sound ~= nil then
+        if type(typeInfo.actions.collect_last.sound) ~= "string" then
             xmlUnloadFile(config)
-            return false, "Failed to create new type - collect_all sound must be a string."
+            return false, "Failed to create new type - collect_last sound must be a string."
         end
-        if type(typeInfo.actions.collect_all.sound_volume) ~= "string" then
+        if type(typeInfo.actions.collect_last.sound_volume) ~= "string" then
             xmlUnloadFile(config)
-            return false, "Failed to create new type - collect_all sound_volume must be a string."
+            return false, "Failed to create new type - collect_last sound_volume must be a string."
         end
-        xmlNodeSetAttribute(newActionNodeAll, "sound_volume", typeInfo.actions.collect_all.sound_volume)
+        xmlNodeSetAttribute(newActionNodeAll, "sound_volume", typeInfo.actions.collect_last.sound_volume)
     end
 
     if not xmlSaveFile(config) then
@@ -1194,7 +1196,7 @@ local function sendCollectibles(player, account)
                 toggle_keybind = info.toggle_keybind,
                 toggle_command = info.toggle_command,
                 collect_one = info.collect_one,
-                collect_all = info.collect_all,
+                collect_last = info.collect_last,
                 total = info.total,
                 spawnpoints = info.spawnpoints,
             }
@@ -1686,20 +1688,19 @@ local function handlePickedUp(serversidePickup, collectibleInfo_)
 
     local total = collectibleTypes[theType].total
 
-    local rewardMoney = collectibleTypes[theType].collect_one.reward_money
+    local action = collectibleTypes[theType].collect_one
+    local actionLast = collectibleTypes[theType].collect_last
+    if count == total and not actionLast.empty then
+        action = actionLast
+    end
+
+    local rewardMoney = action.reward_money
     if rewardMoney then
         givePlayerMoney(client, rewardMoney)
         outputCustomText(client, "reward_money", rewardMoney, (string.gsub(theType, "_", " ")))
     end
-
-    local action
-    if count == total then
-        action = collectibleTypes[theType].collect_all
-    else
-        action = collectibleTypes[theType].collect_one
-    end
     
-    triggerClientEvent(client, "collectibles:actionOnPickedUp", client, theType, count, total, action)
+    triggerClientEvent(client, "collectibles:onCollectVisuals", client, theType, count, total, action)
 
     -- Custom Event (for Developers)
     triggerEvent("collectibles:onCollected", client, account, accountID, accountName, collectibleTypes[theType].target, theType, count, total)

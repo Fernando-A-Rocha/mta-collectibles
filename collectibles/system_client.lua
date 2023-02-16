@@ -9,7 +9,7 @@
 -- Internal Events
 addEvent("collectibles:receive", true) -- source: always the local player
 addEvent("collectibles:despawn", true) -- source: always the local player
-addEvent("collectibles:actionOnPickedUp", true) -- source: always the local player
+addEvent("collectibles:onCollectVisuals", true) -- source: always the local player
 addEvent("collectibles:pickupDenied", true) -- source: always the local player
 
 local SW, SH = guiGetScreenSize()
@@ -191,13 +191,9 @@ local function getDefaultOrCustomStyle(theType)
     return text_top, text_bottom
 end
 
-local function actionOnPickedUp(theType, collected, total, action)
-    local info = receivedCollectibles[theType]
-    if not info then
-        return
-    end
-    local sound = action.sound
-    local sound_volume = action.sound_volume
+local function actionOnPickedUp(theType, collected, total, visualFx)
+    local sound = visualFx.sound
+    local sound_volume = visualFx.sound_volume
     if sound then
         local soundElement = playSound(sound, false)
         if not soundElement then
@@ -223,8 +219,8 @@ local function actionOnPickedUp(theType, collected, total, action)
 
     if waitingPickup and waitingPickup.type == theType then
         local theIndex
-        for i=1, #info.spawnpoints do
-            local sp = info.spawnpoints[i]
+        for i=1, #receivedCollectibles[theType].spawnpoints do
+            local sp = receivedCollectibles[theType].spawnpoints[i]
             if sp and sp.spID == waitingPickup.spID then
                 theIndex = i
                 break
@@ -235,15 +231,13 @@ local function actionOnPickedUp(theType, collected, total, action)
         else
             outputDebugMsg("Failed to find spawnpoint ID '" .. waitingPickup.spID .. "' of type '" .. theType .. "'.", "ERROR")
         end
-        if info.target == "client" then
-            -- Destroy the pickup on the client
-            destroyElement(waitingPickup.pickup)
-            spawnedCollectibles[waitingPickup.pickup] = nil
-        end
+        -- Destroy the pickup on the client
+        destroyElement(waitingPickup.pickup)
+        spawnedCollectibles[waitingPickup.pickup] = nil
         waitingPickup = nil
     end
 end
-addEventHandler("collectibles:actionOnPickedUp", localPlayer, actionOnPickedUp, false)
+addEventHandler("collectibles:onCollectVisuals", localPlayer, actionOnPickedUp, false)
 
 addEventHandler("collectibles:receive", localPlayer, function(list, CONSTANTS_)
     if type(list) ~= "table" then
