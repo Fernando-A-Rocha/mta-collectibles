@@ -326,11 +326,11 @@ end
 
 local function commandSpawnCollectibles(thePlayer, cmd, theType)
     if not canAdminCollectibles(thePlayer) then
-        outputCustomText(thePlayer, "admin_no_permission")
+        oct(thePlayer, "You don't have permission to do this.")
         return
     end
     if not theType then
-        outputCustomText(thePlayer, "command_syntax", cmd, gct("syntax_collectible_type"))
+        oct(thePlayer, "SYNTAX: /%s %s", cmd, gct("[collectible type name]"))
         return
     end
     spawnCollectibles(theType, thePlayer)
@@ -338,11 +338,11 @@ end
 
 local function commandDestroyCollectibles(thePlayer, cmd, theType)
     if not canAdminCollectibles(thePlayer) then
-        outputCustomText(thePlayer, "admin_no_permission")
+        oct(thePlayer, "You don't have permission to do this.")
         return
     end
     if not theType then
-        outputCustomText(thePlayer, "command_syntax", cmd, gct("syntax_collectible_type"))
+        oct(thePlayer, "SYNTAX: /%s %s", cmd, gct("[collectible type name]"))
         return
     end
     destroyCollectibles(theType, thePlayer)
@@ -350,17 +350,17 @@ end
 
 local function commandResetCollectibles(thePlayer, cmd, targetAccountID, theType)
     if not canAdminCollectibles(thePlayer) then
-        outputCustomText(thePlayer, "admin_no_permission")
+        oct(thePlayer, "You don't have permission to do this.")
         return
     end
     targetAccountID = tonumber(targetAccountID)
     if not targetAccountID then
-        outputCustomText(thePlayer, "command_syntax", cmd, gct("syntax_target_account_id")..gct("syntax_optional_after")..gct("syntax_collectible_type"))
+        oct(thePlayer, "SYNTAX: /%s %s", cmd, gct("[target account ID]")..gct("optional:")..gct("[collectible type name]"))
         return
     end
     local targetAccount = getAccountByID(targetAccountID)
     if not targetAccount then
-        outputCustomText(thePlayer, "admin_invalid_account_id", tostring(targetAccount))
+        oct(thePlayer, "User account ID %s does not exist.", tostring(targetAccount))
         return
     end
     if not theType then
@@ -371,20 +371,20 @@ end
 
 local function commandCreateSpawnpoint(thePlayer, cmd, theType, model)
     if not canAdminCollectibles(thePlayer) then
-        outputCustomText(thePlayer, "admin_no_permission")
+        oct(thePlayer, "You don't have permission to do this.")
         return
     end
     model = tonumber(model)
     if not theType or not model then
-        outputCustomText(thePlayer, "command_syntax", cmd, gct("syntax_collectible_type").." "..gct("syntax_pickup_object_id"))
+        oct(thePlayer, "SYNTAX: /%s %s", cmd, gct("[collectible type name]").." "..gct("[pickup object model ID]"))
         return
     end
     if not collectibleTypes[theType] then
-        outputCustomText(thePlayer, "admin_invalid_collectible_type", theType)
+        oct(thePlayer, "Collectible type '%s' does not exist.", theType)
         return
     end
     if not isDefaultObjectID(model) then
-        outputCustomText(thePlayer, "admin_invalid_object_model_id", tostring(model))
+        oct(thePlayer, "Model ID %s is not a valid object ID.", tostring(model))
         return
     end
     local x,y,z = getElementPosition(thePlayer)
@@ -392,28 +392,28 @@ local function commandCreateSpawnpoint(thePlayer, cmd, theType, model)
     setPlayerPreventPicking(thePlayer, 5000)
     local newSpID, reason = createNewSpawnpoint(theType, model, x,y,z, interior, dimension)
     if not newSpID then
-        outputCustomText(thePlayer, "admin_error", reason)
+        oct(thePlayer, "Error: %s", reason)
         return
     end
-    outputCustomText(thePlayer, "admin_spawnpoint_created", tostring(newSpID), (string.gsub(theType, "_", " ")))
+    oct(thePlayer, "You have created a new spawnpoint with ID %s (%s).", tostring(newSpID), (string.gsub(theType, "_", " ")))
 end
 
 local function commandRemoveSpawnpoint(thePlayer, cmd, theType, spID)
     if not canAdminCollectibles(thePlayer) then
-        outputCustomText(thePlayer, "admin_no_permission")
+        oct(thePlayer, "You don't have permission to do this.")
         return
     end
     spID = tonumber(spID)
     if not theType or not spID then
-        outputCustomText(thePlayer, "command_syntax", cmd, gct("syntax_collectible_type").." "..gct("syntax_spawnpoint_id"))
+        oct(thePlayer, "SYNTAX: /%s %s", cmd, gct("[collectible type name]").." "..gct("[spawnpoint ID]"))
         return
     end
     if not collectibleTypes[theType] then
-        outputCustomText(thePlayer, "admin_invalid_collectible_type", theType)
+        oct(thePlayer, "Collectible type '%s' does not exist.", theType)
         return
     end
     if #collectibleTypes[theType].spawnpoints == 0 then
-        outputCustomText(thePlayer, "admin_no_spawnpoints", (string.gsub(theType, "_", " ")))
+        oct(thePlayer, "Collectible type '%s' has 0 spawnpoints defined.", (string.gsub(theType, "_", " ")))
         return
     end
     for i=1, #collectibleTypes[theType].spawnpoints do
@@ -421,14 +421,14 @@ local function commandRemoveSpawnpoint(thePlayer, cmd, theType, spID)
         if spawnpoint and spawnpoint.spID == spID then
             local success, reason = removeSpawnpoint(theType, spID)
             if not success then
-                outputCustomText(thePlayer, "admin_error", reason)
+                oct(thePlayer, "Error: %s", reason)
                 return
             end
-            outputCustomText(thePlayer, "admin_removed_spawnpoint", tostring(spID), (string.gsub(theType, "_", " ")))
+            oct(thePlayer, "You have deleted spawnpoint ID %s (%s).", tostring(spID), (string.gsub(theType, "_", " ")))
             return
         end
     end
-    outputCustomText(thePlayer, "admin_invalid_spawnpoint_id", (string.gsub(theType, "_", " ")), spID)
+    oct(thePlayer, "Collectible type '%s' doesn't have a spawnpoint with ID %s.", (string.gsub(theType, "_", " ")), spID)
 end
 
 --- Validates all custom settings
@@ -1067,14 +1067,14 @@ function spawnCollectibles(theType, thePlayer)
     local info = collectibleTypes[theType]
     if (not info) or (info.target ~= "server") then
         if isElement(thePlayer) then
-            outputCustomText(thePlayer, "admin_invalid_collectible_type", theType)
+            oct(thePlayer, "Collectible type '%s' does not exist.", theType)
             for theType2, info2 in pairs(collectibleTypes) do
                 if info2.target == "server" then
                     outputChatBox("  - " .. theType2, thePlayer, 255, 255, 255)
                 end
             end
         end
-        return false, "admin_invalid_collectible_type"
+        return false, "Collectible type '%s' does not exist."
     end
     local countExisting = 0
     for pickup, info2 in pairs(spawnedServerCollectibles) do
@@ -1084,9 +1084,9 @@ function spawnCollectibles(theType, thePlayer)
     end
     if countExisting > 0 then
         if isElement(thePlayer) then
-            outputCustomText(thePlayer, "admin_count_spawned", countExisting, (string.gsub(theType, "_", " ")))
+            oct(thePlayer, "There are currently %s %s collectibles spawned.", countExisting, (string.gsub(theType, "_", " ")))
         end
-        return false, "admin_count_spawned"
+        return false, "There are currently %s %s collectibles spawned."
     end
     for i=1, #info.spawnpoints do
         local sp = info.spawnpoints[i]
@@ -1102,7 +1102,7 @@ function spawnCollectibles(theType, thePlayer)
         end
     end
     if isElement(thePlayer) then
-        outputCustomText(thePlayer, "admin_spawned", countCreated, (string.gsub(theType, "_", " ")))
+        oct(thePlayer, "You have spawned %s %s collectibles on the server.", countCreated, (string.gsub(theType, "_", " ")))
     end
     triggerEvent("collectibles:onSpawnedServer", root, (isElement(thePlayer) and thePlayer or "SYSTEM"), theType, countCreated)
     return true
@@ -1114,14 +1114,14 @@ function destroyCollectibles(theType, thePlayer)
     local info = collectibleTypes[theType]
     if (not info) or (info.target ~= "server") then
         if isElement(thePlayer) then
-            outputCustomText(thePlayer, "admin_invalid_collectible_type", theType)
+            oct(thePlayer, "Collectible type '%s' does not exist.", theType)
             for theType2, info2 in pairs(collectibleTypes) do
                 if info2.target == "server" then
                     outputChatBox("  - " .. theType2, thePlayer, 255, 255, 255)
                 end
             end
         end
-        return false, "admin_invalid_collectible_type"
+        return false, "Collectible type '%s' does not exist."
     end
     local total = info.total
     for i=1, total do
@@ -1138,9 +1138,9 @@ function destroyCollectibles(theType, thePlayer)
     end
     if #pickupsLeft == 0 then
         if isElement(thePlayer) then
-            outputCustomText(thePlayer, "admin_count_spawned", 0, (string.gsub(theType, "_", " ")))
+            oct(thePlayer, "There are currently %s %s collectibles spawned.", 0, (string.gsub(theType, "_", " ")))
         end
-        return false, "admin_count_spawned"
+        return false, "There are currently %s %s collectibles spawned."
     end
     for i=1, #pickupsLeft do
         local pickup = pickupsLeft[i]
@@ -1148,7 +1148,7 @@ function destroyCollectibles(theType, thePlayer)
         spawnedServerCollectibles[pickup] = nil
     end
     if isElement(thePlayer) then
-        outputCustomText(thePlayer, "admin_destroyed", countLeft, (string.gsub(theType, "_", " ")))
+        oct(thePlayer, "You have destroyed the existing %s %s collectibles.", countLeft, (string.gsub(theType, "_", " ")))
     end
     triggerEvent("collectibles:onDestroyedServer", root, (isElement(thePlayer) and thePlayer or "SYSTEM"), theType, countLeft, total)
     return true
@@ -1225,7 +1225,7 @@ function removeSpawnpoint(theType, spID)
     assert(type(spID) == "number", "Bad argument @ removeSpawnpoint [expected number at argument 2, got " .. type(spID) .. "]")
     local info = collectibleTypes[theType]
     if (not info) then
-        return false, "admin_invalid_collectible_type"
+        return false, "Collectible type '%s' does not exist."
     end
     local spawnpoint, theIndex
     for i=1, #info.spawnpoints do
@@ -1335,7 +1335,7 @@ function createNewSpawnpoint(theType, model, x,y,z, interior, dimension)
     assert(type(dimension) == "number", "Bad argument @ createNewSpawnpoint [expected number at argument 7, got " .. type(dimension) .. "]")
     local info = collectibleTypes[theType]
     if (not info) then
-        return false, "admin_invalid_collectible_type"
+        return false, "Collectible type '%s' does not exist."
     end
 
     local config = xmlLoadFile("config.xml")
@@ -1543,14 +1543,14 @@ function resetClientCollectibles(targetAccount, theType, thePlayer)
     assert(type(theType) == "string", "Bad argument @ resetClientCollectibles [string expected, got " .. type(theType) .. "]")
     if theType ~= "all" and ((not collectibleTypes[theType]) or (collectibleTypes[theType].target ~= "client")) then
         if isElement(thePlayer) then
-            outputCustomText(thePlayer, "admin_invalid_collectible_type", theType)
+            oct(thePlayer, "Collectible type '%s' does not exist.", theType)
             for theType2, info2 in pairs(collectibleTypes) do
                 if info2.target == "client" then
                     outputChatBox("  - " .. theType2, thePlayer, 255, 255, 255)
                 end
             end
         end
-        return false, "admin_invalid_collectible_type"
+        return false, "Collectible type '%s' does not exist."
     end
     local dataName = getAccountDataNames().client_counts
     local data = getAccountData(targetAccount, dataName)
@@ -1585,11 +1585,11 @@ function resetClientCollectibles(targetAccount, theType, thePlayer)
     end
     if targetPlayer then
         sendCollectibles(targetPlayer, targetAccount)
-        outputCustomText(targetPlayer, "admin_reset_success_player", (string.gsub(theType, "_", " ")))
+        oct(targetPlayer, "admin_reset_success_player", (string.gsub(theType, "_", " ")))
     end
     if isElement(thePlayer) then
         local targetAccountName = getAccountName(targetAccount)
-        outputCustomText(thePlayer, "admin_reset_success", (string.gsub(theType, "_", " ")), targetAccountName, tostring(targetAccountID))
+        oct(thePlayer, "You have reset and respawned %s client collectibles for %s (ID: %s).", (string.gsub(theType, "_", " ")), targetAccountName, tostring(targetAccountID))
     end
     return true
 end
@@ -1694,7 +1694,7 @@ local function handlePickedUp(serversidePickup, collectibleInfo_)
     local rewardMoney = reward.reward_money
     if rewardMoney then
         if givePlayerMoney(client, rewardMoney) then
-            outputCustomText(client, "reward_money", rewardMoney, (string.gsub(theType, "_", " ")))
+            oct(client, "You have earned $%s for collecting this %s.", rewardMoney, (string.gsub(theType, "_", " ")))
         end
     end
 

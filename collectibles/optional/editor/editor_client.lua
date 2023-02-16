@@ -161,7 +161,7 @@ end
 
 local function openCreateCollectible(metaFileSrcs)
     local WW, WH = 750, 550
-    createWin = guiCreateWindow((SW-WW)/2, (SH-WH)/2, WW, WH, gct("editor_create_new"), false)
+    createWin = guiCreateWindow((SW-WW)/2, (SH-WH)/2, WW, WH, gct("Create New Collectible"), false)
     guiSetEnabled(mainWin, false)
 
     local x, y = 15, 0
@@ -527,7 +527,7 @@ addEventHandler("collectibles:admin", localPlayer, function(serverInfo)
     else
         x, y = 5, 5
 
-        local targetExplanation = gct("editor_target_explained")
+        local targetExplanation = gct("There are two possible collectible 'targets':\n• [client]: The collectibles are created on each client only. Toggle command/bind and respawn time can be defined.\nDon't forget to define a toggle command/keybind if 'Spawn Automatically' is disabled.\n• [server]: The collectibles are created on the server and all players will compete for them.")
         
         local _, countLines = targetExplanation:gsub("\n","")
         countLines = countLines + 1

@@ -58,7 +58,7 @@ local function toggleCollectibles(theType)
         end
     end
     if #pickupsLeft == 0 then
-        outputCustomText("already_collected", (string.gsub(theType, "_", " ")), info.total)
+        oct("You already collected all %s collectibles (total %s).", (string.gsub(theType, "_", " ")), info.total)
         return
     end
     if receivedCollectibles[theType].toggled == false then
@@ -68,7 +68,7 @@ local function toggleCollectibles(theType)
             createOnePickup(theType, spawnpoint.spID, spawnpoint)
         end
         local countCollected = info.total - #pickupsLeft
-        outputCustomText("toggle_on", countCollected, info.total, (string.gsub(theType, "_", " ")))
+        oct("You have found %s out of %s %s collectibles so far. Good luck!", countCollected, info.total, (string.gsub(theType, "_", " ")))
         receivedCollectibles[theType].toggled = true
     else
         -- Destroy collectibles
@@ -80,7 +80,7 @@ local function toggleCollectibles(theType)
                 spawnedCollectibles[pickup] = nil
             end
         end
-        outputCustomText("toggle_off", countDel, (string.gsub(theType, "_", " ")))
+        oct("You have hidden %s %s collectible(s).", countDel, (string.gsub(theType, "_", " ")))
         receivedCollectibles[theType].toggled = false
     end
 end
@@ -133,7 +133,7 @@ addEventHandler("collectibles:pickupDenied", localPlayer, function(theType, spID
     if waitingPickup == nil then return end
     if (waitingPickup.type ~= theType or waitingPickup.spID ~= spID) then return end
     waitingPickup = nil
-    outputCustomText("cant_pickup")
+    oct("You can't collect this now.")
 end, false)
 
 local function drawCollectible()
