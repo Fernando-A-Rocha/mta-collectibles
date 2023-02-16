@@ -50,20 +50,24 @@ local function toggleCollectibles(theType)
     else
         return
     end
-    local countAvailable = #info.spawnpoints
-    local countCollected = info.total - countAvailable
-    if countAvailable == 0 then
+    local pickupsLeft = {}
+    for i=1, #info.spawnpoints do
+        local spawnpoint = info.spawnpoints[i]
+        if spawnpoint and not (spawnpoint.wasCollected) then
+            pickupsLeft[#pickupsLeft+1] = spawnpoint
+        end
+    end
+    if #pickupsLeft == 0 then
         outputCustomText("already_collected", (string.gsub(theType, "_", " ")), info.total)
         return
     end
     if receivedCollectibles[theType].toggled == false then
         -- Create collectibles
-        for i=1, countAvailable do
-            local spawnpoint = info.spawnpoints[i]
-            if spawnpoint then
-                createOnePickup(theType, spawnpoint.spID, spawnpoint)
-            end
+        for i=1, #pickupsLeft do
+            local spawnpoint = pickupsLeft[i]
+            createOnePickup(theType, spawnpoint.spID, spawnpoint)
         end
+        local countCollected = info.total - #pickupsLeft
         outputCustomText("toggle_on", countCollected, info.total, (string.gsub(theType, "_", " ")))
         receivedCollectibles[theType].toggled = true
     else
@@ -232,8 +236,13 @@ local function actionOnPickedUp(theType, collected, total, visualFx)
             outputDebugMsg("Failed to find spawnpoint ID '" .. waitingPickup.spID .. "' of type '" .. theType .. "'.", "ERROR")
         end
         -- Destroy the pickup on the client
-        destroyElement(waitingPickup.pickup)
-        spawnedCollectibles[waitingPickup.pickup] = nil
+        if not isElement(waitingPickup.pickup) then
+            outputDebugMsg("Pickup element invalid.", "ERROR")
+            iprint(waitingPickup)
+        else
+            destroyElement(waitingPickup.pickup)
+            spawnedCollectibles[waitingPickup.pickup] = nil
+        end
         waitingPickup = nil
     end
 end
