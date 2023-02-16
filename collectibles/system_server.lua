@@ -330,7 +330,7 @@ local function commandSpawnCollectibles(thePlayer, cmd, theType)
         return
     end
     if not theType then
-        outputCustomText(thePlayer, "command_syntax", cmd, "[collectible type]")
+        outputCustomText(thePlayer, "command_syntax", cmd, getCustomText("syntax_collectible_type"))
         return
     end
     spawnCollectibles(theType, thePlayer)
@@ -342,7 +342,7 @@ local function commandDestroyCollectibles(thePlayer, cmd, theType)
         return
     end
     if not theType then
-        outputCustomText(thePlayer, "command_syntax", cmd, "[collectible type]")
+        outputCustomText(thePlayer, "command_syntax", cmd, getCustomText("syntax_collectible_type"))
         return
     end
     destroyCollectibles(theType, thePlayer)
@@ -355,7 +355,7 @@ local function commandResetCollectibles(thePlayer, cmd, targetAccountID, theType
     end
     targetAccountID = tonumber(targetAccountID)
     if not targetAccountID then
-        outputCustomText(thePlayer, "command_syntax", cmd, "[target account ID] (optional: [collectible type name])")
+        outputCustomText(thePlayer, "command_syntax", cmd, getCustomText("syntax_target_account_id")..getCustomText("syntax_optional_after")..getCustomText("syntax_collectible_type"))
         return
     end
     local targetAccount = getAccountByID(targetAccountID)
@@ -376,7 +376,7 @@ local function commandCreateSpawnpoint(thePlayer, cmd, theType, model)
     end
     model = tonumber(model)
     if not theType or not model then
-        outputCustomText(thePlayer, "command_syntax", cmd, "[collectible type] [pickup object model ID]")
+        outputCustomText(thePlayer, "command_syntax", cmd, getCustomText("syntax_collectible_type").." "..getCustomText("syntax_pickup_object_id"))
         return
     end
     if not collectibleTypes[theType] then
@@ -405,7 +405,7 @@ local function commandRemoveSpawnpoint(thePlayer, cmd, theType, spID)
     end
     spID = tonumber(spID)
     if not theType or not spID then
-        outputCustomText(thePlayer, "command_syntax", cmd, "[collectible type] [spawnpoint ID]")
+        outputCustomText(thePlayer, "command_syntax", cmd, getCustomText("syntax_collectible_type").." "..getCustomText("syntax_spawnpoint_id"))
         return
     end
     if not collectibleTypes[theType] then

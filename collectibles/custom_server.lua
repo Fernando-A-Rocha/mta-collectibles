@@ -13,15 +13,15 @@ CONSTANTS = {
         Customizable admin commands
     --]]
     COMMANDS = {
-        SPAWN = "spawncollectibles",
-        DESTROY = "destroycollectibles",
-        RESETPLAYER = "resetplayercollectibles",
-        CREATESPAWN = "createspawnpoint",
-        REMOVESPAWN = "removespawnpoint",
+        SPAWN = "cspawn",
+        DESTROY = "cdestroy",
+        RESETPLAYER = "cresetplayer",
+        CREATESPAWN = "ccreatesp",
+        REMOVESPAWN = "cremovesp",
 
         -- For the 'editor' scripts (Optional):
-        EDITOR = "editcollectibles",
-        SPAWNPOINTS = "collectiblespawns",
+        EDITOR = "ceditor",
+        SPAWNPOINTS = "cspawnpoints",
     },
 
     --[[
@@ -30,10 +30,14 @@ CONSTANTS = {
         rgb color is optional - defaults to white (255,255,255)
     --]]
     STRINGS = {
-        -- Shared:
         ["error"] = {value = "Error"},
         ["success"] = {value = "Success"},
         ["command_syntax"] = {value = "SYNTAX: /%s %s"},
+        ["syntax_collectible_type"] = {value = "[collectible type name]"},
+        ["syntax_target_account_id"] = {value = "[target account ID]"},
+        ["syntax_pickup_object_id"] = {value = "[pickup object model ID]"},
+        ["syntax_spawnpoint_id"] = {value = "[spawnpoint ID]"},
+        ["syntax_optional_after"] = {value = "optional:"},
         ["ask_to_wait"] = {value = "Please wait a bit before doing this again.", rgb={200,200,200}},
 
         -- Client only:
@@ -59,8 +63,13 @@ CONSTANTS = {
         ["admin_invalid_account_id"] = {value="User account ID %s does not exist.", rgb={255, 0, 0}},
         ["admin_reset_success"] = {value="You have reset and respawned %s client collectibles for %s (ID: %s).", rgb={5, 255, 5}},
         ["admin_reset_success_player"] = {value="An admin has reset and respawned your collectibles (%s).", rgb={88, 255, 88}},
-
         ["admin_resource_restart"] = {value="The resource will now restart...\nPay attention to the server console."},
+        ["admin_changes_saved"] = {value="Changes saved successfully."},
+        ["admin_collectible_type_deleted"] = {value="Collectible type '%s' permanently deleted."},
+        ["admin_collectible_type_created"] = {value="Collectible type '%s' created successfully."},
+        ["admin_config_backup_created"] = {value="Configuration backup created successfully."},
+        ["admin_config_backup_restored"] = {value="Configuration restored successfully."},
+        ["admin_config_backup_copied"] = {value="Configuration backup copied to: %s"},
     },
 }
 
