@@ -210,12 +210,10 @@ local function parseOneNode(rootChildren, targetNodeName)
                                     return false, "Invalid attribute 'reward_money' of 'action' node - must be a number greater than 0."
                                 end
                             end
-                            local empty = (not sound) and (not reward_money)
                             collectibleTypes[theType][on] = {
                                 sound = sound,
                                 sound_volume = sound_volume,
                                 reward_money = reward_money,
-                                empty = empty,
                             }
                         end
                     end
@@ -1688,19 +1686,25 @@ local function handlePickedUp(serversidePickup, collectibleInfo_)
 
     local total = collectibleTypes[theType].total
 
-    local action = collectibleTypes[theType].collect_one
-    local actionLast = collectibleTypes[theType].collect_last
-    if count == total and not actionLast.empty then
-        action = actionLast
+    local reward = collectibleTypes[theType].collect_one
+    local rewardLast = collectibleTypes[theType].collect_last
+    if count == total and rewardLast.reward_money then
+        reward = rewardLast
+    end
+    local rewardMoney = reward.reward_money
+    if rewardMoney then
+        if givePlayerMoney(client, rewardMoney) then
+            outputCustomText(client, "reward_money", rewardMoney, (string.gsub(theType, "_", " ")))
+        end
     end
 
-    local rewardMoney = action.reward_money
-    if rewardMoney then
-        givePlayerMoney(client, rewardMoney)
-        outputCustomText(client, "reward_money", rewardMoney, (string.gsub(theType, "_", " ")))
+    local visualFx = collectibleTypes[theType].collect_one
+    local visualFxLast = collectibleTypes[theType].collect_last
+    if count == total and visualFxLast.sound then
+        visualFx = visualFxLast
     end
     
-    triggerClientEvent(client, "collectibles:onCollectVisuals", client, theType, count, total, action)
+    triggerClientEvent(client, "collectibles:onCollectVisuals", client, theType, count, total, visualFx)
 
     -- Custom Event (for Developers)
     triggerEvent("collectibles:onCollected", client, account, accountID, accountName, collectibleTypes[theType].target, theType, count, total)
