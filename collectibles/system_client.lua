@@ -9,7 +9,6 @@
 -- Internal Events
 addEvent("collectibles:receive", true) -- source: always the local player
 addEvent("collectibles:despawn", true) -- source: always the local player
-addEvent("collectibles:spawn", true) -- source: always the local player
 addEvent("collectibles:actionOnPickedUp", true) -- source: always the local player
 addEvent("collectibles:pickupDenied", true) -- source: always the local player
 
@@ -24,16 +23,6 @@ local CONSTANTS = {}
 
 function getConstants()
     return CONSTANTS
-end
-function outputDebugMsg(msg, theType)
-    msg = "[Collectibles] " .. msg
-    local r,g,b = 255, 255, 255
-    if theType == "ERROR" then
-        r,g,b = 255, 25, 25
-    elseif theType == "WARNING" then
-        r,g,b = 255, 255, 25
-    end
-    outputDebugString(msg, 4, r,g,b)
 end
 
 local function createOnePickup(theType, spID, spawnpoint)
@@ -97,7 +86,7 @@ local function createCollectibles(initial)
         if (info.toggled == true) then
             for i=1, #info.spawnpoints do
                 local spawnpoint = info.spawnpoints[i]
-                if spawnpoint then
+                if spawnpoint and not (spawnpoint.wasCollected) then
                     createOnePickup(theType, spawnpoint.spID, spawnpoint)
                 end
             end
@@ -123,20 +112,24 @@ local function onPickupHit(thePlayer)
     if thePlayer ~= localPlayer then return end
     if not spawnedCollectibles then return end
     if waitingPickup ~= nil then return end
-    local collectibleInfo = spawnedCollectibles[source]
-    if not collectibleInfo then return end
     if (getElementDimension(localPlayer) ~= getElementDimension(source) or getElementInterior(localPlayer) ~= getElementInterior(source)) then return end
-    local theType = collectibleInfo.type
-    local spID = collectibleInfo.spID
-    waitingPickup = {type = theType, spID = spID, pickup = source}
-    triggerServerEvent("collectibles:handlePickedUp", root, false, collectibleInfo)
+    local collectibleInfo = spawnedCollectibles[source]
+    if collectibleInfo then
+        -- Client collectible
+        waitingPickup = {type = collectibleInfo.type, spID = collectibleInfo.spID, pickup = source}
+        triggerServerEvent("collectibles:handlePickedUp", resourceRoot, false, collectibleInfo)
+    else
+        -- Server collectible
+        triggerServerEvent("collectibles:handlePickedUp", resourceRoot, source, false)
+    end
 end
 addEventHandler("onClientPickupHit", resourceRoot, onPickupHit)
 
-addEventHandler("collectibles:pickupDenied", localPlayer, function(collectibleInfo)
+addEventHandler("collectibles:pickupDenied", localPlayer, function(theType, spID)
     if waitingPickup == nil then return end
-    if (waitingPickup.type ~= collectibleInfo.type or waitingPickup.spID ~= collectibleInfo.spID) then return end
+    if (waitingPickup.type ~= theType or waitingPickup.spID ~= spID) then return end
     waitingPickup = nil
+    outputCustomText("cant_pickup")
 end, false)
 
 local function drawCollectible()
@@ -199,7 +192,10 @@ local function getDefaultOrCustomStyle(theType)
 end
 
 local function actionOnPickedUp(theType, collected, total, action)
-    
+    local info = receivedCollectibles[theType]
+    if not info then
+        return
+    end
     local sound = action.sound
     local sound_volume = action.sound_volume
     if sound then
@@ -227,8 +223,8 @@ local function actionOnPickedUp(theType, collected, total, action)
 
     if waitingPickup and waitingPickup.type == theType then
         local theIndex
-        for i=1, #receivedCollectibles[theType].spawnpoints do
-            local sp = receivedCollectibles[theType].spawnpoints[i]
+        for i=1, #info.spawnpoints do
+            local sp = info.spawnpoints[i]
             if sp and sp.spID == waitingPickup.spID then
                 theIndex = i
                 break
@@ -239,8 +235,11 @@ local function actionOnPickedUp(theType, collected, total, action)
         else
             outputDebugMsg("Failed to find spawnpoint ID '" .. waitingPickup.spID .. "' of type '" .. theType .. "'.", "ERROR")
         end
-        destroyElement(waitingPickup.pickup)
-        spawnedCollectibles[waitingPickup.pickup] = nil
+        if info.target == "client" then
+            -- Destroy the pickup on the client
+            destroyElement(waitingPickup.pickup)
+            spawnedCollectibles[waitingPickup.pickup] = nil
+        end
         waitingPickup = nil
     end
 end
@@ -248,6 +247,9 @@ addEventHandler("collectibles:actionOnPickedUp", localPlayer, actionOnPickedUp, 
 
 addEventHandler("collectibles:receive", localPlayer, function(list, CONSTANTS_)
     if type(list) ~= "table" then
+        return
+    end
+    if type(CONSTANTS_) ~= "table" then
         return
     end
     receivedCollectibles = list
@@ -274,30 +276,6 @@ addEventHandler("collectibles:despawn", localPlayer, function()
         destroyElement(pickup)
     end
     spawnedCollectibles = nil
-end, false)
-
-addEventHandler("collectibles:spawn", localPlayer, function(theType, spID, spawnpoint)
-    if not receivedCollectibles[theType] then
-        return
-    end
-    if type(spawnpoint) ~= "table" then
-        return
-    end
-    local theIndex = #receivedCollectibles[theType].spawnpoints + 1
-    receivedCollectibles[theType].spawnpoints[spID] = {
-        spID = spID,
-        x = spawnpoint.x,
-        y = spawnpoint.y,
-        z = spawnpoint.z,
-        model = spawnpoint.model,
-    }
-
-    if receivedCollectibles[theType].toggled ~= true then
-        return
-    end
-    if createOnePickup(theType, spID, spawnpoint) then
-        outputCustomText("respawned", (string.gsub(theType, "_", " ")), spID)
-    end
 end, false)
 
 addEventHandler("onClientResourceStart", resourceRoot, function()

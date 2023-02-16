@@ -25,6 +25,16 @@ end
 addEventHandler("collectibles:onSpawnedServer", root, onCollectiblesSpawned, false)
 local function handlePlayerLogin()
     local player2 = source
+    local oneGoingOn = false
+    for theType, event in pairs(EVENTS) do
+        if event.ongoing then
+            oneGoingOn = true
+            break
+        end
+    end
+    -- Don't check later if there's no event going on
+    -- as new events will be announced anyway
+    if not oneGoingOn then return end
     setTimer(function(player)
         if not isElement(player) then return end
         for theType, event in pairs(EVENTS) do

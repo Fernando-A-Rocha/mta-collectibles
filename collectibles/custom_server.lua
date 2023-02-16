@@ -31,15 +31,14 @@ CONSTANTS = {
         -- Shared:
         ["command_syntax"] = {value = "SYNTAX: /%s %s", rgb={255,255,255}},
         ["ask_to_wait"] = {value = "Please wait a bit before doing this again.", rgb={200,200,200}},
-        ["cant_pickup"] = {value="You can't collect this now.", rgb={255, 55, 55}},
 
         -- Client only:
         ["cant_toggle"] = {value="You can't toggle collectibles now.", rgb={255, 0, 0}},
         ["already_collected"] = {value="You already collected all %s collectibles (total %s).", rgb={255, 0, 0}},
         ["toggle_on"] = {value="You have found %s out of %s %s collectibles so far. Good luck!", rgb={255, 255, 255}},
         ["toggle_off"] = {value="You have hidden %s %s collectible(s).", rgb={255, 255, 255}},
-        ["respawned"] = {value="%s collectible #%s has been respawned.", rgb={255, 255, 255}},
         ["reward_money"] = {value="You have earned $%s for collecting this %s.", rgb={55, 255, 55}},
+        ["cant_pickup"] = {value="You can't collect this now.", rgb={255, 55, 55}},
 
         -- Server only:
         ["admin_error"] = {value="Error: %s", rgb={255, 0, 0}},

@@ -27,7 +27,7 @@
 -->
 <config>
     <types>
-        <type name="Totem" target="client" auto_load="true" toggle_command="totems" respawn_after_unit="minutes" respawn_after="1" />
+        <type name="Totem" target="client" auto_load="true" toggle_command="totems" respawn_after_unit="minutes" respawn_after="0.3" />
         
         <type name="Heart" target="client" auto_load="false" toggle_keybind="f7" />
         

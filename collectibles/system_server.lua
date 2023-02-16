@@ -11,7 +11,7 @@
 
 -- Internal Events
 addEvent("collectibles:requestCollectibles", true) -- source: always resourceRoot
-addEvent("collectibles:handlePickedUp", true) -- source: root or a player element
+addEvent("collectibles:handlePickedUp", true) -- source: always resourceRoot
 
 -- Custom Events (for Developers)
 addEvent("collectibles:onCollected", true) -- source: a player element
@@ -1097,7 +1097,7 @@ function spawnCollectibles(theType, thePlayer)
     local countCreated = 0
     for i=1, #info.spawnpoints do
         local spawnpoint = info.spawnpoints[i]
-        if spawnpoint and createOnePickup(theType, i, spawnpoint) then
+        if spawnpoint and createOnePickup(theType, spawnpoint.spID, spawnpoint) then
             countCreated = countCreated + 1
         end
     end
@@ -1154,17 +1154,6 @@ function destroyCollectibles(theType, thePlayer)
     return true
 end
 
-local function spawnClientCollectible(theType, spID, thePlayer)
-    for i=1, #collectibleTypes[theType].spawnpoints do
-        local spawnpoint = collectibleTypes[theType].spawnpoints[i]
-        if spawnpoint and spawnpoint.spID == spID then
-
-            triggerClientEvent(thePlayer, "collectibles:spawn", thePlayer, theType, spID, spawnpoint)
-            return
-        end
-    end
-end
-
 local function isCollectedClient(thePlayer, account, theType, respawn_after, spID)
     local dataName = getAccountDataNames().client_counts
     local data = getAccountData(account, dataName)
@@ -1183,49 +1172,36 @@ local function isCollectedClient(thePlayer, account, theType, respawn_after, spI
     if (respawn_after) and ((now - collectedAt) > respawn_after) then
         data[theType][tostring(spID)] = nil
         setAccountData(account, dataName, toJSON(data))
-        spawnClientCollectible(theType, tonumber(spID), thePlayer)
         return false
     end
     return true
 end
 
-local function sendCollectibles(player, account, thisType)
-    local collectibleTypesClient = {}
+local function sendCollectibles(player, account)
+    local collectiblesToSend = {}
     for theType, info in pairs(collectibleTypes) do
-        if info.target == "client" and (not thisType or thisType == theType) then
-            local spawnpoints = {}
+        if info.target == "client" then
             for i=1, #info.spawnpoints do
                 local spawnpoint = info.spawnpoints[i]
                 if spawnpoint then
-                    local alreadyCollected = isCollectedClient(player, account, theType, info.respawn_after, spawnpoint.spID)
-                    if not alreadyCollected then
-                        spawnpoints[#spawnpoints+1] = {
-                            spID = spawnpoint.spID,
-                            x = spawnpoint.x,
-                            y = spawnpoint.y,
-                            z = spawnpoint.z,
-                            interior = spawnpoint.interior,
-                            dimension = spawnpoint.dimension,
-                            model = spawnpoint.model,
-                        }
-                    end
+                    info.spawnpoints[i].wasCollected = isCollectedClient(player, account, theType, info.respawn_after, spawnpoint.spID)
                 end
             end
-            local toggled = (info.auto_load or false)
-            collectibleTypesClient[theType] = {
+            collectiblesToSend[theType] = {
+                target = info.target,
                 name = info.name,
-                toggled = toggled,
+                toggled = (info.auto_load or false),
                 toggle_keybind = info.toggle_keybind,
                 toggle_command = info.toggle_command,
                 collect_one = info.collect_one,
                 collect_all = info.collect_all,
                 total = info.total,
-                spawnpoints = spawnpoints,
+                spawnpoints = info.spawnpoints,
             }
         end
     end
     triggerClientEvent(player, "collectibles:receive", player,
-        collectibleTypesClient,
+        collectiblesToSend,
         CONSTANTS
     )
 end
@@ -1446,7 +1422,7 @@ local function createServerCollectibles()
                 for i=1, #info.spawnpoints do
                     local spawnpoint = info.spawnpoints[i]
                     if spawnpoint then
-                        createOnePickup(theType, i, spawnpoint)
+                        createOnePickup(theType, spawnpoint.spID, spawnpoint)
                     end
                 end
             end
@@ -1496,6 +1472,7 @@ local function countCollectedClient(thePlayer, account, theType, respawn_after)
     end
     local now = getRealTime().timestamp
     local count = 0
+    local forceRespawn = false
     for spID, collectedAt in pairs(data[theType]) do
         collectedAt = tonumber(collectedAt)
         if collectedAt then
@@ -1503,13 +1480,16 @@ local function countCollectedClient(thePlayer, account, theType, respawn_after)
                 data[theType][tostring(spID)] = nil
                 setAccountData(account, dataName, toJSON(data))
 
-                if isElement(thePlayer) then
-                    spawnClientCollectible(theType, tonumber(spID), thePlayer)
+                if not forceRespawn and isElement(thePlayer) then
+                    forceRespawn = true
                 end
             else
                 count = count + 1
             end
         end
+    end
+    if forceRespawn then
+        sendCollectibles(thePlayer, account)
     end
     return count
 end
@@ -1531,7 +1511,7 @@ function getCollectedCounts(account)
             local count = countCollectedServer(accountID, theType)
             serverCounts[theType] = {count = count, total = info.total, spawnpoints = info.spawnpoints, spawnedPickups = spawnedPickups}
         elseif info.target == "client" then
-            local count = countCollectedClient(thePlayer, account, theType, info.respawn_after)
+            local count = countCollectedClient(false, account, theType, info.respawn_after)
             clientCounts[theType] = {count = count, total = info.total, spawnpoints = info.spawnpoints}
         end
     end
@@ -1604,7 +1584,7 @@ function resetClientCollectibles(targetAccount, theType, thePlayer)
         end
     end
     if targetPlayer then
-        sendCollectibles(targetPlayer, targetAccount, (theType ~= "all" and theType or nil))
+        sendCollectibles(targetPlayer, targetAccount)
         outputCustomText(targetPlayer, "admin_reset_success_player", (string.gsub(theType, "_", " ")))
     end
     if isElement(thePlayer) then
@@ -1614,42 +1594,80 @@ function resetClientCollectibles(targetAccount, theType, thePlayer)
     return true
 end
 
-local function handlePickedUp(thePlayer_, collectibleInfo)
-    local pickup = source
-    if (thePlayer_) and (not (isElement(pickup) and getElementType(pickup) == "pickup")) then
-        return
-    end
-    local thePlayer = client or thePlayer_
-    if not (isElement(thePlayer) and getElementType(thePlayer) == "player") then
-        return
-    end
+local function handlePickedUp(serversidePickup, collectibleInfo_)
+    if not client then return end
     if (type(collectibleTypes)~="table") then
-        return
+        return false, "Unexpected error: collectibleTypes is not a table"
     end
-    local account = getPlayerAccount(thePlayer)
+    local account = getPlayerAccount(client)
     if (not account) or (isGuestAccount(account)) then
-        return--hacker?
+        return false, "Guest account"
     end
+    local accountName = getAccountName(account)
+    local accountID = getAccountID(account)
+    if serversidePickup and not (isElement(serversidePickup) and getElementType(serversidePickup) == "pickup") then
+        return false, "serversidePickup is not a pickup element"
+        --hacker?
+    end
+    if not collectibleInfo_ and not serversidePickup then
+        return false, "Missing collectibleInfo_ and serversidePickup"
+        --hacker?
+    end
+    if serversidePickup and not collectibleInfo_ then
+        collectibleInfo_ = spawnedServerCollectibles[serversidePickup]
+        if type(collectibleInfo_) ~= "table" then
+            return false, "Missing spawnedServerCollectibles for pickup "..inspect(serversidePickup)
+            --hacker?
+        end
+        collectibleInfo = collectibleInfo_
+    else
+        if type(collectibleInfo_) ~= "table" then
+            return false, "Bad collectibleInfo"
+            --hacker?
+        end
+        if type(collectibleInfo_.type) ~= "string" then
+            return false, "Bad collectibleInfo.type"
+            --hacker?
+        end
+        if type(collectibleInfo_.spID) ~= "number" then
+            return false, "Bad collectibleInfo.spID"
+            --hacker?
+        end
+        collectibleInfo = collectibleInfo_
+    end
+
     local theType = collectibleInfo.type
     if not collectibleTypes[theType] then
-        return--hacker?
+        return false, "Unknown collectible type '"..theType.."'"
+        --hacker?
     end
-    if not canCollectPickup(thePlayer, account, theType) then
-        if client then
-            triggerClientEvent(client, "collectibles:pickupDenied", client, collectibleInfo)
+    local target = collectibleTypes[theType].target
+    local spID = collectibleInfo.spID
+    local respawn_after = collectibleTypes[theType].respawn_after
+    if (target == "server") and not serversidePickup then
+        return false, "Client tried to force pickup serverside collectible '"..theType.."' #"..spID
+        --hacker?
+    end
+    local foundSpawnpoint = false
+    for i=1, #collectibleTypes[theType].spawnpoints do
+        local spawnpoint = collectibleTypes[theType].spawnpoints[i]
+        if spawnpoint and (spawnpoint.spID == spID) then
+            foundSpawnpoint = true
+            break
         end
-        outputCustomText(thePlayer, "cant_pickup")
-        return
+    end
+    if not foundSpawnpoint then
+        return false, "Type '"..theType.."' does not have spawnpoint ID "..spID
+        --hacker?
+    end
+    if not canCollectPickup(client, account, theType) then
+        triggerClientEvent(client, "collectibles:pickupDenied", client, theType, spID)
+        return true
     end
 
     -- success, pick it up:
-
-    local accountName = getAccountName(account)
-    local accountID = getAccountID(account)
-    local respawn_after = collectibleTypes[theType].respawn_after
-    local spID = collectibleInfo.spID
     local count
-    if (not client) then
+    if (target == "server") then
         count = countCollectedServer(accountID, theType) + 1
         for i=1, #collectibleTypes[theType].spawnpoints do
             local spawnpoint = collectibleTypes[theType].spawnpoints[i]
@@ -1658,10 +1676,10 @@ local function handlePickedUp(thePlayer_, collectibleInfo)
                 break
             end
         end
-        destroyElement(pickup)
-        spawnedServerCollectibles[pickup] = nil
+        destroyElement(serversidePickup)
+        spawnedServerCollectibles[serversidePickup] = nil
     else
-        count = countCollectedClient(thePlayer, account, theType, respawn_after) + 1
+        count = countCollectedClient(client, account, theType, respawn_after) + 1
         saveCollectedClient(account, theType, spID)
         -- pickup will be destroyed on client
     end
@@ -1670,8 +1688,8 @@ local function handlePickedUp(thePlayer_, collectibleInfo)
 
     local rewardMoney = collectibleTypes[theType].collect_one.reward_money
     if rewardMoney then
-        givePlayerMoney(thePlayer, rewardMoney)
-        outputCustomText(thePlayer, "reward_money", rewardMoney, (string.gsub(theType, "_", " ")))
+        givePlayerMoney(client, rewardMoney)
+        outputCustomText(client, "reward_money", rewardMoney, (string.gsub(theType, "_", " ")))
     end
 
     local action
@@ -1681,24 +1699,24 @@ local function handlePickedUp(thePlayer_, collectibleInfo)
         action = collectibleTypes[theType].collect_one
     end
     
-    triggerClientEvent(thePlayer, "collectibles:actionOnPickedUp", thePlayer, theType, count, total, action)
+    triggerClientEvent(client, "collectibles:actionOnPickedUp", client, theType, count, total, action)
 
     -- Custom Event (for Developers)
-    triggerEvent("collectibles:onCollected", thePlayer, account, accountID, accountName, collectibleTypes[theType].target, theType, count, total)
+    triggerEvent("collectibles:onCollected", client, account, accountID, accountName, collectibleTypes[theType].target, theType, count, total)
+    return true
 end
-addEventHandler("collectibles:handlePickedUp", root, handlePickedUp)
 
-local function onPickupHit(thePlayer)
-    local collectibleInfo = spawnedServerCollectibles[source]
-    if not collectibleInfo then return end
-    if (getElementDimension(thePlayer) ~= getElementDimension(source) or getElementInterior(thePlayer) ~= getElementInterior(source)) then return end
-    triggerEvent("collectibles:handlePickedUp", source, thePlayer, collectibleInfo)
+local function requestHandlePickedUp(...)
+    local result, reason = handlePickedUp(...)
+    if not result then
+        outputDebugMsg("collectibles:handlePickedUp failed: " .. tostring(reason), "ERROR")
+    end
 end
-addEventHandler("onPickupHit", resourceRoot, onPickupHit)
+addEventHandler("collectibles:handlePickedUp", resourceRoot, requestHandlePickedUp)
 
 addEventHandler("onPickupHit", resourceRoot, function()
     cancelEvent()
-end)
+end, true, "high+9")
 
 addEventHandler("onPlayerLogin", root, function(_, newAccount)
     if isGuestAccount(newAccount) then
@@ -1766,5 +1784,5 @@ addEventHandler("onResourceStart", resourceRoot, function()
 
     clientsWaiting = nil -- clear memory
 
-    setTimer(respawnAllClientCollectibles, 60000, 0)
+    setTimer(respawnAllClientCollectibles, 30000, 0)
 end, false)

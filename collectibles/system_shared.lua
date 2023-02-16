@@ -60,3 +60,14 @@ function isDefaultObjectID(id)
 	end
 	return true
 end
+
+function outputDebugMsg(msg, theType)
+    msg = "[Collectibles] " .. msg
+    local r,g,b = 255, 255, 255
+    if theType == "ERROR" then
+        r,g,b = 255, 25, 25
+    elseif theType == "WARNING" then
+        r,g,b = 255, 255, 25
+    end
+    outputDebugString(msg, 4, r,g,b)
+end

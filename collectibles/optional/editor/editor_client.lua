@@ -482,7 +482,6 @@ local function openCreateCollectible(metaFileSrcs)
                     }
                 }
             }
-            iprint(theType)
 
             local desc = "Are you sure you want to create a new collectible type:\n'"..typeName.."'"
             if typeAutoLoad then
