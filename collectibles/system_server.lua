@@ -578,29 +578,20 @@ function backupConfiguration()
     return true
 end
 
-function duplicateConfigBackup(newPath)
-    if not fileExists("backups/config.xml") then
-        return false, "File 'backups/config.xml' does not exist."
+function duplicateConfigBackup(oldPath, newPath)
+    if not fileExists(oldPath) then
+        return false, "File '"..oldPath.."' does not exist."
     end
     if fileExists(newPath) then
         return false, "File '" .. newPath .. "' already exists, will not override."
     end
-    local new = fileCreate(newPath)
-    if not new then
-        return false, "Failed to create file '" .. newPath .. "' - check permissions."
+    if not fileCopy(oldPath, newPath) then
+        return false, "Failed to copy file '"..oldPath.."' to '"..newPath.."' - check permissions."
     end
-    local backup = fileOpen("backups/config.xml")
-    if not backup then
-        fileClose(new)
-        return false, "Failed to open file 'backups/config.xml' - check permissions."
-    end
-    fileWrite(new, fileRead(backup, fileGetSize(backup)))
-    fileClose(backup)
-    fileClose(new)
     return true
 end
 
-function restoreConfigBackup()
+function restoreConfigBackup(backupPath)
     if fileExists("config.xml.old") then
         if not fileDelete("config.xml.old") then
             return false, "Failed to delete file 'config.xml.old' - check permissions."
@@ -618,7 +609,7 @@ function restoreConfigBackup()
     fileWrite(old, fileRead(config, fileGetSize(config)))
     fileClose(config)
     fileClose(old)
-    if not fileCopy("backups/config.xml", "config.xml", true) then -- Overwrite
+    if not fileCopy(backupPath, "config.xml", true) then -- Overwrite
         return false, "Failed to copy file 'backups/config.xml' to 'config.xml' - check permissions."
     end
     return true
@@ -1765,11 +1756,7 @@ addEventHandler("onResourceStart", resourceRoot, function()
     local success, reason = loadConfiguration()
     if not success then
         outputInfoMessage(reason)
-        if fileExists("backups/config.xml") then
-            outputInfoMessage("Restore the backed up configuration file 'backups/config.xml' if needed.")
-        else
-            outputInfoMessage("Oops, you didn't backup your configuration file so you don't have anything to restore.")
-        end
+        outputInfoMessage("Restore a configuration file from the 'backups' folder if needed.")
         return cancelEvent()
     end
 

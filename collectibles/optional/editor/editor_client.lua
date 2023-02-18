@@ -871,15 +871,15 @@ addEventHandler("collectibles:admin", localPlayer, function(serverInfo)
     x = 10
     y = 15
 
-    local backupLabel = guiCreateLabel(x, y, TW-(x*2), 20, "Configuration Backup - backups/config.xml", false, tabBackups)
+    local backupLabel = guiCreateLabel(x, y, TW-(x*2), 20, "Configuration Backup | Default: backups/config.xml", false, tabBackups)
     y = y + 20 + 5
 
     x = x + 10
 
-    local backupExists = "A backup file currently exists in the server's file system."
+    local backupExists = "File 'backups/config.xml' currently exists in the server's file system."
     local bR, bG, bB = 0, 255, 0
     if not serverInfo.backupExists then
-        backupExists = "A backup file could not be found in the server's file system."
+        backupExists = "File 'backups/config.xml' could not be found in the server's file system."
         bR, bG, bB = 255, 0, 0
     end
     local backupExistsLabel = guiCreateLabel(x, y, TW-(x*2), 20, backupExists, false, tabBackups)
@@ -890,15 +890,9 @@ addEventHandler("collectibles:admin", localPlayer, function(serverInfo)
 
     local backupRestoreButton = guiCreateButton(x + (TW*(1/3)) - x, y + 20 + 5, (TW*(1/3)) - x, 24, "Restore Backup", false, tabBackups)
     guiSetProperty(backupRestoreButton, "NormalTextColour", "FFFFFF00")
-    if not serverInfo.backupExists then
-        guiSetEnabled(backupRestoreButton, false)
-    end
 
     local backupDuplicateButton = guiCreateButton(x + (TW*(1/3)) - x + (TW*(1/3)), y + 20 + 5, (TW*(1/3)) - x, 24, "Duplicate Backup", false, tabBackups)
     guiSetProperty(backupDuplicateButton, "NormalTextColour", "FF00FFFF")
-    if not serverInfo.backupExists then
-        guiSetEnabled(backupDuplicateButton, false)
-    end
 
     -- Bottom buttons
 
@@ -1043,18 +1037,49 @@ addEventHandler("collectibles:admin", localPlayer, function(serverInfo)
 
         elseif source == backupRestoreButton then
 
-            local desc = "Are you sure you want to restore the configuration from the backup?"
-            createConfirmPopup("Restore Backup", "FFFFFF00", desc, "Restore", "Cancel", "collectibles:adminConfirm", "backupRestore")
+            guiSetEnabled(mainWin, false)
+            local win = guiCreateWindow((SW-500)/2, (SH-130)/2, 500, 130, "Restore Backup", false)
+            local labelCurrPath = guiCreateLabel(10, 25, 500-20, 20, "Backed up configuration file (backups/...):", false, win)
+            local PLACEHOLDER_PATH = "config.xml"
+            local currName = guiCreateEdit(10, 50, 500-20, 30, PLACEHOLDER_PATH, false, win)
+            addEventHandler("onClientGUIClick", currName, function()
+                if guiGetText(source) == PLACEHOLDER_PATH then
+                    guiSetText(source, "")
+                end
+            end, false)
+            local cancel = guiCreateButton(10, 90, 140, 30, "Cancel", false, win)
+            local ok = guiCreateButton(160, 90, 140, 30, "Confirm", false, win)
+            guiSetProperty(ok, "NormalTextColour", "FF00FF00")
+            addEventHandler("onClientGUIClick", ok, function()
+                local oldName = guiGetText(currName)
+                if oldName == "" then
+                    return showValidationError("Backup name cannot be empty")
+                end
+                if oldName:find(" ") then
+                    return showValidationError("Backup name cannot contain spaces")
+                end
+                destroyElement(win)
+                
+                local desc = "Are you sure you want to restore the configuration from:\n"..("backups/"..oldName)
+                createConfirmPopup("Restore Backup", "FFFFFF00", desc, "Restore", "Cancel", "collectibles:adminConfirm", "backupRestore", oldName)
+
+            end, false)
+            addEventHandler("onClientGUIClick", cancel, function()
+                destroyElement(win)
+                guiSetEnabled(mainWin, true)
+            end, false)
 
         elseif source == backupDuplicateButton then
 
             guiSetEnabled(mainWin, false)
             local win = guiCreateWindow((SW-500)/2, (SH-160)/2, 500, 160, "Duplicate Backup", false)
-            local labeldesc = guiCreateLabel(10, 30, 500, 40, "Enter a path for the new backup:\nYou can use %s for the current server date-time string.", false, win)
+            local labeldesc = guiCreateLabel(10, 25, 500, 40, "You can use %s in the new path for the current server date-time string.", false, win)
             guiLabelSetHorizontalAlign(labeldesc, "center")
-            local PLACEHOLDER_PATH = "backups/%s/config.xml"
-            local timeNow = getRealTime()
-            local name = guiCreateEdit(10, 80, 500-20, 30, PLACEHOLDER_PATH, false, win)
+            local labelCurrPath = guiCreateLabel(10, 55, 500/2-10, 20, "Copy file (backups/...):", false, win)
+            local labelNewPath = guiCreateLabel(10+500/2, 55, 500/2-20, 20, "New file (backups/...):", false, win)
+            local PLACEHOLDER_PATH = "config_%s.xml"
+            local currName = guiCreateEdit(10, 80, 500/2-10, 30, "config.xml", false, win)
+            local name = guiCreateEdit(10+500/2, 80, 500/2-20, 30, PLACEHOLDER_PATH, false, win)
             addEventHandler("onClientGUIClick", name, function()
                 if guiGetText(source) == PLACEHOLDER_PATH then
                     guiSetText(source, "")
@@ -1071,9 +1096,16 @@ addEventHandler("collectibles:admin", localPlayer, function(serverInfo)
                 if newName:find(" ") then
                     return showValidationError("Backup name cannot contain spaces")
                 end
+                local oldName = guiGetText(currName)
+                if oldName == "" then
+                    return showValidationError("Backup name cannot be empty")
+                end
+                if oldName:find(" ") then
+                    return showValidationError("Backup name cannot contain spaces")
+                end
                 destroyElement(win)
-                local desc = "Are you sure you want to duplicate the backup to:\n"..newName
-                createConfirmPopup("Duplicate Backup", "FFFFFF00", desc, "Duplicate", "Cancel", "collectibles:adminConfirm", "backupDuplicate", newName)
+                local desc = "Are you sure you want to duplicate the backup from:\n"..("backups/"..oldName).."\nto:\n"..("backups/"..newName)
+                createConfirmPopup("Duplicate Backup", "FFFFFF00", desc, "Duplicate", "Cancel", "collectibles:adminConfirm", "backupDuplicate", oldName, newName)
             end, false)
             addEventHandler("onClientGUIClick", cancel, function()
                 destroyElement(win)
@@ -1356,10 +1388,10 @@ addEventHandler("collectibles:adminConfirm", localPlayer, function(confirmType, 
             triggerServerEvent("collectibles:backupConfig", resourceRoot)
 
         elseif confirmType == "backupRestore" then
-            triggerServerEvent("collectibles:restoreConfigBackup", resourceRoot)
+            triggerServerEvent("collectibles:restoreConfigBackup", resourceRoot, eventArgs[1])
 
         elseif confirmType == "backupDuplicate" then
-            triggerServerEvent("collectibles:duplicateConfigBackup", resourceRoot, eventArgs[1])
+            triggerServerEvent("collectibles:duplicateConfigBackup", resourceRoot, eventArgs[1], eventArgs[2])
         
         elseif confirmType == "createSpawnpoint" then
             triggerServerEvent("collectibles:createSpawnpoint", resourceRoot, eventArgs[1], eventArgs[2])
@@ -1372,11 +1404,11 @@ end, false)
 addEventHandler("collectibles:adminResponse", localPlayer, function(success, failureReason, okText)
     if (success) then
         if okText then
-            createConfirmPopup(gct("error"), "FF00FF00", success, okText, false, "collectibles:adminConfirm", "closeMainWindow")
+            createConfirmPopup(gct("Success"), "FF00FF00", success, okText, false, "collectibles:adminConfirm", "closeMainWindow")
         else
-            createConfirmPopup(gct("success"), "FF00FF00", success, false, false)
+            createConfirmPopup(gct("Success"), "FF00FF00", success, false, false)
         end
     else
-        createConfirmPopup(gct("error"), "FFFF0000", tostring(failureReason), false, okText or false)
+        createConfirmPopup(gct("Error"), "FFFF0000", tostring(failureReason), false, okText or false)
     end
 end, false)

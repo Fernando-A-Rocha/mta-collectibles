@@ -173,14 +173,17 @@ local function requestBackupConfiguration()
 end
 addEventHandler("collectibles:backupConfig", resourceRoot, requestBackupConfiguration, false)
 
-local function requestRestoreConfigBackup()
+local function requestRestoreConfigBackup(backupPath)
     if not client then return end
     if not canAdminCollectibles(client) then
         handlePermissionMismatch(client)
         return
     end
-
-    local success, reason = restoreConfigBackup()
+    if type(backupPath) ~= "string" then
+        return triggerClientEvent(client, "collectibles:adminResponse", client, false, gct("Invalid arguments."), "OK")
+    end
+    backupPath = "backups/"..backupPath
+    local success, reason = restoreConfigBackup(backupPath)
     if not success then
         return triggerClientEvent(client, "collectibles:adminResponse", client, false, reason, "OK")
     end
@@ -190,26 +193,31 @@ local function requestRestoreConfigBackup()
         restartResource(getThisResource())
     end, 5000, 1)
 
-    triggerClientEvent(client, "collectibles:adminResponse", client, gct("Configuration restored successfully.").."\n\n"..gct("The resource will now restart...\nPay attention to the server console."))
+    triggerClientEvent(client, "collectibles:adminResponse", client, gct("Configuration restored successfully from:\n"..backupPath).."\n\n"..gct("The resource will now restart...\nPay attention to the server console."))
 end
 addEventHandler("collectibles:restoreConfigBackup", resourceRoot, requestRestoreConfigBackup, false)
 
-local function requestDuplicateConfigBackup(newPath)
+local function requestDuplicateConfigBackup(oldPath, newPath)
     if not client then return end
     if not canAdminCollectibles(client) then
         handlePermissionMismatch(client)
         return
     end
+    if type(oldPath) ~= "string" or type(newPath) ~= "string" then
+        return triggerClientEvent(client, "collectibles:adminResponse", client, false, gct("Invalid arguments."), "OK")
+    end
+    oldPath = "backups/"..oldPath
+    newPath = "backups/"..newPath
     
     local dateTimeString = os.date("%Y-%m-%d_%H-%M-%S")
     newPath = string.format(newPath, dateTimeString)
 
-    local success, reason = duplicateConfigBackup(newPath)
+    local success, reason = duplicateConfigBackup(oldPath, newPath)
     if not success then
         return triggerClientEvent(client, "collectibles:adminResponse", client, false, reason, "OK")
     end
 
-    triggerClientEvent(client, "collectibles:adminResponse", client, gct("Configuration backup copied to: %s", newPath), false, "OK")
+    triggerClientEvent(client, "collectibles:adminResponse", client, gct("Configuration backup copied from:\n%s\nto:\n%s", oldPath, newPath), false, "OK")
 end
 addEventHandler("collectibles:duplicateConfigBackup", resourceRoot, requestDuplicateConfigBackup, false)
 
