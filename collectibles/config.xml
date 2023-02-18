@@ -5,14 +5,6 @@
         - Server collectibles
         - Client collectibles
     
-    Server collectibles:  [Useful for special server-wide events like Treasure Hunt or Easter-Egg Hunt]
-        - Created on the server
-        - Can be spawned when the resource starts automatically (auto_load)
-        - Collected on the server (once collected, it is destroyed and other players won't be able to collect it)
-        - Count is stored on the server temporarily by account name
-        - Server admin is responsible for spawning and destroying collectibles
-        - Once all have been collected, the server admin is responsible for respawning them
-    
     Client collectibles:  [Good to always have on the server to keep players entertained looking for collectibles]
         - Created on the client
         - Can be spawned when the client joins automatically (auto_load)
@@ -21,6 +13,14 @@
         - Count is stored on the client
         - Collection date is stored on the server permanently by account name
         - Collectibles respawn after X amount of time
+    
+    Server collectibles:  [Useful for special server-wide events like Treasure Hunt or Easter-Egg Hunt]
+        - Created on the server
+        - Can be spawned when the resource starts automatically (auto_load)
+        - Collected on the server (once collected, it is destroyed and other players won't be able to collect it)
+        - Count is stored on the server temporarily by account name
+        - Server admin is responsible for spawning and destroying collectibles
+        - Once all have been collected, the server admin is responsible for respawning them
 
     Important Notes:
         - Players not logged in are not able to collect collectibles due it being impossible to store data on guest accounts

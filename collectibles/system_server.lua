@@ -557,41 +557,17 @@ local function loadConfiguration()
     return true
 end
 
-function backupConfiguration()
-    if fileExists("backups/config.xml") then
-        if not fileDelete("backups/config.xml") then
-            return false, "Failed to delete file 'backups/config.xml' - check permissions."
-        end
-    end
-    local backup = fileCreate("backups/config.xml")
-    if not backup then
-        return false, "Failed to create file 'backups/config.xml' - check permissions."
-    end
-    local config = fileOpen("config.xml")
-    if not config then
-        fileClose(backup)
-        return false, "Failed to open file 'config.xml' - check permissions."
-    end
-    fileWrite(backup, fileRead(config, fileGetSize(config)))
-    fileClose(config)
-    fileClose(backup)
-    return true
-end
-
-function duplicateConfigBackup(oldPath, newPath)
-    if not fileExists(oldPath) then
-        return false, "File '"..oldPath.."' does not exist."
-    end
-    if fileExists(newPath) then
-        return false, "File '" .. newPath .. "' already exists, will not override."
-    end
-    if not fileCopy(oldPath, newPath) then
-        return false, "Failed to copy file '"..oldPath.."' to '"..newPath.."' - check permissions."
+function backupConfiguration(backupPath)
+    if not fileCopy("config.xml", backupPath, true) then
+        return false, "Failed to copy file 'config.xml' to '"..backupPath.."' - check permissions."
     end
     return true
 end
 
 function restoreConfigBackup(backupPath)
+    if not fileExists(backupPath) then
+        return false, "File '" .. backupPath .. "' does not exist."
+    end
     if fileExists("config.xml.old") then
         if not fileDelete("config.xml.old") then
             return false, "Failed to delete file 'config.xml.old' - check permissions."
@@ -611,6 +587,19 @@ function restoreConfigBackup(backupPath)
     fileClose(old)
     if not fileCopy(backupPath, "config.xml", true) then -- Overwrite
         return false, "Failed to copy file 'backups/config.xml' to 'config.xml' - check permissions."
+    end
+    return true
+end
+
+function duplicateConfigBackup(oldPath, newPath)
+    if not fileExists(oldPath) then
+        return false, "File '"..oldPath.."' does not exist."
+    end
+    if fileExists(newPath) then
+        return false, "File '" .. newPath .. "' already exists, will not override."
+    end
+    if not fileCopy(oldPath, newPath) then
+        return false, "Failed to copy file '"..oldPath.."' to '"..newPath.."' - check permissions."
     end
     return true
 end

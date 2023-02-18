@@ -871,15 +871,15 @@ addEventHandler("collectibles:admin", localPlayer, function(serverInfo)
     x = 10
     y = 15
 
-    local backupLabel = guiCreateLabel(x, y, TW-(x*2), 20, "Configuration Backup | Default: backups/config.xml", false, tabBackups)
+    local backupLabel = guiCreateLabel(x, y, TW-(x*2), 20, "Configuration Backups", false, tabBackups)
     y = y + 20 + 5
 
     x = x + 10
 
-    local backupExists = "File 'backups/config.xml' currently exists in the server's file system."
+    local backupExists = gct("File '%s' (default) currently exists in the server's file system.", "backups/config.xml")
     local bR, bG, bB = 0, 255, 0
     if not serverInfo.backupExists then
-        backupExists = "File 'backups/config.xml' could not be found in the server's file system."
+        backupExists = gct("File '%s' (default) could not be found in the server's file system.", "backups/config.xml")
         bR, bG, bB = 255, 0, 0
     end
     local backupExistsLabel = guiCreateLabel(x, y, TW-(x*2), 20, backupExists, false, tabBackups)
@@ -1033,7 +1033,7 @@ addEventHandler("collectibles:admin", localPlayer, function(serverInfo)
             if serverInfo.backupExists then
                 desc = desc .."\n\nWARNING: This will overwrite the existing backup."
             end
-            createConfirmPopup("Create Backup", "FFFFFF00", desc, "Create", "Cancel", "collectibles:adminConfirm", "backupCreate")
+            createConfirmPopup("Create Backup", "FFFFFF00", desc, "Create", "Cancel", "collectibles:adminConfirm", "backupCreate", "config.xml")
 
         elseif source == backupRestoreButton then
 
@@ -1385,7 +1385,7 @@ addEventHandler("collectibles:adminConfirm", localPlayer, function(confirmType, 
             triggerServerEvent("collectibles:createNewType", resourceRoot, eventArgs[1])
         
         elseif confirmType == "backupCreate" then
-            triggerServerEvent("collectibles:backupConfig", resourceRoot)
+            triggerServerEvent("collectibles:backupConfig", resourceRoot, eventArgs[1])
 
         elseif confirmType == "backupRestore" then
             triggerServerEvent("collectibles:restoreConfigBackup", resourceRoot, eventArgs[1])

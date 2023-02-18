@@ -157,19 +157,22 @@ local function requestCreateNewType(typeInfo)
 end
 addEventHandler("collectibles:createNewType", resourceRoot, requestCreateNewType, false)
 
-local function requestBackupConfiguration()
+local function requestBackupConfiguration(backupPath)
     if not client then return end
     if not canAdminCollectibles(client) then
         handlePermissionMismatch(client)
         return
     end
-
-    local success, reason = backupConfiguration()
+    if type(backupPath) ~= "string" then
+        return triggerClientEvent(client, "collectibles:adminResponse", client, false, gct("Invalid arguments."), "OK")
+    end
+    backupPath = "backups/"..backupPath
+    local success, reason = backupConfiguration(backupPath)
     if not success then
         return triggerClientEvent(client, "collectibles:adminResponse", client, false, reason, "OK")
     end
 
-    triggerClientEvent(client, "collectibles:adminResponse", client, gct("Configuration backup created successfully."), false, "OK")
+    triggerClientEvent(client, "collectibles:adminResponse", client, gct("Configuration backup created successfully:\n%s", backupPath), false, "OK")
 end
 addEventHandler("collectibles:backupConfig", resourceRoot, requestBackupConfiguration, false)
 
@@ -193,7 +196,7 @@ local function requestRestoreConfigBackup(backupPath)
         restartResource(getThisResource())
     end, 5000, 1)
 
-    triggerClientEvent(client, "collectibles:adminResponse", client, gct("Configuration restored successfully from:\n"..backupPath).."\n\n"..gct("The resource will now restart...\nPay attention to the server console."))
+    triggerClientEvent(client, "collectibles:adminResponse", client, gct("Configuration restored successfully from:\n", backupPath).."\n\n"..gct("The resource will now restart...\nPay attention to the server console."))
 end
 addEventHandler("collectibles:restoreConfigBackup", resourceRoot, requestRestoreConfigBackup, false)
 
