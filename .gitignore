@@ -1,2 +1,5 @@
 # Documentation generation
 docgen/*
+
+# Minimal resource version
+collectibles_minimal/*
