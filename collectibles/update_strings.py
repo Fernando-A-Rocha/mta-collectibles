@@ -1,8 +1,13 @@
 # Author: https://github.com/Fernando-A-Rocha
 # 
+# For developers
+# 
+# Finds all .lua files in the given directories
 # Updates JSON file with all strings used by the Lua scripts
-# Finds all .lua files in the current directory
 # Run this script after adding new strings or changing existing ones in the Lua scripts
+#
+# Dependencies:
+# - luaparser (https://github.com/boolangery/py-lua-parser)
 #
 # Usage: python update_strings.py
 #
@@ -15,11 +20,10 @@ LUA_FILE_EXT = ".lua"
 import os
 import json
 
-# https://github.com/boolangery/py-lua-parser
 try:
     from luaparser import ast
 except ImportError:
-    print("Install luaparser: pip install luaparser")
+    print("Missing dependency: pip install luaparser")
     exit()
 
 def get_defined_strings():
@@ -35,11 +39,9 @@ def get_strings_from_file(file_path):
     with open(file_path, "r") as f:
         tree = ast.parse(f.read())
         strings = {}
-        # find calls to function GCT_FUNC
         for node in ast.walk(tree):
             if isinstance(node, ast.Call):
                 if isinstance(node.func, ast.Name) and node.func.id == GCT_FUNC:
-                    # get the first argument of the call
                     if isinstance(node.args[0], ast.String):
                         strings.update({ node.args[0].s: { "value": node.args[0].s, "rgb": [255, 255, 255] } })
         return strings
