@@ -15,9 +15,21 @@ LUA_FILE_EXT = ".lua"
 import os
 import json
 
-# Required: pip install luaparser
 # https://github.com/boolangery/py-lua-parser
-from luaparser import ast
+try:
+    from luaparser import ast
+except ImportError:
+    print("Install luaparser: pip install luaparser")
+    exit()
+
+def get_defined_strings():
+    if not os.path.exists(JSON_FILE):
+        return []
+    try:
+        with open(JSON_FILE, "r") as f:
+            return json.load(f)
+    except:
+        return []
 
 def get_strings_from_file(file_path):
     with open(file_path, "r") as f:
@@ -42,12 +54,23 @@ def get_strings_from_dir(dir_path):
 
 print("Searching for strings used by " + GCT_FUNC + " in " + str(WORKING_DIRS))
 
-strings = []
-for dir in WORKING_DIRS:
-    strings.extend(get_strings_from_dir(dir))
-strings = { s: { "value": s, "rgb": [255, 255, 255] } for s in strings }
+try:
+    prev_strings = get_defined_strings()
+    if prev_strings is None:
+        prev_strings = {}
 
-with open(JSON_FILE, "w") as f:
-    json.dump(strings, f, indent=4)
+    strings = []
+    for dir in WORKING_DIRS:
+        strings.extend(get_strings_from_dir(dir))
+    strings = { s: { "value": s, "rgb": [255, 255, 255] } for s in strings }
+    for s in strings:
+        if s in prev_strings:
+            strings[s]["rgb"] = prev_strings[s]["rgb"]
 
-print("Updated " + JSON_FILE + " with " + str(len(strings)) + " strings")
+    with open(JSON_FILE, "w") as f:
+        f.truncate(0)
+        json.dump(strings, f, indent=4)
+
+    print("Updated " + JSON_FILE + " with " + str(len(strings)) + " strings")
+except Exception as e:
+    print("Error: " + str(e))

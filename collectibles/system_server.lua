@@ -516,7 +516,7 @@ local function parseCustomSettings()
             stringsJson = toJSON({})
             fileWrite(stringsJsonF, stringsJson)
             fileClose(stringsJsonF)
-            outputDebugMsg("Created "..CONSTANTS.STRINGS_FILE.." file.", "INFO")
+            outputDebugMsg("Created '"..CONSTANTS.STRINGS_FILE.."'. Run 'update_strings.py' to fill it with the strings used if you want to translate them.", "INFO")
         end
     else
         stringsJsonF = fileOpen(CONSTANTS.STRINGS_FILE, true)
@@ -551,7 +551,9 @@ local function parseCustomSettings()
                     c = c + 1
                 end
             end
-            outputDebugMsg("Parsed "..c.." strings from "..CONSTANTS.STRINGS_FILE..".", "SUCCESS")
+            if c > 0 then
+                outputDebugMsg("Parsed "..c.." strings from "..CONSTANTS.STRINGS_FILE..".", "SUCCESS")
+            end
         else
             outputDebugMsg("Failed to parse "..CONSTANTS.STRINGS_FILE.." - invalid format. Use a JSON validator.", "ERROR")
         end
@@ -779,9 +781,14 @@ function updateConfiguration(updateNodes, updateStrings)
         CONSTANTS.STRINGS[name] = {value = v.value, rgb = (v.rgb or nil)}
     end
 
-    local stringsJsonF = fileOpen(CONSTANTS.STRINGS_FILE)
+    if fileExists(CONSTANTS.STRINGS_FILE) then
+        if not fileDelete(CONSTANTS.STRINGS_FILE) then
+            return false, "Failed to delete file: "..CONSTANTS.STRINGS_FILE
+        end
+    end
+    local stringsJsonF = fileCreate(CONSTANTS.STRINGS_FILE)
     if not stringsJsonF then
-        return false, "Failed to open file: "..CONSTANTS.STRINGS_FILE
+        return false, "Failed to create file: "..CONSTANTS.STRINGS_FILE
     end
     fileWrite(stringsJsonF, toJSON(CONSTANTS.STRINGS, false, "tabs"))
     fileClose(stringsJsonF)
