@@ -23,27 +23,23 @@ addEvent("collectibles:createSpawnpoint", true) -- source: always resourceRoot
 local antiSpam = {}
 local goingToRestart = false
 
--- It is also defined clientside in editor_client.lua
-local BACKUPS_DIRECTORY = "backups/"
-
-
 local function handlePermissionMismatch(thePlayer)
     outputInfoMessage("CRITICAL WARNING: "..getPlayerName(thePlayer).." ("..getAccountName(getPlayerAccount(thePlayer))
     ..") triggered an event"..(eventName and (" ("..eventName..")") or "").." for which they don't have permission.")
-    oct(thePlayer, "You don't have permission to do this.")
+    oct(thePlayer, gct("You don't have permission to do this."))
 end
 
 function commandOpenEditor(thePlayer, cmd)
     if not canAdminCollectibles(thePlayer) then
-        oct(thePlayer, "You don't have permission to do this.")
+        oct(thePlayer, gct("You don't have permission to do this."))
         return
     end
     if antiSpam[thePlayer] then
-        oct(thePlayer, "Please wait a bit before doing this again.")
+        oct(thePlayer, gct("Please wait a bit before doing this again."))
         return
     end
     if (goingToRestart == true) then
-        oct(thePlayer, "Please wait a bit before doing this again.")
+        oct(thePlayer, gct("The server is restarting, please wait."))
         return
     end
     antiSpam[thePlayer] = true
@@ -84,11 +80,13 @@ function commandOpenEditor(thePlayer, cmd)
         end
     end
 
+    local constants = getConstants()
     local info = {
         collectibleTypes = collectibleTypes,
         collectedCounts = collectedCounts,
-        backupExists = fileExists(BACKUPS_DIRECTORY.."config.xml"),
-        metaFileSrcs = metaFileSrcs
+        backupExists = fileExists((constants.BACKUPS_DIRECTORY)..(constants.COLLECTIBLES_FILE)),
+        metaFileSrcs = metaFileSrcs,
+        constants = constants
     }
     
     triggerClientEvent(thePlayer, "collectibles:admin", thePlayer, info)
@@ -161,16 +159,13 @@ local function requestCreateNewType(typeInfo)
 end
 addEventHandler("collectibles:createNewType", resourceRoot, requestCreateNewType, false)
 
-local function requestBackupConfiguration(backupPath)
+local function requestBackupConfiguration()
     if not client then return end
     if not canAdminCollectibles(client) then
         handlePermissionMismatch(client)
         return
     end
-    if type(backupPath) ~= "string" then
-        return triggerClientEvent(client, "collectibles:adminResponse", client, false, gct("Invalid arguments."), gct("OK"))
-    end
-    backupPath = BACKUPS_DIRECTORY..backupPath
+    local backupPath = (getConstants().BACKUPS_DIRECTORY)..(getConstants().COLLECTIBLES_FILE)
     local success, reason = backupConfiguration(backupPath)
     if not success then
         return triggerClientEvent(client, "collectibles:adminResponse", client, false, reason, gct("OK"))
@@ -189,7 +184,7 @@ local function requestRestoreConfigBackup(backupPath)
     if type(backupPath) ~= "string" then
         return triggerClientEvent(client, "collectibles:adminResponse", client, false, gct("Invalid arguments."), gct("OK"))
     end
-    backupPath = BACKUPS_DIRECTORY..backupPath
+    backupPath = (getConstants().BACKUPS_DIRECTORY)..backupPath
     local success, reason = restoreConfigBackup(backupPath)
     if not success then
         return triggerClientEvent(client, "collectibles:adminResponse", client, false, reason, gct("OK"))
@@ -213,8 +208,8 @@ local function requestDuplicateConfigBackup(oldPath, newPath)
     if type(oldPath) ~= "string" or type(newPath) ~= "string" then
         return triggerClientEvent(client, "collectibles:adminResponse", client, false, gct("Invalid arguments."), gct("OK"))
     end
-    oldPath = BACKUPS_DIRECTORY..oldPath
-    newPath = BACKUPS_DIRECTORY..newPath
+    oldPath = (getConstants().BACKUPS_DIRECTORY)..oldPath
+    newPath = (getConstants().BACKUPS_DIRECTORY)..newPath
     
     local dateTimeString = os.date("%Y-%m-%d_%H-%M-%S")
     newPath = string.format(newPath, dateTimeString)
@@ -230,17 +225,17 @@ addEventHandler("collectibles:duplicateConfigBackup", resourceRoot, requestDupli
 
 function commandConfigureSpawnpoints(thePlayer, cmd, theType)
     if not canAdminCollectibles(thePlayer) then
-        oct(thePlayer, "You don't have permission to do this.")
+        oct(thePlayer, gct("You don't have permission to do this."))
         return
     end
     if not theType then
-        oct(thePlayer, "SYNTAX: /%s %s", cmd, gct("[collectible type name]"))
+        oct(thePlayer, gct("SYNTAX: /%s %s", cmd, gct("[collectible type name]")))
         return
     end
     local collectibleTypes = getCollectibleTypes()
     local info = collectibleTypes[theType]
     if not info then
-        oct(thePlayer, "Collectible type '%s' does not exist.", theType)
+        oct(thePlayer, gct("Collectible type '%s' does not exist.", theType))
         return
     end
     triggerClientEvent(thePlayer, "collectibles:configureSpawnpoints", thePlayer, cmd, theType, info)

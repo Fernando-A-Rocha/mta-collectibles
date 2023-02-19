@@ -1,7 +1,7 @@
 --[[
     Author: https://github.com/Fernando-A-Rocha
 
-    Collectibles - Custom (Client)
+    Collectibles - Settings (Client)
 ]]
 
 --[[

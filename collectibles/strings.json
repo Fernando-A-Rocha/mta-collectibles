@@ -1,0 +1,1130 @@
+{
+    "You already collected all %s collectibles (total %s).": {
+        "value": "You already collected all %s collectibles (total %s).",
+        "rgb": [
+            255,
+            255,
+            255
+        ]
+    },
+    "You have found %s out of %s %s collectibles so far. Good luck!": {
+        "value": "You have found %s out of %s %s collectibles so far. Good luck!",
+        "rgb": [
+            255,
+            255,
+            255
+        ]
+    },
+    "You have hidden %s %s collectible(s).": {
+        "value": "You have hidden %s %s collectible(s).",
+        "rgb": [
+            255,
+            255,
+            255
+        ]
+    },
+    "You can't collect this now.": {
+        "value": "You can't collect this now.",
+        "rgb": [
+            255,
+            255,
+            255
+        ]
+    },
+    "You don't have permission to do this.": {
+        "value": "You don't have permission to do this.",
+        "rgb": [
+            255,
+            255,
+            255
+        ]
+    },
+    "SYNTAX: /%s %s": {
+        "value": "SYNTAX: /%s %s",
+        "rgb": [
+            255,
+            255,
+            255
+        ]
+    },
+    "[collectible type name]": {
+        "value": "[collectible type name]",
+        "rgb": [
+            255,
+            255,
+            255
+        ]
+    },
+    "[target account ID]": {
+        "value": "[target account ID]",
+        "rgb": [
+            255,
+            255,
+            255
+        ]
+    },
+    "optional:": {
+        "value": "optional:",
+        "rgb": [
+            255,
+            255,
+            255
+        ]
+    },
+    "User account ID %s does not exist.": {
+        "value": "User account ID %s does not exist.",
+        "rgb": [
+            255,
+            255,
+            255
+        ]
+    },
+    "[pickup object model ID]": {
+        "value": "[pickup object model ID]",
+        "rgb": [
+            255,
+            255,
+            255
+        ]
+    },
+    "Collectible type '%s' does not exist.": {
+        "value": "Collectible type '%s' does not exist.",
+        "rgb": [
+            255,
+            255,
+            255
+        ]
+    },
+    "Model ID %s is not a valid object ID.": {
+        "value": "Model ID %s is not a valid object ID.",
+        "rgb": [
+            255,
+            255,
+            255
+        ]
+    },
+    "Error: %s": {
+        "value": "Error: %s",
+        "rgb": [
+            255,
+            255,
+            255
+        ]
+    },
+    "You have created a new spawnpoint with ID %s (%s).": {
+        "value": "You have created a new spawnpoint with ID %s (%s).",
+        "rgb": [
+            255,
+            255,
+            255
+        ]
+    },
+    "[spawnpoint ID]": {
+        "value": "[spawnpoint ID]",
+        "rgb": [
+            255,
+            255,
+            255
+        ]
+    },
+    "Collectible type '%s' has 0 spawnpoints defined.": {
+        "value": "Collectible type '%s' has 0 spawnpoints defined.",
+        "rgb": [
+            255,
+            255,
+            255
+        ]
+    },
+    "You have deleted spawnpoint ID %s (%s).": {
+        "value": "You have deleted spawnpoint ID %s (%s).",
+        "rgb": [
+            255,
+            255,
+            255
+        ]
+    },
+    "Collectible type '%s' doesn't have a spawnpoint with ID %s.": {
+        "value": "Collectible type '%s' doesn't have a spawnpoint with ID %s.",
+        "rgb": [
+            255,
+            255,
+            255
+        ]
+    },
+    "There are currently %s %s collectibles spawned.": {
+        "value": "There are currently %s %s collectibles spawned.",
+        "rgb": [
+            255,
+            255,
+            255
+        ]
+    },
+    "You have spawned %s %s collectibles on the server.": {
+        "value": "You have spawned %s %s collectibles on the server.",
+        "rgb": [
+            255,
+            255,
+            255
+        ]
+    },
+    "You have destroyed the existing %s %s collectibles.": {
+        "value": "You have destroyed the existing %s %s collectibles.",
+        "rgb": [
+            255,
+            255,
+            255
+        ]
+    },
+    "admin_reset_success_player": {
+        "value": "admin_reset_success_player",
+        "rgb": [
+            255,
+            255,
+            255
+        ]
+    },
+    "You have reset and respawned %s client collectibles for %s (ID: %s).": {
+        "value": "You have reset and respawned %s client collectibles for %s (ID: %s).",
+        "rgb": [
+            255,
+            255,
+            255
+        ]
+    },
+    "You have earned $%s for collecting this %s.": {
+        "value": "You have earned $%s for collecting this %s.",
+        "rgb": [
+            255,
+            255,
+            255
+        ]
+    },
+    "Validation Error": {
+        "value": "Validation Error",
+        "rgb": [
+            255,
+            255,
+            255
+        ]
+    },
+    "OK": {
+        "value": "OK",
+        "rgb": [
+            255,
+            255,
+            255
+        ]
+    },
+    "Create New Collectible": {
+        "value": "Create New Collectible",
+        "rgb": [
+            255,
+            255,
+            255
+        ]
+    },
+    "Name:": {
+        "value": "Name:",
+        "rgb": [
+            255,
+            255,
+            255
+        ]
+    },
+    "Spawn Automatically": {
+        "value": "Spawn Automatically",
+        "rgb": [
+            255,
+            255,
+            255
+        ]
+    },
+    "Target:": {
+        "value": "Target:",
+        "rgb": [
+            255,
+            255,
+            255
+        ]
+    },
+    "(Optional)  Respawn After:": {
+        "value": "(Optional)  Respawn After:",
+        "rgb": [
+            255,
+            255,
+            255
+        ]
+    },
+    "Seconds": {
+        "value": "Seconds",
+        "rgb": [
+            255,
+            255,
+            255
+        ]
+    },
+    "Minutes": {
+        "value": "Minutes",
+        "rgb": [
+            255,
+            255,
+            255
+        ]
+    },
+    "Hours": {
+        "value": "Hours",
+        "rgb": [
+            255,
+            255,
+            255
+        ]
+    },
+    "Days": {
+        "value": "Days",
+        "rgb": [
+            255,
+            255,
+            255
+        ]
+    },
+    "Weeks": {
+        "value": "Weeks",
+        "rgb": [
+            255,
+            255,
+            255
+        ]
+    },
+    "(Optional)  Toggle Command:": {
+        "value": "(Optional)  Toggle Command:",
+        "rgb": [
+            255,
+            255,
+            255
+        ]
+    },
+    "(Optional)  Toggle Key Bind:": {
+        "value": "(Optional)  Toggle Key Bind:",
+        "rgb": [
+            255,
+            255,
+            255
+        ]
+    },
+    "Actions": {
+        "value": "Actions",
+        "rgb": [
+            255,
+            255,
+            255
+        ]
+    },
+    "Here you can define what happens when a collectible is picked up and when it's the last one found.": {
+        "value": "Here you can define what happens when a collectible is picked up and when it's the last one found.",
+        "rgb": [
+            255,
+            255,
+            255
+        ]
+    },
+    "On Collect:": {
+        "value": "On Collect:",
+        "rgb": [
+            255,
+            255,
+            255
+        ]
+    },
+    "(Optional)  Play Sound": {
+        "value": "(Optional)  Play Sound",
+        "rgb": [
+            255,
+            255,
+            255
+        ]
+    },
+    "Sound File Path:": {
+        "value": "Sound File Path:",
+        "rgb": [
+            255,
+            255,
+            255
+        ]
+    },
+    "Volume:": {
+        "value": "Volume:",
+        "rgb": [
+            255,
+            255,
+            255
+        ]
+    },
+    "On Collect Last:": {
+        "value": "On Collect Last:",
+        "rgb": [
+            255,
+            255,
+            255
+        ]
+    },
+    "Cancel": {
+        "value": "Cancel",
+        "rgb": [
+            255,
+            255,
+            255
+        ]
+    },
+    "Create": {
+        "value": "Create",
+        "rgb": [
+            255,
+            255,
+            255
+        ]
+    },
+    "Name cannot be empty": {
+        "value": "Name cannot be empty",
+        "rgb": [
+            255,
+            255,
+            255
+        ]
+    },
+    "Respawn After must be a positive number": {
+        "value": "Respawn After must be a positive number",
+        "rgb": [
+            255,
+            255,
+            255
+        ]
+    },
+    "Toggle command cannot be empty": {
+        "value": "Toggle command cannot be empty",
+        "rgb": [
+            255,
+            255,
+            255
+        ]
+    },
+    "Toggle command cannot contain spaces": {
+        "value": "Toggle command cannot contain spaces",
+        "rgb": [
+            255,
+            255,
+            255
+        ]
+    },
+    "Toggle keybind cannot be empty": {
+        "value": "Toggle keybind cannot be empty",
+        "rgb": [
+            255,
+            255,
+            255
+        ]
+    },
+    "Toggle keybind cannot contain spaces": {
+        "value": "Toggle keybind cannot contain spaces",
+        "rgb": [
+            255,
+            255,
+            255
+        ]
+    },
+    "Toggle keybind must be a valid key name": {
+        "value": "Toggle keybind must be a valid key name",
+        "rgb": [
+            255,
+            255,
+            255
+        ]
+    },
+    "Sound volume on 'collect_one' must be a positive number": {
+        "value": "Sound volume on 'collect_one' must be a positive number",
+        "rgb": [
+            255,
+            255,
+            255
+        ]
+    },
+    "Sound on 'collect_one' cannot be empty": {
+        "value": "Sound on 'collect_one' cannot be empty",
+        "rgb": [
+            255,
+            255,
+            255
+        ]
+    },
+    "Sound file path on 'collect_one' does not exist": {
+        "value": "Sound file path on 'collect_one' does not exist",
+        "rgb": [
+            255,
+            255,
+            255
+        ]
+    },
+    "Sound volume on 'collect_last' must be a positive number": {
+        "value": "Sound volume on 'collect_last' must be a positive number",
+        "rgb": [
+            255,
+            255,
+            255
+        ]
+    },
+    "Sound on 'collect_last' cannot be empty": {
+        "value": "Sound on 'collect_last' cannot be empty",
+        "rgb": [
+            255,
+            255,
+            255
+        ]
+    },
+    "Sound file path on 'collect_last' does not exist": {
+        "value": "Sound file path on 'collect_last' does not exist",
+        "rgb": [
+            255,
+            255,
+            255
+        ]
+    },
+    "Are you sure you want to create a new collectible type:\\n%s": {
+        "value": "Are you sure you want to create a new collectible type:\\n%s",
+        "rgb": [
+            255,
+            255,
+            255
+        ]
+    },
+    "\\nIt will be automatically loaded on %s start.": {
+        "value": "\\nIt will be automatically loaded on %s start.",
+        "rgb": [
+            255,
+            255,
+            255
+        ]
+    },
+    "Confirm Creation": {
+        "value": "Confirm Creation",
+        "rgb": [
+            255,
+            255,
+            255
+        ]
+    },
+    "Confirm": {
+        "value": "Confirm",
+        "rgb": [
+            255,
+            255,
+            255
+        ]
+    },
+    "Collectibles - Editor": {
+        "value": "Collectibles - Editor",
+        "rgb": [
+            255,
+            255,
+            255
+        ]
+    },
+    "Types": {
+        "value": "Types",
+        "rgb": [
+            255,
+            255,
+            255
+        ]
+    },
+    "No collectible types have been defined.": {
+        "value": "No collectible types have been defined.",
+        "rgb": [
+            255,
+            255,
+            255
+        ]
+    },
+    "There are two possible collectible 'targets':\\n\u00e2\u20ac\u00a2 [client]: The collectibles are created on each client only. Toggle command/bind and respawn time can be defined.\\nDon't forget to define a toggle command/keybind if 'Spawn Automatically' is disabled.\\n\u00e2\u20ac\u00a2 [server]: The collectibles are created on the server and all players will compete for them.": {
+        "value": "There are two possible collectible 'targets':\\n\u00e2\u20ac\u00a2 [client]: The collectibles are created on each client only. Toggle command/bind and respawn time can be defined.\\nDon't forget to define a toggle command/keybind if 'Spawn Automatically' is disabled.\\n\u00e2\u20ac\u00a2 [server]: The collectibles are created on the server and all players will compete for them.",
+        "rgb": [
+            255,
+            255,
+            255
+        ]
+    },
+    "Create Collectible Type": {
+        "value": "Create Collectible Type",
+        "rgb": [
+            255,
+            255,
+            255
+        ]
+    },
+    "Spawn Points:": {
+        "value": "Spawn Points:",
+        "rgb": [
+            255,
+            255,
+            255
+        ]
+    },
+    "Configure": {
+        "value": "Configure",
+        "rgb": [
+            255,
+            255,
+            255
+        ]
+    },
+    "INFO: View all server and player stats related to this collectible:": {
+        "value": "INFO: View all server and player stats related to this collectible:",
+        "rgb": [
+            255,
+            255,
+            255
+        ]
+    },
+    "View Stats": {
+        "value": "View Stats",
+        "rgb": [
+            255,
+            255,
+            255
+        ]
+    },
+    "DANGER: Deletes this type's spawnpoints and collected counts of all player accounts:": {
+        "value": "DANGER: Deletes this type's spawnpoints and collected counts of all player accounts:",
+        "rgb": [
+            255,
+            255,
+            255
+        ]
+    },
+    "Delete This Type": {
+        "value": "Delete This Type",
+        "rgb": [
+            255,
+            255,
+            255
+        ]
+    },
+    "Are you sure you want to delete collectible type:\\n%s": {
+        "value": "Are you sure you want to delete collectible type:\\n%s",
+        "rgb": [
+            255,
+            255,
+            255
+        ]
+    },
+    "\\nThis will delete all corresponding spawnpoints and\\ncollected counts of all player accounts.": {
+        "value": "\\nThis will delete all corresponding spawnpoints and\\ncollected counts of all player accounts.",
+        "rgb": [
+            255,
+            255,
+            255
+        ]
+    },
+    "Delete Collectible Type": {
+        "value": "Delete Collectible Type",
+        "rgb": [
+            255,
+            255,
+            255
+        ]
+    },
+    "Misc": {
+        "value": "Misc",
+        "rgb": [
+            255,
+            255,
+            255
+        ]
+    },
+    "Configuration Backups": {
+        "value": "Configuration Backups",
+        "rgb": [
+            255,
+            255,
+            255
+        ]
+    },
+    "File '%s' (default) currently exists in the server's file system.": {
+        "value": "File '%s' (default) currently exists in the server's file system.",
+        "rgb": [
+            255,
+            255,
+            255
+        ]
+    },
+    "File '%s' (default) could not be found in the server's file system.": {
+        "value": "File '%s' (default) could not be found in the server's file system.",
+        "rgb": [
+            255,
+            255,
+            255
+        ]
+    },
+    "Create Backup": {
+        "value": "Create Backup",
+        "rgb": [
+            255,
+            255,
+            255
+        ]
+    },
+    "Restore Backup": {
+        "value": "Restore Backup",
+        "rgb": [
+            255,
+            255,
+            255
+        ]
+    },
+    "Duplicate Backup": {
+        "value": "Duplicate Backup",
+        "rgb": [
+            255,
+            255,
+            255
+        ]
+    },
+    "Save Changes": {
+        "value": "Save Changes",
+        "rgb": [
+            255,
+            255,
+            255
+        ]
+    },
+    "Close": {
+        "value": "Close",
+        "rgb": [
+            255,
+            255,
+            255
+        ]
+    },
+    "Name for '%s' cannot be empty": {
+        "value": "Name for '%s' cannot be empty",
+        "rgb": [
+            255,
+            255,
+            255
+        ]
+    },
+    "Respawn After for '%s' must be a positive number": {
+        "value": "Respawn After for '%s' must be a positive number",
+        "rgb": [
+            255,
+            255,
+            255
+        ]
+    },
+    "Toggle command for '%s' cannot be empty": {
+        "value": "Toggle command for '%s' cannot be empty",
+        "rgb": [
+            255,
+            255,
+            255
+        ]
+    },
+    "Toggle command for '%s' cannot contain spaces": {
+        "value": "Toggle command for '%s' cannot contain spaces",
+        "rgb": [
+            255,
+            255,
+            255
+        ]
+    },
+    "Toggle keybind for '%s' cannot be empty": {
+        "value": "Toggle keybind for '%s' cannot be empty",
+        "rgb": [
+            255,
+            255,
+            255
+        ]
+    },
+    "Toggle keybind for '%s' cannot contain spaces": {
+        "value": "Toggle keybind for '%s' cannot contain spaces",
+        "rgb": [
+            255,
+            255,
+            255
+        ]
+    },
+    "Toggle keybind for '%s' must be a valid key name": {
+        "value": "Toggle keybind for '%s' must be a valid key name",
+        "rgb": [
+            255,
+            255,
+            255
+        ]
+    },
+    "Sound volume for '%s - %s' must be a positive number": {
+        "value": "Sound volume for '%s - %s' must be a positive number",
+        "rgb": [
+            255,
+            255,
+            255
+        ]
+    },
+    "Sound for '%s - %s' cannot be empty": {
+        "value": "Sound for '%s - %s' cannot be empty",
+        "rgb": [
+            255,
+            255,
+            255
+        ]
+    },
+    "Sound file path for '%s - %s' does not exist": {
+        "value": "Sound file path for '%s - %s' does not exist",
+        "rgb": [
+            255,
+            255,
+            255
+        ]
+    },
+    "Are you sure you want to save these changes?\\nThis will restart the resource if successful.": {
+        "value": "Are you sure you want to save these changes?\\nThis will restart the resource if successful.",
+        "rgb": [
+            255,
+            255,
+            255
+        ]
+    },
+    "Are you sure you want to create a backup of the current configuration?\\n%s": {
+        "value": "Are you sure you want to create a backup of the current configuration?\\n%s",
+        "rgb": [
+            255,
+            255,
+            255
+        ]
+    },
+    "\\n\\nWARNING: This will overwrite the existing backup.": {
+        "value": "\\n\\nWARNING: This will overwrite the existing backup.",
+        "rgb": [
+            255,
+            255,
+            255
+        ]
+    },
+    "Backed up configuration file (%s...):": {
+        "value": "Backed up configuration file (%s...):",
+        "rgb": [
+            255,
+            255,
+            255
+        ]
+    },
+    "Backup name cannot be empty": {
+        "value": "Backup name cannot be empty",
+        "rgb": [
+            255,
+            255,
+            255
+        ]
+    },
+    "Backup name cannot contain spaces": {
+        "value": "Backup name cannot contain spaces",
+        "rgb": [
+            255,
+            255,
+            255
+        ]
+    },
+    "Are you sure you want to restore the configuration from:\\n%s%s": {
+        "value": "Are you sure you want to restore the configuration from:\\n%s%s",
+        "rgb": [
+            255,
+            255,
+            255
+        ]
+    },
+    "You can use %s in the new path for the current server date-time string.": {
+        "value": "You can use %s in the new path for the current server date-time string.",
+        "rgb": [
+            255,
+            255,
+            255
+        ]
+    },
+    "Copy file (%s...):": {
+        "value": "Copy file (%s...):",
+        "rgb": [
+            255,
+            255,
+            255
+        ]
+    },
+    "To new file (%s...):": {
+        "value": "To new file (%s...):",
+        "rgb": [
+            255,
+            255,
+            255
+        ]
+    },
+    "Are you sure you want to duplicate the backup from:\\n%s\\nto:\\n%s": {
+        "value": "Are you sure you want to duplicate the backup from:\\n%s\\nto:\\n%s",
+        "rgb": [
+            255,
+            255,
+            255
+        ]
+    },
+    "Create New %s Spawnpoint": {
+        "value": "Create New %s Spawnpoint",
+        "rgb": [
+            255,
+            255,
+            255
+        ]
+    },
+    "Valid Object ID": {
+        "value": "Valid Object ID",
+        "rgb": [
+            255,
+            255,
+            255
+        ]
+    },
+    "Model:": {
+        "value": "Model:",
+        "rgb": [
+            255,
+            255,
+            255
+        ]
+    },
+    "Select a model": {
+        "value": "Select a model",
+        "rgb": [
+            255,
+            255,
+            255
+        ]
+    },
+    "You must select or type a valid object model ID.": {
+        "value": "You must select or type a valid object model ID.",
+        "rgb": [
+            255,
+            255,
+            255
+        ]
+    },
+    "Information": {
+        "value": "Information",
+        "rgb": [
+            255,
+            255,
+            255
+        ]
+    },
+    "Are you sure you want to create a new\\n'%s' (model: %s)\\nspawnpoint at your current location?": {
+        "value": "Are you sure you want to create a new\\n'%s' (model: %s)\\nspawnpoint at your current location?",
+        "rgb": [
+            255,
+            255,
+            255
+        ]
+    },
+    "Create Spawnpoint": {
+        "value": "Create Spawnpoint",
+        "rgb": [
+            255,
+            255,
+            255
+        ]
+    },
+    "ID": {
+        "value": "ID",
+        "rgb": [
+            255,
+            255,
+            255
+        ]
+    },
+    "Model": {
+        "value": "Model",
+        "rgb": [
+            255,
+            255,
+            255
+        ]
+    },
+    "X Coord": {
+        "value": "X Coord",
+        "rgb": [
+            255,
+            255,
+            255
+        ]
+    },
+    "Y Coord": {
+        "value": "Y Coord",
+        "rgb": [
+            255,
+            255,
+            255
+        ]
+    },
+    "Z Coord": {
+        "value": "Z Coord",
+        "rgb": [
+            255,
+            255,
+            255
+        ]
+    },
+    "Interior": {
+        "value": "Interior",
+        "rgb": [
+            255,
+            255,
+            255
+        ]
+    },
+    "Dimension": {
+        "value": "Dimension",
+        "rgb": [
+            255,
+            255,
+            255
+        ]
+    },
+    "Add": {
+        "value": "Add",
+        "rgb": [
+            255,
+            255,
+            255
+        ]
+    },
+    "Remove": {
+        "value": "Remove",
+        "rgb": [
+            255,
+            255,
+            255
+        ]
+    },
+    "Teleport": {
+        "value": "Teleport",
+        "rgb": [
+            255,
+            255,
+            255
+        ]
+    },
+    "Are you sure you want to remove spawnpoint #%s?": {
+        "value": "Are you sure you want to remove spawnpoint #%s?",
+        "rgb": [
+            255,
+            255,
+            255
+        ]
+    },
+    "Remove Spawnpoint": {
+        "value": "Remove Spawnpoint",
+        "rgb": [
+            255,
+            255,
+            255
+        ]
+    },
+    "Success": {
+        "value": "Success",
+        "rgb": [
+            255,
+            255,
+            255
+        ]
+    },
+    "Error": {
+        "value": "Error",
+        "rgb": [
+            255,
+            255,
+            255
+        ]
+    },
+    "Please wait a bit before doing this again.": {
+        "value": "Please wait a bit before doing this again.",
+        "rgb": [
+            255,
+            255,
+            255
+        ]
+    },
+    "The server is restarting, please wait.": {
+        "value": "The server is restarting, please wait.",
+        "rgb": [
+            255,
+            255,
+            255
+        ]
+    },
+    "admin_changes_saved": {
+        "value": "admin_changes_saved",
+        "rgb": [
+            255,
+            255,
+            255
+        ]
+    },
+    "The resource will now restart...\\nPay attention to the server console.": {
+        "value": "The resource will now restart...\\nPay attention to the server console.",
+        "rgb": [
+            255,
+            255,
+            255
+        ]
+    },
+    "Collectible type '%s' was permanently deleted.": {
+        "value": "Collectible type '%s' was permanently deleted.",
+        "rgb": [
+            255,
+            255,
+            255
+        ]
+    },
+    "Collectible type '%s' created successfully.": {
+        "value": "Collectible type '%s' created successfully.",
+        "rgb": [
+            255,
+            255,
+            255
+        ]
+    },
+    "Configuration backup created successfully:\\n%s": {
+        "value": "Configuration backup created successfully:\\n%s",
+        "rgb": [
+            255,
+            255,
+            255
+        ]
+    },
+    "Invalid arguments.": {
+        "value": "Invalid arguments.",
+        "rgb": [
+            255,
+            255,
+            255
+        ]
+    },
+    "Configuration restored successfully from:\\n": {
+        "value": "Configuration restored successfully from:\\n",
+        "rgb": [
+            255,
+            255,
+            255
+        ]
+    },
+    "Configuration backup copied from:\\n%s\\nto:\\n%s": {
+        "value": "Configuration backup copied from:\\n%s\\nto:\\n%s",
+        "rgb": [
+            255,
+            255,
+            255
+        ]
+    }
+}

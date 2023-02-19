@@ -1,2 +1,2 @@
 # Ignore OLD file created when config is restored by a backup
-config.xml.old
+*.old

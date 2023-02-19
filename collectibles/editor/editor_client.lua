@@ -19,9 +19,6 @@ local KEY_NAMES = { "mouse1", "mouse2", "mouse3", "mouse4", "mouse5", "mouse_whe
 "F6", "F7", "F8", "F9", "F10", "F11", "F12", "backspace", "tab", "lalt", "ralt", "enter", "space", "pgup", "pgdn", "end", "home",
 "insert", "delete", "lshift", "rshift", "lctrl", "rctrl", "[", "]", "pause", "capslock", "scroll", ";", ",", "-", ".", "/", "#", "\\", "=" }
 
--- For security reasons, it is also defined serverside in editor_server.lua
-local BACKUPS_DIRECTORY = "backups/"
-
 local SW, SH = guiGetScreenSize()
 local popupWin = nil
 local createWin = nil
@@ -898,10 +895,13 @@ addEventHandler("collectibles:admin", localPlayer, function(serverInfo)
 
     x = x + 10
 
-    local backupExists = gct("File '%s' (default) currently exists in the server's file system.", "backups/config.xml")
+    local BACKUPS_DIRECTORY = serverInfo.constants.BACKUPS_DIRECTORY
+    local COLLECTIBLES_FILE = serverInfo.constants.COLLECTIBLES_FILE
+
+    local backupExists = gct("File '%s' (default) currently exists in the server's file system.", BACKUPS_DIRECTORY .. COLLECTIBLES_FILE)
     local bR, bG, bB = 0, 255, 0
     if not serverInfo.backupExists then
-        backupExists = gct("File '%s' (default) could not be found in the server's file system.", "backups/config.xml")
+        backupExists = gct("File '%s' (default) could not be found in the server's file system.", BACKUPS_DIRECTORY .. COLLECTIBLES_FILE)
         bR, bG, bB = 255, 0, 0
     end
     local backupExistsLabel = guiCreateLabel(x, y, TW-(x*2), 20, backupExists, false, tabMisc)
@@ -924,6 +924,7 @@ addEventHandler("collectibles:admin", localPlayer, function(serverInfo)
     local close = guiCreateButton(15 + (2/3)*WW, WH - 45, (1/3)*WW - 30, 30, gct("Close"), false, mainWin)
 
     -- Button interactions
+
 
     addEventHandler("onClientGUIClick", mainWin, function()
         
@@ -1059,22 +1060,21 @@ addEventHandler("collectibles:admin", localPlayer, function(serverInfo)
 
         elseif source == backupCreateButton then
 
-            local desc = gct("Are you sure you want to create a backup of the current configuration?\n%s", BACKUPS_DIRECTORY.."config.xml")
+            local desc = gct("Are you sure you want to create a backup of the current configuration?\n%s", BACKUPS_DIRECTORY..COLLECTIBLES_FILE)
             if serverInfo.backupExists then
                 desc = desc ..gct("\n\nWARNING: This will overwrite the existing backup.")
             end
             createConfirmPopup(gct("Create Backup"), "FFFFFF00", desc, gct("Confirm"), gct("Cancel"),
-                "collectibles:adminConfirm", "backupCreate", "config.xml")
+                "collectibles:adminConfirm", "backupCreate")
 
         elseif source == backupRestoreButton then
 
             guiSetEnabled(mainWin, false)
             local win = guiCreateWindow((SW-500)/2, (SH-130)/2, 500, 130, gct("Restore Backup"), false)
             local labelCurrPath = guiCreateLabel(10, 25, 500-20, 20, gct("Backed up configuration file (%s...):", BACKUPS_DIRECTORY), false, win)
-            local PLACEHOLDER_PATH = "config.xml"
-            local currName = guiCreateEdit(10, 50, 500-20, 30, PLACEHOLDER_PATH, false, win)
+            local currName = guiCreateEdit(10, 50, 500-20, 30, COLLECTIBLES_FILE, false, win)
             addEventHandler("onClientGUIClick", currName, function()
-                if guiGetText(source) == PLACEHOLDER_PATH then
+                if guiGetText(source) == COLLECTIBLES_FILE then
                     guiSetText(source, "")
                 end
             end, false)
@@ -1110,7 +1110,7 @@ addEventHandler("collectibles:admin", localPlayer, function(serverInfo)
             local labelCurrPath = guiCreateLabel(10, 55, 500/2-10, 20, gct("Copy file (%s...):", BACKUPS_DIRECTORY), false, win)
             local labelNewPath = guiCreateLabel(10+500/2, 55, 500/2-20, 20, gct("To new file (%s...):", BACKUPS_DIRECTORY), false, win)
             local PLACEHOLDER_PATH = "config_%s.xml"
-            local currName = guiCreateEdit(10, 80, 500/2-10, 30, "config.xml", false, win)
+            local currName = guiCreateEdit(10, 80, 500/2-10, 30, COLLECTIBLES_FILE, false, win)
             local name = guiCreateEdit(10+500/2, 80, 500/2-20, 30, PLACEHOLDER_PATH, false, win)
             addEventHandler("onClientGUIClick", name, function()
                 if guiGetText(source) == PLACEHOLDER_PATH then
@@ -1422,7 +1422,7 @@ addEventHandler("collectibles:adminConfirm", localPlayer, function(confirmType, 
             triggerServerEvent("collectibles:createNewType", resourceRoot, eventArgs[1])
         
         elseif confirmType == "backupCreate" then
-            triggerServerEvent("collectibles:backupConfig", resourceRoot, eventArgs[1])
+            triggerServerEvent("collectibles:backupConfig", resourceRoot)
 
         elseif confirmType == "backupRestore" then
             triggerServerEvent("collectibles:restoreConfigBackup", resourceRoot, eventArgs[1])

@@ -24,7 +24,7 @@ local spawnedServerCollectibles = {}
 
 function getAccountDataNames()
     return {
-        client_counts = "collectibiles.client",
+        CLIENT_COUNTS = "collectibiles.client",
     }
 end
 
@@ -39,11 +39,6 @@ end
 
 function getSpawnedServerCollectibles()
     return spawnedServerCollectibles
-end
-
-function outputInfoMessage(msg)
-    msg = "[Collectibles] " .. msg
-    outputServerLog(msg)
 end
 
 local function parseOneNode(rootChildren, targetNodeName)
@@ -326,11 +321,11 @@ end
 
 local function commandSpawnCollectibles(thePlayer, cmd, theType)
     if not canAdminCollectibles(thePlayer) then
-        oct(thePlayer, "You don't have permission to do this.")
+        oct(thePlayer, gct("You don't have permission to do this."))
         return
     end
     if not theType then
-        oct(thePlayer, "SYNTAX: /%s %s", cmd, gct("[collectible type name]"))
+        oct(thePlayer, gct("SYNTAX: /%s %s", cmd, gct("[collectible type name]")))
         return
     end
     spawnCollectibles(theType, thePlayer)
@@ -338,11 +333,11 @@ end
 
 local function commandDestroyCollectibles(thePlayer, cmd, theType)
     if not canAdminCollectibles(thePlayer) then
-        oct(thePlayer, "You don't have permission to do this.")
+        oct(thePlayer, gct("You don't have permission to do this."))
         return
     end
     if not theType then
-        oct(thePlayer, "SYNTAX: /%s %s", cmd, gct("[collectible type name]"))
+        oct(thePlayer, gct("SYNTAX: /%s %s", cmd, gct("[collectible type name]")))
         return
     end
     destroyCollectibles(theType, thePlayer)
@@ -350,17 +345,17 @@ end
 
 local function commandResetCollectibles(thePlayer, cmd, targetAccountID, theType)
     if not canAdminCollectibles(thePlayer) then
-        oct(thePlayer, "You don't have permission to do this.")
+        oct(thePlayer, gct("You don't have permission to do this."))
         return
     end
     targetAccountID = tonumber(targetAccountID)
     if not targetAccountID then
-        oct(thePlayer, "SYNTAX: /%s %s", cmd, gct("[target account ID]")..gct("optional:")..gct("[collectible type name]"))
+        oct(thePlayer, gct("SYNTAX: /%s %s", cmd, gct("[target account ID]")..gct("optional:")..gct("[collectible type name]")))
         return
     end
     local targetAccount = getAccountByID(targetAccountID)
     if not targetAccount then
-        oct(thePlayer, "User account ID %s does not exist.", tostring(targetAccount))
+        oct(thePlayer, gct("User account ID %s does not exist.", tostring(targetAccount)))
         return
     end
     if not theType then
@@ -371,20 +366,20 @@ end
 
 local function commandCreateSpawnpoint(thePlayer, cmd, theType, model)
     if not canAdminCollectibles(thePlayer) then
-        oct(thePlayer, "You don't have permission to do this.")
+        oct(thePlayer, gct("You don't have permission to do this."))
         return
     end
     model = tonumber(model)
     if not theType or not model then
-        oct(thePlayer, "SYNTAX: /%s %s", cmd, gct("[collectible type name]").." "..gct("[pickup object model ID]"))
+        oct(thePlayer, gct("SYNTAX: /%s %s", cmd, gct("[collectible type name]").." "..gct("[pickup object model ID]")))
         return
     end
     if not collectibleTypes[theType] then
-        oct(thePlayer, "Collectible type '%s' does not exist.", theType)
+        oct(thePlayer, gct("Collectible type '%s' does not exist.", theType))
         return
     end
     if not isDefaultObjectID(model) then
-        oct(thePlayer, "Model ID %s is not a valid object ID.", tostring(model))
+        oct(thePlayer, gct("Model ID %s is not a valid object ID.", tostring(model)))
         return
     end
     local x,y,z = getElementPosition(thePlayer)
@@ -392,28 +387,28 @@ local function commandCreateSpawnpoint(thePlayer, cmd, theType, model)
     setPlayerPreventPicking(thePlayer, 5000)
     local newSpID, reason = createNewSpawnpoint(theType, model, x,y,z, interior, dimension)
     if not newSpID then
-        oct(thePlayer, "Error: %s", reason)
+        oct(thePlayer, gct("Error: %s", reason))
         return
     end
-    oct(thePlayer, "You have created a new spawnpoint with ID %s (%s).", tostring(newSpID), (string.gsub(theType, "_", " ")))
+    oct(thePlayer, gct("You have created a new spawnpoint with ID %s (%s).", tostring(newSpID), (string.gsub(theType, "_", " "))))
 end
 
 local function commandRemoveSpawnpoint(thePlayer, cmd, theType, spID)
     if not canAdminCollectibles(thePlayer) then
-        oct(thePlayer, "You don't have permission to do this.")
+        oct(thePlayer, gct("You don't have permission to do this."))
         return
     end
     spID = tonumber(spID)
     if not theType or not spID then
-        oct(thePlayer, "SYNTAX: /%s %s", cmd, gct("[collectible type name]").." "..gct("[spawnpoint ID]"))
+        oct(thePlayer, gct("SYNTAX: /%s %s", cmd, gct("[collectible type name]").." "..gct("[spawnpoint ID]")))
         return
     end
     if not collectibleTypes[theType] then
-        oct(thePlayer, "Collectible type '%s' does not exist.", theType)
+        oct(thePlayer, gct("Collectible type '%s' does not exist.", theType))
         return
     end
     if #collectibleTypes[theType].spawnpoints == 0 then
-        oct(thePlayer, "Collectible type '%s' has 0 spawnpoints defined.", (string.gsub(theType, "_", " ")))
+        oct(thePlayer, gct("Collectible type '%s' has 0 spawnpoints defined.", (string.gsub(theType, "_", " "))))
         return
     end
     for i=1, #collectibleTypes[theType].spawnpoints do
@@ -421,14 +416,14 @@ local function commandRemoveSpawnpoint(thePlayer, cmd, theType, spID)
         if spawnpoint and spawnpoint.spID == spID then
             local success, reason = removeSpawnpoint(theType, spID)
             if not success then
-                oct(thePlayer, "Error: %s", reason)
+                oct(thePlayer, gct("Error: %s", reason))
                 return
             end
-            oct(thePlayer, "You have deleted spawnpoint ID %s (%s).", tostring(spID), (string.gsub(theType, "_", " ")))
+            oct(thePlayer, gct("You have deleted spawnpoint ID %s (%s).", tostring(spID), (string.gsub(theType, "_", " "))))
             return
         end
     end
-    oct(thePlayer, "Collectible type '%s' doesn't have a spawnpoint with ID %s.", (string.gsub(theType, "_", " ")), spID)
+    oct(thePlayer, gct("Collectible type '%s' doesn't have a spawnpoint with ID %s.", (string.gsub(theType, "_", " ")), spID))
 end
 
 --- Validates all custom settings
@@ -497,9 +492,69 @@ local function parseCustomSettings()
         addCommandHandler(commands.EDITOR, commandOpenEditor, false, false)
     end
 
+    -- Misc constants
+    if type(CONSTANTS.COLLECTIBLES_FILE) ~= "string" then
+        return false, "Failed to parse constants - CONSTANTS.COLLECTIBLES_FILE is not a string."
+    end
+    if type(CONSTANTS.STRINGS_FILE) ~= "string" then
+        return false, "Failed to parse constants - CONSTANTS.STRINGS_FILE is not a string."
+    end
+    if type(CONSTANTS.BACKUPS_DIRECTORY) ~= "string" then
+        return false, "Failed to parse constants - CONSTANTS.BACKUPS_DIRECTORY is not a string."
+    end
+
     -- STRINGS
-    if type(CONSTANTS.STRINGS) ~= "table" then
-        return false, "Failed to parse constants - CONSTANTS.STRINGS is not a table."
+    CONSTANTS.STRINGS = {}
+    local stringsJsonF
+    local stringsJson
+    if not fileExists(CONSTANTS.STRINGS_FILE) then
+        stringsJsonF = fileCreate(CONSTANTS.STRINGS_FILE)
+        if not stringsJsonF then
+            outputDebugMsg("Failed to parse "..CONSTANTS.STRINGS_FILE.." - couldn't create file.", "ERROR")
+            stringsJsonF = nil
+        else
+            stringsJson = toJSON({})
+            fileWrite(stringsJsonF, stringsJson)
+            fileClose(stringsJsonF)
+            outputDebugMsg("Created "..CONSTANTS.STRINGS_FILE.." file.", "INFO")
+        end
+    else
+        stringsJsonF = fileOpen(CONSTANTS.STRINGS_FILE, true)
+        if not stringsJsonF then
+            outputDebugMsg("Failed to parse "..CONSTANTS.STRINGS_FILE.." - couldn't open file.", "ERROR")
+            stringsJsonF = nil
+        else
+            stringsJson = fileRead(stringsJsonF, fileGetSize(stringsJsonF))
+            fileClose(stringsJsonF)
+        end
+    end
+    if stringsJson then
+        local strings = fromJSON(stringsJson)
+        if strings then
+            local c = 0
+            for name, v in pairs(strings) do
+                if type(name) ~= "string" then
+                    outputDebugMsg("Failed to parse "..CONSTANTS.STRINGS_FILE.." - "..name.." is not a string.", "ERROR")
+                elseif type(v) ~= "table" then
+                    outputDebugMsg("Failed to parse "..CONSTANTS.STRINGS_FILE.." - "..name.." is not a table.", "ERROR")
+                elseif type(v.value) ~= "string" then
+                    outputDebugMsg("Failed to parse "..CONSTANTS.STRINGS_FILE.." - "..name..".value is not a string.", "ERROR")
+                else
+                    if (v.rgb) ~= nil then
+                        if not (type(v.rgb[1])=="number" and type(v.rgb[2])=="number" and type(v.rgb[3])=="number") then
+                            outputDebugMsg("Failed to parse "..CONSTANTS.STRINGS_FILE.." - "..name..".rgb is not a table of 3 numbers.", "ERROR")
+                        elseif v.rgb[1] < 0 or v.rgb[1] > 255 or v.rgb[2] < 0 or v.rgb[2] > 255 or v.rgb[3] < 0 or v.rgb[3] > 255 then
+                            outputDebugMsg("Failed to parse "..CONSTANTS.STRINGS_FILE.." - "..name..".rgb is not a table of 3 numbers between 0 and 255.", "ERROR")
+                        end
+                    end
+                    CONSTANTS.STRINGS[name] = {value = v.value, rgb = (v.rgb or nil)}
+                    c = c + 1
+                end
+            end
+            outputDebugMsg("Parsed "..c.." strings from "..CONSTANTS.STRINGS_FILE..".", "SUCCESS")
+        else
+            outputDebugMsg("Failed to parse "..CONSTANTS.STRINGS_FILE.." - invalid format. Use a JSON validator.", "ERROR")
+        end
     end
 
     return true
@@ -510,15 +565,15 @@ end
 -- Errors are usually caused by incorrectly formatted XML file (caused by editing it manually) and file IO operations.
 local function loadConfiguration()
 
-    local config = xmlLoadFile("config.xml")
+    local config = xmlLoadFile(CONSTANTS.COLLECTIBLES_FILE)
     if not config then
-        return false, "Failed to load file 'config.xml'."
+        return false, "Failed to load file "..CONSTANTS.COLLECTIBLES_FILE.."."
     end
 
     local children = xmlNodeGetChildren(config)
     if not children then
         xmlUnloadFile(config)
-        return false, "Failed to get children of 'config.xml'."
+        return false, "Failed to get children of "..CONSTANTS.COLLECTIBLES_FILE.."."
     end
 
     local success, reason, theType = parseOneNode(children, "types")
@@ -558,8 +613,8 @@ local function loadConfiguration()
 end
 
 function backupConfiguration(backupPath)
-    if not fileCopy("config.xml", backupPath, true) then
-        return false, "Failed to copy file 'config.xml' to '"..backupPath.."' - check permissions."
+    if not fileCopy(CONSTANTS.COLLECTIBLES_FILE, backupPath, true) then
+        return false, "Failed to copy file "..CONSTANTS.COLLECTIBLES_FILE.." to '"..backupPath.."' - check permissions."
     end
     return true
 end
@@ -568,25 +623,12 @@ function restoreConfigBackup(backupPath)
     if not fileExists(backupPath) then
         return false, "File '" .. backupPath .. "' does not exist."
     end
-    if fileExists("config.xml.old") then
-        if not fileDelete("config.xml.old") then
-            return false, "Failed to delete file 'config.xml.old' - check permissions."
-        end
+    local oldPath = backupPath .. ".old"
+    if not fileCopy(CONSTANTS.COLLECTIBLES_FILE, oldPath, true) then -- Backup to .old
+        return false, "Failed to copy file "..CONSTANTS.COLLECTIBLES_FILE.." to '"..oldPath.."' - check permissions."
     end
-    local old = fileCreate("config.xml.old")
-    if not old then
-        return false, "Failed to create file 'config.xml.old' - check permissions."
-    end
-    local config = fileOpen("config.xml")
-    if not config then
-        fileClose(old)
-        return false, "Failed to open file 'config.xml' - check permissions."
-    end
-    fileWrite(old, fileRead(config, fileGetSize(config)))
-    fileClose(config)
-    fileClose(old)
-    if not fileCopy(backupPath, "config.xml", true) then -- Overwrite
-        return false, "Failed to copy file 'backups/config.xml' to 'config.xml' - check permissions."
+    if not fileCopy(backupPath, CONSTANTS.COLLECTIBLES_FILE, true) then -- Overwrite
+        return false, "Failed to copy file '"..backupPath.."' to "..CONSTANTS.COLLECTIBLES_FILE.." - check permissions."
     end
     return true
 end
@@ -610,7 +652,7 @@ local function findNode(theChildren, nodeName, attributeNames)
         if xmlNodeGetName(child) == nodeName then
             local nodeChildren = xmlNodeGetChildren(child)
             if not nodeChildren then
-                return false, "Failed to get children of '" .. nodeName .. "' in 'config.xml'."
+                return false, "Failed to get children of '" .. nodeName .. "' in "..CONSTANTS.COLLECTIBLES_FILE.."."
             end
             for j=1, #nodeChildren do
                 local nodeChild = nodeChildren[j]
@@ -629,21 +671,21 @@ local function findNode(theChildren, nodeName, attributeNames)
             end
         end
     end
-    return false, "Failed to find node '" .. nodeName .. "/" .. inspect(attributeNames) .. "' in 'config.xml'."
+    return false, "Failed to find node '" .. nodeName .. "/" .. inspect(attributeNames) .. "' in "..CONSTANTS.COLLECTIBLES_FILE.."."
 end
 
 function updateConfiguration(updateNodes)
     assert(type(updateNodes) == "table", "Bad argument @ updateConfiguration (table expected, got " .. type(updateNodes) .. ")")
 
-    local config = xmlLoadFile("config.xml")
+    local config = xmlLoadFile(CONSTANTS.COLLECTIBLES_FILE)
     if not config then
-        return false, "Failed to load file 'config.xml'."
+        return false, "Failed to load file "..CONSTANTS.COLLECTIBLES_FILE.."."
     end
 
     local children = xmlNodeGetChildren(config)
     if not children then
         xmlUnloadFile(config)
-        return false, "Failed to get children of 'config.xml'."
+        return false, "Failed to get children of "..CONSTANTS.COLLECTIBLES_FILE.."."
     end
 
     local updatedTypeNames = {} -- old => new
@@ -687,7 +729,7 @@ function updateConfiguration(updateNodes)
     children = xmlNodeGetChildren(config)
     if not children then
         xmlUnloadFile(config)
-        return false, "Failed to get children of 'config.xml'."
+        return false, "Failed to get children of "..CONSTANTS.COLLECTIBLES_FILE.."."
     end
 
     for i=1, #children do
@@ -696,7 +738,7 @@ function updateConfiguration(updateNodes)
             local nodeChildren = xmlNodeGetChildren(child)
             if not nodeChildren then
                 xmlUnloadFile(config)
-                return false, "Failed to get children of '" .. xmlNodeGetName(child) .. "' in 'config.xml'."
+                return false, "Failed to get children of '" .. xmlNodeGetName(child) .. "' in "..CONSTANTS.COLLECTIBLES_FILE.."."
             end
             for j=1, #nodeChildren do
                 local nodeChild = nodeChildren[j]
@@ -710,7 +752,7 @@ function updateConfiguration(updateNodes)
 
     if not xmlSaveFile(config) then
         xmlUnloadFile(config)
-        return false, "Failed to save file 'config.xml'."
+        return false, "Failed to save file "..CONSTANTS.COLLECTIBLES_FILE.."."
     end
 
     xmlUnloadFile(config)
@@ -724,15 +766,15 @@ function deleteType(theType)
         return false, "Failed to delete type '" .. theType .. "' - type does not exist."
     end
 
-    local config = xmlLoadFile("config.xml")
+    local config = xmlLoadFile(CONSTANTS.COLLECTIBLES_FILE)
     if not config then
-        return false, "Failed to load file 'config.xml'."
+        return false, "Failed to load file "..CONSTANTS.COLLECTIBLES_FILE.."."
     end
 
     local children = xmlNodeGetChildren(config)
     if not children then
         xmlUnloadFile(config)
-        return false, "Failed to get children of 'config.xml'."
+        return false, "Failed to get children of "..CONSTANTS.COLLECTIBLES_FILE.."."
     end
 
     -- Find the necessary node
@@ -750,33 +792,33 @@ function deleteType(theType)
 
     if not typesNode then
         xmlUnloadFile(config)
-        return false, "Failed to find node 'types' in 'config.xml'."
+        return false, "Failed to find node 'types' in "..CONSTANTS.COLLECTIBLES_FILE.."."
     end
     if not actionsNode then
         xmlUnloadFile(config)
-        return false, "Failed to find node 'actions' in 'config.xml'."
+        return false, "Failed to find node 'actions' in "..CONSTANTS.COLLECTIBLES_FILE.."."
     end
     if not spawnpointsNode then
         xmlUnloadFile(config)
-        return false, "Failed to find node 'spawnpoints' in 'config.xml'."
+        return false, "Failed to find node 'spawnpoints' in "..CONSTANTS.COLLECTIBLES_FILE.."."
     end
 
     local typesChildren = xmlNodeGetChildren(typesNode)
     if not typesChildren then
         xmlUnloadFile(config)
-        return false, "Failed to get children of 'types' in 'config.xml'."
+        return false, "Failed to get children of 'types' in "..CONSTANTS.COLLECTIBLES_FILE.."."
     end
 
     local actionsChildren = xmlNodeGetChildren(actionsNode)
     if not actionsChildren then
         xmlUnloadFile(config)
-        return false, "Failed to get children of 'actions' in 'config.xml'."
+        return false, "Failed to get children of 'actions' in "..CONSTANTS.COLLECTIBLES_FILE.."."
     end
 
     local spawnpointsChildren = xmlNodeGetChildren(spawnpointsNode)
     if not spawnpointsChildren then
         xmlUnloadFile(config)
-        return false, "Failed to get children of 'spawnpoints' in 'config.xml'."
+        return false, "Failed to get children of 'spawnpoints' in "..CONSTANTS.COLLECTIBLES_FILE.."."
     end
 
     local typeNode = nil
@@ -793,7 +835,7 @@ function deleteType(theType)
     end
     if not typeNode then
         xmlUnloadFile(config)
-        return false, "Failed to find node 'type' with attribute 'name' = '" .. theType .. "' in 'config.xml'."
+        return false, "Failed to find node 'type' with attribute 'name' = '" .. theType .. "' in "..CONSTANTS.COLLECTIBLES_FILE.."."
     end
 
     for i=1, #actionsChildren do
@@ -807,7 +849,7 @@ function deleteType(theType)
     end
     if #actionNodes ~= 2 then
         xmlUnloadFile(config)
-        return false, "Failed to find 2 'action' nodes with attribute 'type' = '" .. theType .. "' in 'config.xml'."
+        return false, "Failed to find 2 'action' nodes with attribute 'type' = '" .. theType .. "' in "..CONSTANTS.COLLECTIBLES_FILE.."."
     end
 
     for i=1, #spawnpointsChildren do
@@ -839,7 +881,7 @@ function deleteType(theType)
         for i=1, #accounts do
             local account = accounts[i]
             if account then
-                local dataName = getAccountDataNames().client_counts
+                local dataName = getAccountDataNames().CLIENT_COUNTS
                 local data = getAccountData(account, dataName)
                 if not data then
                     data = {}
@@ -854,7 +896,7 @@ function deleteType(theType)
 
     if not xmlSaveFile(config) then
         xmlUnloadFile(config)
-        return false, "Failed to save file 'config.xml'."
+        return false, "Failed to save file "..CONSTANTS.COLLECTIBLES_FILE.."."
     end
 
     xmlUnloadFile(config)
@@ -864,15 +906,15 @@ end
 function createNewType(typeInfo)
     assert(type(typeInfo) == "table", "Bad argument @ createNewType (table expected, got " .. type(typeInfo) .. ")")
 
-    local config = xmlLoadFile("config.xml")
+    local config = xmlLoadFile(CONSTANTS.COLLECTIBLES_FILE)
     if not config then
-        return false, "Failed to load file 'config.xml'."
+        return false, "Failed to load file "..CONSTANTS.COLLECTIBLES_FILE.."."
     end
 
     local children = xmlNodeGetChildren(config)
     if not children then
         xmlUnloadFile(config)
-        return false, "Failed to get children of 'config.xml'."
+        return false, "Failed to get children of "..CONSTANTS.COLLECTIBLES_FILE.."."
     end
 
     -- Verify type info
@@ -927,11 +969,11 @@ function createNewType(typeInfo)
 
     if not typesNode then
         xmlUnloadFile(config)
-        return false, "Failed to find node 'types' in 'config.xml'."
+        return false, "Failed to find node 'types' in "..CONSTANTS.COLLECTIBLES_FILE.."."
     end
     if not actionsNode then
         xmlUnloadFile(config)
-        return false, "Failed to find node 'actions' in 'config.xml'."
+        return false, "Failed to find node 'actions' in "..CONSTANTS.COLLECTIBLES_FILE.."."
     end
 
     -- Create new type node
@@ -1019,7 +1061,7 @@ function createNewType(typeInfo)
 
     if not xmlSaveFile(config) then
         xmlUnloadFile(config)
-        return false, "Failed to save file 'config.xml'."
+        return false, "Failed to save file "..CONSTANTS.COLLECTIBLES_FILE.."."
     end
 
     xmlUnloadFile(config)
@@ -1047,14 +1089,14 @@ function spawnCollectibles(theType, thePlayer)
     local info = collectibleTypes[theType]
     if (not info) or (info.target ~= "server") then
         if isElement(thePlayer) then
-            oct(thePlayer, "Collectible type '%s' does not exist.", theType)
+            oct(thePlayer, gct("Collectible type '%s' does not exist.", theType))
             for theType2, info2 in pairs(collectibleTypes) do
                 if info2.target == "server" then
                     outputChatBox("  - " .. theType2, thePlayer, 255, 255, 255)
                 end
             end
         end
-        return false, "Collectible type '%s' does not exist."
+        return false, "INVALID_TYPE"
     end
     local countExisting = 0
     for pickup, info2 in pairs(spawnedServerCollectibles) do
@@ -1064,9 +1106,9 @@ function spawnCollectibles(theType, thePlayer)
     end
     if countExisting > 0 then
         if isElement(thePlayer) then
-            oct(thePlayer, "There are currently %s %s collectibles spawned.", countExisting, (string.gsub(theType, "_", " ")))
+            oct(thePlayer, gct("There are currently %s %s collectibles spawned.", countExisting, (string.gsub(theType, "_", " "))))
         end
-        return false, "There are currently %s %s collectibles spawned."
+        return false, "ALREADY_SPAWNED"
     end
     for i=1, #info.spawnpoints do
         local sp = info.spawnpoints[i]
@@ -1082,7 +1124,7 @@ function spawnCollectibles(theType, thePlayer)
         end
     end
     if isElement(thePlayer) then
-        oct(thePlayer, "You have spawned %s %s collectibles on the server.", countCreated, (string.gsub(theType, "_", " ")))
+        oct(thePlayer, gct("You have spawned %s %s collectibles on the server.", countCreated, (string.gsub(theType, "_", " "))))
     end
     triggerEvent("collectibles:onSpawnedServer", root, (isElement(thePlayer) and thePlayer or "SYSTEM"), theType, countCreated)
     return true
@@ -1094,14 +1136,14 @@ function destroyCollectibles(theType, thePlayer)
     local info = collectibleTypes[theType]
     if (not info) or (info.target ~= "server") then
         if isElement(thePlayer) then
-            oct(thePlayer, "Collectible type '%s' does not exist.", theType)
+            oct(thePlayer, gct("Collectible type '%s' does not exist.", theType))
             for theType2, info2 in pairs(collectibleTypes) do
                 if info2.target == "server" then
                     outputChatBox("  - " .. theType2, thePlayer, 255, 255, 255)
                 end
             end
         end
-        return false, "Collectible type '%s' does not exist."
+        return false, "INVALID_TYPE"
     end
     local total = info.total
     for i=1, total do
@@ -1118,9 +1160,9 @@ function destroyCollectibles(theType, thePlayer)
     end
     if #pickupsLeft == 0 then
         if isElement(thePlayer) then
-            oct(thePlayer, "There are currently %s %s collectibles spawned.", 0, (string.gsub(theType, "_", " ")))
+            oct(thePlayer, gct("There are currently %s %s collectibles spawned.", 0, (string.gsub(theType, "_", " "))))
         end
-        return false, "There are currently %s %s collectibles spawned."
+        return false, "NOT_SPAWNED"
     end
     for i=1, #pickupsLeft do
         local pickup = pickupsLeft[i]
@@ -1128,14 +1170,14 @@ function destroyCollectibles(theType, thePlayer)
         spawnedServerCollectibles[pickup] = nil
     end
     if isElement(thePlayer) then
-        oct(thePlayer, "You have destroyed the existing %s %s collectibles.", countLeft, (string.gsub(theType, "_", " ")))
+        oct(thePlayer, gct("You have destroyed the existing %s %s collectibles.", countLeft, (string.gsub(theType, "_", " "))))
     end
     triggerEvent("collectibles:onDestroyedServer", root, (isElement(thePlayer) and thePlayer or "SYSTEM"), theType, countLeft, total)
     return true
 end
 
 local function isCollectedClient(thePlayer, account, theType, respawn_after, spID)
-    local dataName = getAccountDataNames().client_counts
+    local dataName = getAccountDataNames().CLIENT_COUNTS
     local data = getAccountData(account, dataName)
     if not data then
         return false
@@ -1220,14 +1262,14 @@ function removeSpawnpoint(theType, spID)
         return false, "admin_invalid_spawnpoint_index"
     end
 
-    local config = xmlLoadFile("config.xml")
+    local config = xmlLoadFile(CONSTANTS.COLLECTIBLES_FILE)
     if not config then
-        return false, "Failed to load file 'config.xml'."
+        return false, "Failed to load file "..CONSTANTS.COLLECTIBLES_FILE.."."
     end
     local children = xmlNodeGetChildren(config)
     if not children then
         xmlUnloadFile(config)
-        return false, "Failed to get children of 'config.xml'."
+        return false, "Failed to get children of "..CONSTANTS.COLLECTIBLES_FILE.."."
     end
 
     local found = false
@@ -1237,7 +1279,7 @@ function removeSpawnpoint(theType, spID)
             local spawnpoints2 = xmlNodeGetChildren(child)
             if not spawnpoints2 then
                 xmlUnloadFile(config)
-                return false, "Failed to get children of 'spawnpoints' in 'config.xml'."
+                return false, "Failed to get children of 'spawnpoints' in "..CONSTANTS.COLLECTIBLES_FILE.."."
             end
             for i2=1, #spawnpoints2 do
                 local spawnpoint2 = spawnpoints2[i2]
@@ -1260,12 +1302,12 @@ function removeSpawnpoint(theType, spID)
     end
     if not found then
         xmlUnloadFile(config)
-        return false, "Failed to find spawnpoint in 'config.xml'."
+        return false, "Failed to find spawnpoint in "..CONSTANTS.COLLECTIBLES_FILE.."."
     end
 
     if not xmlSaveFile(config) then
         xmlUnloadFile(config)
-        return false, "Failed to save file 'config.xml'."
+        return false, "Failed to save file "..CONSTANTS.COLLECTIBLES_FILE.."."
     end
     xmlUnloadFile(config)
 
@@ -1281,7 +1323,7 @@ function removeSpawnpoint(theType, spID)
 
     if info.target == "client" then
         -- reset all accounts' collected counts of this type
-        local dataName = getAccountDataNames().client_counts
+        local dataName = getAccountDataNames().CLIENT_COUNTS
         local accounts = getAccounts()
         local collectedCounts = {}
         for i=1, #accounts do
@@ -1318,14 +1360,14 @@ function createNewSpawnpoint(theType, model, x,y,z, interior, dimension)
         return false, "Collectible type '%s' does not exist."
     end
 
-    local config = xmlLoadFile("config.xml")
+    local config = xmlLoadFile(CONSTANTS.COLLECTIBLES_FILE)
     if not config then
-        return false, "Failed to load file 'config.xml'."
+        return false, "Failed to load file "..CONSTANTS.COLLECTIBLES_FILE.."."
     end
     local children = xmlNodeGetChildren(config)
     if not children then
         xmlUnloadFile(config)
-        return false, "Failed to get children of 'config.xml'."
+        return false, "Failed to get children of "..CONSTANTS.COLLECTIBLES_FILE.."."
     end
 
     local lastSpID = 0
@@ -1354,7 +1396,7 @@ function createNewSpawnpoint(theType, model, x,y,z, interior, dimension)
     end
     if not xmlSaveFile(config) then
         xmlUnloadFile(config)
-        return false, "Failed to save file 'config.xml'."
+        return false, "Failed to save file "..CONSTANTS.COLLECTIBLES_FILE.."."
     end
     xmlUnloadFile(config)
 
@@ -1422,7 +1464,7 @@ local function countCollectedServer(accountID, theType)
 end
 
 local function saveCollectedClient(account, theType, spID)
-    local dataName = getAccountDataNames().client_counts
+    local dataName = getAccountDataNames().CLIENT_COUNTS
     local data = getAccountData(account, dataName)
     if not data then
         data = {}
@@ -1441,7 +1483,7 @@ local function despawnCollectibles(player)
 end
 
 local function countCollectedClient(thePlayer, account, theType, respawn_after)
-    local dataName = getAccountDataNames().client_counts
+    local dataName = getAccountDataNames().CLIENT_COUNTS
     local data = getAccountData(account, dataName)
     if not data then
         return 0
@@ -1523,7 +1565,7 @@ function resetClientCollectibles(targetAccount, theType, thePlayer)
     assert(type(theType) == "string", "Bad argument @ resetClientCollectibles [string expected, got " .. type(theType) .. "]")
     if theType ~= "all" and ((not collectibleTypes[theType]) or (collectibleTypes[theType].target ~= "client")) then
         if isElement(thePlayer) then
-            oct(thePlayer, "Collectible type '%s' does not exist.", theType)
+            oct(thePlayer, gct("Collectible type '%s' does not exist.", theType))
             for theType2, info2 in pairs(collectibleTypes) do
                 if info2.target == "client" then
                     outputChatBox("  - " .. theType2, thePlayer, 255, 255, 255)
@@ -1532,7 +1574,7 @@ function resetClientCollectibles(targetAccount, theType, thePlayer)
         end
         return false, "Collectible type '%s' does not exist."
     end
-    local dataName = getAccountDataNames().client_counts
+    local dataName = getAccountDataNames().CLIENT_COUNTS
     local data = getAccountData(targetAccount, dataName)
     if not data then
         data = {}
@@ -1565,11 +1607,11 @@ function resetClientCollectibles(targetAccount, theType, thePlayer)
     end
     if targetPlayer then
         sendCollectibles(targetPlayer, targetAccount)
-        oct(targetPlayer, "admin_reset_success_player", (string.gsub(theType, "_", " ")))
+        oct(targetPlayer, gct("admin_reset_success_player", (string.gsub(theType, "_", " "))))
     end
     if isElement(thePlayer) then
         local targetAccountName = getAccountName(targetAccount)
-        oct(thePlayer, "You have reset and respawned %s client collectibles for %s (ID: %s).", (string.gsub(theType, "_", " ")), targetAccountName, tostring(targetAccountID))
+        oct(thePlayer, gct("You have reset and respawned %s client collectibles for %s (ID: %s).", (string.gsub(theType, "_", " ")), targetAccountName, tostring(targetAccountID)))
     end
     return true
 end
@@ -1674,7 +1716,7 @@ local function handlePickedUp(serversidePickup, collectibleInfo_)
     local rewardMoney = reward.reward_money
     if rewardMoney then
         if givePlayerMoney(client, rewardMoney) then
-            oct(client, "You have earned $%s for collecting this %s.", rewardMoney, (string.gsub(theType, "_", " ")))
+            oct(client, gct("You have earned $%s for collecting this %s.", rewardMoney, (string.gsub(theType, "_", " "))))
         end
     end
 

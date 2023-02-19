@@ -1,7 +1,7 @@
 --[[
     Author: https://github.com/Fernando-A-Rocha
 
-    Collectibles - Custom (Server)
+    Collectibles - Settings (Server)
 ]]
 
 --[[
@@ -10,7 +10,7 @@
 CONSTANTS = {
 
     --[[
-        Customizable admin commands
+        Admin commands
     --]]
     COMMANDS = {
         SPAWN = "cspawn",
@@ -25,16 +25,11 @@ CONSTANTS = {
     },
 
     --[[
-        Customizable texts (possible translate)
-
-        rgb color table (e.g. {255, 194, 14}) is optional - defaults to white (255,255,255)
-
-        To translate new strings, add the exact string used by the script with the gct or oct functions
-    --]]
-    STRINGS = {
-        -- Example:
-        ["SYNTAX: /%s %s"] = {value = "USAGE: /%s %s", rgb={255, 194, 14}},
-    },
+        Misc. constants
+    ]]
+    COLLECTIBLES_FILE = "collectibles.xml",
+    STRINGS_FILE = "strings.json",
+    BACKUPS_DIRECTORY = "backups/",
 }
 
 --[[

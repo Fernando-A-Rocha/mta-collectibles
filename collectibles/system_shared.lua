@@ -10,17 +10,14 @@
 function gct(name, ...)
     local formatWith = {...}
     local r, g, b = 255, 255, 255
+    local text = name
     local constants = getConstants()
     local info = constants.STRINGS[name]
-    if type(info) ~= "table" or type(info.value) ~= "string" then
-        if #formatWith > 0 then
-            name = string.format(name, unpack(formatWith))
+    if info ~= nil then
+        text = info.value
+        if info.rgb ~= nil then
+            r, g, b = info.rgb[1], info.rgb[2], info.rgb[3]
         end
-        return name, r, g, b
-    end
-    local text = info.value
-    if type(info.rgb)=="table" and type(info.rgb[1]) == "number" and type(info.rgb[2]) == "number" and type(info.rgb[3]) == "number" then
-        r, g, b = info.rgb[1], info.rgb[2], info.rgb[3]
     end
     if #formatWith > 0 then
         text = string.format(text, unpack(formatWith))
@@ -31,19 +28,13 @@ end
 -- oct means outputCustomText
 if isElement(localPlayer) then
     -- Clientside version
-    function oct(name, ...)
-        local text, r, g, b = gct(name, ...)
-        if text then
-            outputChatBox(text, r, g, b, true)
-        end
+    function oct(text, r, g, b)
+        outputChatBox(text, r, g, b, true)
     end
 else
     -- Serverside version
-    function oct(player, name, ...)
-        local text, r, g, b = gct(name, ...)
-        if text then
-            outputChatBox(text, player, r, g, b, true)
-        end
+    function oct(player, text, r, g, b)
+        outputChatBox(text, player, r, g, b, true)
     end
 end
 
@@ -71,6 +62,16 @@ function outputDebugMsg(msg, theType)
         r,g,b = 255, 25, 25
     elseif theType == "WARNING" then
         r,g,b = 255, 255, 25
+    elseif theType == "SUCCESS" then
+        r,g,b = 25, 255, 25
     end
     outputDebugString(msg, 4, r,g,b)
+end
+
+if not isElement(localPlayer) then
+    -- Serverside only, it's here for convenience
+    function outputInfoMessage(msg)
+        msg = "[Collectibles] " .. msg
+        outputServerLog(msg)
+    end
 end

@@ -42,6 +42,6 @@ addCommandHandler("collectiblesdata", function(thePlayer, cmd, targetAccountID)
         end
     end
     outputChatBox("Check debug console.", thePlayer, 0, 255, 0)
-    local dataName = getAccountDataNames().client_counts
+    local dataName = getAccountDataNames().CLIENT_COUNTS
     iprint(getAccountData(targetAccount, dataName))
 end, false, false)

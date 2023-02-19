@@ -3,8 +3,8 @@
     <min_mta_version server="1.5.8-9.20957"></min_mta_version>
     
     <!-- Core Scripts -->
-    <script src="custom_client.lua" type="client" />
-    <script src="custom_server.lua" type="server" />
+    <script src="settings_client.lua" type="client" />
+    <script src="settings_server.lua" type="server" />
     <script src="system_shared.lua" type="shared" />
     <script src="system_client.lua" type="client" />
     <script src="system_server.lua" type="server" />
