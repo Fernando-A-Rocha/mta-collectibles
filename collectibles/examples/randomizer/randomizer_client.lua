@@ -42,7 +42,7 @@ local function savePoints()
     removeEventHandler("onClientRender", root, drawInfo)
     setElementFrozen(localPlayer, false)
 end
-local function getARandomCoord(minX, maxX, minY, maxY, minZ, maxZ, cTypeName)
+local function getARandomCoord(minX, maxX, minY, maxY, minZ, maxZ)
     local rx = math.random(minX+3001, maxX+3001)-1
     rx = rx - 3000
     local ry = math.random(minY+3001, maxY+3001)-1
@@ -53,7 +53,7 @@ local function getARandomCoord(minX, maxX, minY, maxY, minZ, maxZ, cTypeName)
         local z = getGroundPosition(px, py, pz+1000)
         if z then
             if (z < minZ or z > maxZ) or (not isLineOfSightClear(px, py, z+1, px+0.5, py-0.5, z+1.5, true, false, false, true, false, false, false)) then
-                getARandomCoord(minX, maxX, minY, maxY, minZ, maxZ, cTypeName)
+                getARandomCoord(minX, maxX, minY, maxY, minZ, maxZ)
                 return
             end
             z = z + 1
@@ -66,7 +66,7 @@ local function getARandomCoord(minX, maxX, minY, maxY, minZ, maxZ, cTypeName)
                 return
             else
                 iteration = iteration + 1
-                getARandomCoord(minX, maxX, minY, maxY, minZ, maxZ, cTypeName)
+                getARandomCoord(minX, maxX, minY, maxY, minZ, maxZ)
             end
         else
             outputChatBox("Failed to getGroundPosition", 255, 0, 0)
