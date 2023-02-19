@@ -122,7 +122,7 @@ local function onPickupHit(thePlayer)
         -- Client collectible
         waitingPickup = {type = collectibleInfo.type, spID = collectibleInfo.spID, pickup = source}
         triggerServerEvent("collectibles:handlePickedUp", resourceRoot, false, collectibleInfo)
-    else
+    elseif not isElementLocal(source) then
         -- Server collectible
         triggerServerEvent("collectibles:handlePickedUp", resourceRoot, source, false)
     end

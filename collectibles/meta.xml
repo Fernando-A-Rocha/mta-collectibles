@@ -45,4 +45,5 @@
     <script src="examples/gui/gui_server.lua" type="server" />
     <script src="examples/godmode/godmode_server.lua" type="server" />
     <script src="examples/godmode/godmode_client.lua" type="client" />
+    <script src="examples/randomizer/randomizer_client.lua" type="client" />
 </meta>
