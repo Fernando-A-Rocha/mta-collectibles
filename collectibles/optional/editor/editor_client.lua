@@ -19,6 +19,9 @@ local KEY_NAMES = { "mouse1", "mouse2", "mouse3", "mouse4", "mouse5", "mouse_whe
 "F6", "F7", "F8", "F9", "F10", "F11", "F12", "backspace", "tab", "lalt", "ralt", "enter", "space", "pgup", "pgdn", "end", "home",
 "insert", "delete", "lshift", "rshift", "lctrl", "rctrl", "[", "]", "pause", "capslock", "scroll", ";", ",", "-", ".", "/", "#", "\\", "=" }
 
+-- For security reasons, it is also defined serverside in editor_server.lua
+local BACKUPS_DIRECTORY = "backups/"
+
 local SW, SH = guiGetScreenSize()
 local popupWin = nil
 local createWin = nil
@@ -156,7 +159,7 @@ function createConfirmPopup(title, titleColor, description, confirmText, cancelT
 end
 
 local function showValidationError(msg)
-    createConfirmPopup("Validation Error", "FFFF0000", msg, false, "OK")
+    createConfirmPopup(gct("Validation Error"), "FFFF0000", msg, false, gct("OK"))
 end
 
 local function openCreateCollectible(metaFileSrcs)
@@ -173,7 +176,7 @@ local function openCreateCollectible(metaFileSrcs)
     guiCreateLabel(0, y, PW2, 20, " ", false, scrollPane)
     y = y + 40
 
-    local typeNameLabel = guiCreateLabel(0, y, PW2, 20, gct("Name (use '_' instead of space):"), false, scrollPane)
+    local typeNameLabel = guiCreateLabel(0, y, PW2, 20, gct("Name:"), false, scrollPane)
     y = y + 20 + 5
 
     local typeNameEdit = guiCreateEdit(0, y, PW2*(1/3), 24, "", false, scrollPane)
@@ -196,11 +199,16 @@ local function openCreateCollectible(metaFileSrcs)
 
     local respawnAfterEdit = guiCreateEdit(0, y, (PW2*(1/3)) * (1/3), 24, "", false, scrollPane)
     local respawnAfterUnitDropdown = guiCreateComboBox((PW2*(1/3)) * (1/3) + 5, y, (PW2*(2/3)) * (1/3), 24*6, "", false, scrollPane)
-    guiComboBoxAddItem(respawnAfterUnitDropdown, "seconds")
-    guiComboBoxAddItem(respawnAfterUnitDropdown, "minutes")
-    guiComboBoxAddItem(respawnAfterUnitDropdown, "hours")
-    guiComboBoxAddItem(respawnAfterUnitDropdown, "days")
-    guiComboBoxAddItem(respawnAfterUnitDropdown, "weeks")
+    local RESPAWN_UNITS = {
+        {name="seconds", niceName=gct("Seconds")},
+        {name="minutes", niceName=gct("Minutes")},
+        {name="hours", niceName=gct("Hours")},
+        {name="days", niceName=gct("Days")},
+        {name="weeks", niceName=gct("Weeks")},
+    }
+    for i=1, #RESPAWN_UNITS do
+        guiComboBoxAddItem(respawnAfterUnitDropdown, RESPAWN_UNITS[i].niceName)
+    end
     guiComboBoxSetSelected(respawnAfterUnitDropdown, 1) -- default: minutes
     guiSetEnabled(respawnAfterEdit, false)
     guiSetEnabled(respawnAfterUnitDropdown, false)
@@ -383,7 +391,13 @@ local function openCreateCollectible(metaFileSrcs)
                     return showValidationError(gct("Respawn After must be a positive number"))
                 end
                 respawnAfter = tostring(respawnAfter)
-                respawnAfterUnit = guiComboBoxGetItemText(respawnAfterUnitDropdown, guiComboBoxGetSelected(respawnAfterUnitDropdown))
+                local respawnUnitItem = guiComboBoxGetSelected(respawnAfterUnitDropdown)
+                for i=1, #RESPAWN_UNITS do
+                    if i == (respawnUnitItem+1) then
+                        respawnAfterUnit = RESPAWN_UNITS[i].name
+                        break
+                    end
+                end
             end
             if guiCheckBoxGetSelected(toggleCommandCheckbox) then
                 toggleCommand = guiGetText(toggleCommandEdit)
@@ -483,11 +497,12 @@ local function openCreateCollectible(metaFileSrcs)
                 }
             }
 
-            local desc = "Are you sure you want to create a new collectible type:\n'"..typeName.."'"
+            local desc = gct("Are you sure you want to create a new collectible type:\n%s", typeName)
             if typeAutoLoad then
-                desc = desc.."\nIt will be automatically loaded on "..(target).." start."
+                desc = desc..gct("\nIt will be automatically loaded on %s start.", target)
             end
-            createConfirmPopup(gct("Confirm Creation"), "FFFFFF00", desc, gct("Confirm"), gct("Cancel"), "collectibles:adminConfirm", "create", theType)
+            createConfirmPopup(gct("Confirm Creation"), "FFFFFF00", desc, gct("Confirm"), gct("Cancel"),
+                "collectibles:adminConfirm", "create", theType)
         end
     end)
 end
@@ -503,7 +518,7 @@ addEventHandler("collectibles:admin", localPlayer, function(serverInfo)
     showCursor(true)
 
     local WW, WH = 800, 600
-    mainWin = guiCreateWindow((SW-WW)/2, (SH-WH)/2, WW, WH, "Collectibles - Editor", false)
+    mainWin = guiCreateWindow((SW-WW)/2, (SH-WH)/2, WW, WH, gct("Collectibles - Editor"), false)
 
     local x, y = 15, 20
     
@@ -513,7 +528,7 @@ addEventHandler("collectibles:admin", localPlayer, function(serverInfo)
 
     local settings = {}
 
-    local tabTypes = guiCreateTab("Types", tabPanel)
+    local tabTypes = guiCreateTab(gct("Types"), tabPanel)
     local TW, TH = guiGetSize(tabTypes, false)
 
     local ct = 0
@@ -522,7 +537,7 @@ addEventHandler("collectibles:admin", localPlayer, function(serverInfo)
     end
 
     if ct == 0 then
-        local noTypesLabel = guiCreateLabel(0, 0, TW, TH, "No collectible types have been defined.", false, tabTypes)
+        local noTypesLabel = guiCreateLabel(0, 0, TW, TH, gct("No collectible types have been defined."), false, tabTypes)
         guiLabelSetColor(noTypesLabel, 255, 0, 0)
     else
         x, y = 5, 5
@@ -537,7 +552,7 @@ addEventHandler("collectibles:admin", localPlayer, function(serverInfo)
         guiLabelSetVerticalAlign(targetExplanationLabel, "center")
         y = y + (16*countLines) + 5
 
-        local createTypeButton = guiCreateButton(x, y, 160, 24, "Create Collectible Type", false, tabTypes)
+        local createTypeButton = guiCreateButton(x, y, 160, 24, gct("Create Collectible Type"), false, tabTypes)
         addEventHandler("onClientGUIClick", createTypeButton, function()
             openCreateCollectible(serverInfo.metaFileSrcs)
         end, false)
@@ -565,17 +580,17 @@ addEventHandler("collectibles:admin", localPlayer, function(serverInfo)
             guiCreateLabel(0, y, PW2, 10, " ", false, tabScroll)
             y = y + 15
             
-            local typeNameLabel = guiCreateLabel(0, y, PW2, 20, "Name (use '_' instead of space):", false, tabScroll)
+            local typeNameLabel = guiCreateLabel(0, y, PW2, 20, gct("Name:"), false, tabScroll)
             y = y + 20 + 5
 
             local typeNameEdit = guiCreateEdit(0, y, PW2*(1/3), 24, theType, false, tabScroll)
             y = y + 24 + 10
 
-            local autoLoadCheckbox = guiCreateCheckBox(0, y, PW2*(1/3), 24, "Spawn Automatically", info.auto_load, false, tabScroll)
+            local autoLoadCheckbox = guiCreateCheckBox(0, y, PW2*(1/3), 24, gct("Spawn Automatically"), info.auto_load, false, tabScroll)
             y = y + 24 + 10
 
-            local targetLabel = guiCreateLabel(0, y, (PW2*(1/3))/2, 20, "Target:", false, tabScroll)
-            local spawnPointsLabel = guiCreateLabel((PW*(1/3))/2 + 5, y, (PW*(1/3))/2, 20, "Spawn Points:", false, tabScroll)
+            local targetLabel = guiCreateLabel(0, y, (PW2*(1/3))/2, 20, gct("Target:"), false, tabScroll)
+            local spawnPointsLabel = guiCreateLabel((PW*(1/3))/2 + 5, y, (PW*(1/3))/2, 20, gct("Spawn Points:"), false, tabScroll)
             y = y + 20 + 5
 
             local targetDropdown = guiCreateComboBox(0, y, (PW2*(1/3))/2, 24*3, "", false, tabScroll)
@@ -583,7 +598,7 @@ addEventHandler("collectibles:admin", localPlayer, function(serverInfo)
             guiComboBoxAddItem(targetDropdown, "server")
             guiComboBoxSetSelected(targetDropdown, info.target == "client" and 0 or 1)
 
-            local spawnPointsButton = guiCreateButton((PW*(1/3))/2 + 5, y, (PW*(1/3))/2, 24, "Configure", false, tabScroll)
+            local spawnPointsButton = guiCreateButton((PW*(1/3))/2 + 5, y, (PW*(1/3))/2, 24, gct("Configure"), false, tabScroll)
             guiSetProperty(spawnPointsButton, "NormalTextColour", "FFFFFFFF")
             addEventHandler("onClientGUIClick", spawnPointsButton, function()
 
@@ -596,16 +611,21 @@ addEventHandler("collectibles:admin", localPlayer, function(serverInfo)
             end, false)
             y = y + 24 + 6
 
-            local respawnAfterCheckbox = guiCreateCheckBox(0, y, PW2*(1/3), 20, "(Optional)  Respawn After:", false, false, tabScroll)
+            local respawnAfterCheckbox = guiCreateCheckBox(0, y, PW2*(1/3), 20, gct("(Optional)  Respawn After:"), false, false, tabScroll)
             y = y + 20 + 5
 
             local respawnAfterEdit = guiCreateEdit(0, y, (PW2*(1/3)) * (1/3), 24, "", false, tabScroll)
             local respawnAfterUnitDropdown = guiCreateComboBox((PW2*(1/3)) * (1/3) + 5, y, (PW2*(2/3)) * (1/3), 24*6, "", false, tabScroll)
-            guiComboBoxAddItem(respawnAfterUnitDropdown, "seconds")
-            guiComboBoxAddItem(respawnAfterUnitDropdown, "minutes")
-            guiComboBoxAddItem(respawnAfterUnitDropdown, "hours")
-            guiComboBoxAddItem(respawnAfterUnitDropdown, "days")
-            guiComboBoxAddItem(respawnAfterUnitDropdown, "weeks")
+            local RESPAWN_UNITS = {
+                {name="seconds", niceName=gct("Seconds")},
+                {name="minutes", niceName=gct("Minutes")},
+                {name="hours", niceName=gct("Hours")},
+                {name="days", niceName=gct("Days")},
+                {name="weeks", niceName=gct("Weeks")},
+            }
+            for i=1, #RESPAWN_UNITS do
+                guiComboBoxAddItem(respawnAfterUnitDropdown, RESPAWN_UNITS[i].niceName)
+            end
             if info.respawn_after_nonconverted and info.respawn_after_unit then
                 guiCheckBoxSetSelected(respawnAfterCheckbox, true)
                 guiSetText(respawnAfterEdit, info.respawn_after_nonconverted)
@@ -622,7 +642,7 @@ addEventHandler("collectibles:admin", localPlayer, function(serverInfo)
             end
             y = y + 24 + 6
 
-            local toggleCommandCheckbox = guiCreateCheckBox(0, y, PW2*(1/3), 20, "(Optional)  Toggle Command:", false, false, tabScroll)
+            local toggleCommandCheckbox = guiCreateCheckBox(0, y, PW2*(1/3), 20, gct("(Optional)  Toggle Command:"), false, false, tabScroll)
             y = y + 20 + 5
 
             local toggleCommandEdit = guiCreateEdit(0, y, PW2*(1/3), 24, "", false, tabScroll)
@@ -634,7 +654,7 @@ addEventHandler("collectibles:admin", localPlayer, function(serverInfo)
             end
             y = y + 24 + 6
 
-            local toggleKeyBindCheckbox = guiCreateCheckBox(0, y, PW2*(1/3), 20, "(Optional)  Toggle Key Bind:", false, false, tabScroll)
+            local toggleKeyBindCheckbox = guiCreateCheckBox(0, y, PW2*(1/3), 20, gct("(Optional)  Toggle Key Bind:"), false, false, tabScroll)
             y = y + 20 + 5
 
             local toggleKeyBindEdit = guiCreateEdit(0, y, PW2*(1/3), 24, "", false, tabScroll)
@@ -718,27 +738,29 @@ addEventHandler("collectibles:admin", localPlayer, function(serverInfo)
                 end, 50, 1)
             end)
 
-            local statsInfoLabel = guiCreateLabel(0, y, PW2, 20, "INFO: View all server and player stats related to this collectible:", false, tabScroll)
+            local statsInfoLabel = guiCreateLabel(0, y, PW2, 20, gct("INFO: View all server and player stats related to this collectible:"), false, tabScroll)
             guiLabelSetHorizontalAlign(statsInfoLabel, "left", true)
             guiLabelSetColor(statsInfoLabel, 110, 240, 255)
             y = y + 20 + 5
 
-            local statsButton = guiCreateButton(0, y, 160, 24, "View Stats", false, tabScroll)
+            local statsButton = guiCreateButton(0, y, 160, 24, gct("View Stats"), false, tabScroll)
             addEventHandler("onClientGUIClick", statsButton, function()
                 outputChatBox("Coming soon!", 200, 200, 200)
             end, false)
             guiSetProperty(statsButton, "NormalTextColour", "ff6ef0ff")
             y = y + 24 + 25
 
-            local deleteInfoLabel = guiCreateLabel(0, y, PW2, 20, "DANGER: Deletes this type's spawnpoints and collected counts of all player accounts:", false, tabScroll)
+            local deleteInfoLabel = guiCreateLabel(0, y, PW2, 20, gct("DANGER: Deletes this type's spawnpoints and collected counts of all player accounts:"), false, tabScroll)
             guiLabelSetHorizontalAlign(deleteInfoLabel, "left", true)
             guiLabelSetColor(deleteInfoLabel, 255, 0, 0)
             y = y + 20 + 5
 
-            local deleteTypeButton = guiCreateButton(0, y, 160, 24, "Delete This Type", false, tabScroll)
+            local deleteTypeButton = guiCreateButton(0, y, 160, 24, gct("Delete This Type"), false, tabScroll)
             addEventHandler("onClientGUIClick", deleteTypeButton, function()
-                local desc = "Are you sure you want to delete collectible type:\n"..theType.."\nThis will delete all corresponding spawnpoints and\ncollected counts of all player accounts."
-                createConfirmPopup("Delete Collectible Type", "FFFF0000", desc, "Confirm", "Cancel", "collectibles:adminConfirm", "remove", theType)
+                local desc = gct("Are you sure you want to delete collectible type:\n%s", theType)
+                desc = desc ..gct("\nThis will delete all corresponding spawnpoints and\ncollected counts of all player accounts.")
+                createConfirmPopup(gct("Delete Collectible Type"), "FFFF0000", desc, gct("Confirm"), gct("Cancel"),
+                    "collectibles:adminConfirm", "remove", theType)
             end, false)
             guiSetProperty(deleteTypeButton, "NormalTextColour", "FFFF0000")
             y = y + 24 + 5
@@ -770,24 +792,24 @@ addEventHandler("collectibles:admin", localPlayer, function(serverInfo)
             x = x + (PW2/2)
             y = 15
 
-            local actionsTitle = guiCreateLabel(x, y, PW2*(1/3), 20, "Actions", false, tabScroll)
+            local actionsTitle = guiCreateLabel(x, y, PW2*(1/3), 20, gct("Actions"), false, tabScroll)
             guiSetFont(actionsTitle, "default-bold-small")
             y = y + 20 + 5
 
-            local actionsText = "Here you can define what happens when a collectible is picked up and when it's the last one found."
+            local actionsText = gct("Here you can define what happens when a collectible is picked up and when it's the last one found.")
             local actionsLabel = guiCreateLabel(x, y, PW2*(1/3) + 55, 40, actionsText, false, tabScroll)
             guiLabelSetHorizontalAlign(actionsLabel, "left", true)
             y = y + 40 + 6
 
-            local onCollectLabel = guiCreateLabel(x, y, PW2*(1/3), 20, "On Collect:", false, tabScroll)
+            local onCollectLabel = guiCreateLabel(x, y, PW2*(1/3), 20, gct("On Collect:"), false, tabScroll)
             guiLabelSetColor(onCollectLabel, 255, 0, 255)
             y = y + 20 + 5
 
-            local playSoundCheckbox = guiCreateCheckBox(x+10, y, PW2*(1/3), 20, "(Optional)  Play Sound", false, false, tabScroll)
+            local playSoundCheckbox = guiCreateCheckBox(x+10, y, PW2*(1/3), 20, gct("(Optional)  Play Sound"), false, false, tabScroll)
             y = y + 20 + 5
 
-            local soundLabel = guiCreateLabel(x+10, y, PW2*(1/3), 20, "Sound File Path:", false, tabScroll)
-            local soundVolumeLabel = guiCreateLabel(x+10 + (PW2*(1/3)) + 5, y, 60, 24, "Volume:", false, tabScroll)
+            local soundLabel = guiCreateLabel(x+10, y, PW2*(1/3), 20, gct("Sound File Path:"), false, tabScroll)
+            local soundVolumeLabel = guiCreateLabel(x+10 + (PW2*(1/3)) + 5, y, 60, 24, gct("Volume:"), false, tabScroll)
 
             local soundEdit = guiCreateEdit(x+10, y + 20 + 5, PW2*(1/3), 24, "", false, tabScroll)
             local soundVolumeEdit = guiCreateEdit(x+10 + (PW2*(1/3)) + 5, y + 20 + 5, 50, 24, "", false, tabScroll)
@@ -801,15 +823,15 @@ addEventHandler("collectibles:admin", localPlayer, function(serverInfo)
             end
             y = y + 20 + 24 + 25
 
-            local onCollectAllLabel = guiCreateLabel(x, y, PW2*(1/3), 20, "On Collect Last:", false, tabScroll)
+            local onCollectAllLabel = guiCreateLabel(x, y, PW2*(1/3), 20, gct("On Collect Last:"), false, tabScroll)
             guiLabelSetColor(onCollectAllLabel, 255, 0, 255)
             y = y + 20 + 5
 
-            local playSoundAllCheckbox = guiCreateCheckBox(x+10, y, PW2*(1/3), 20, "(Optional)  Play Sound", false, false, tabScroll)
+            local playSoundAllCheckbox = guiCreateCheckBox(x+10, y, PW2*(1/3), 20, gct("(Optional)  Play Sound"), false, false, tabScroll)
             y = y + 20 + 5
 
-            local soundAllLabel = guiCreateLabel(x+10, y, PW2*(1/3), 20, "Sound File Path:", false, tabScroll)
-            local soundAllVolumeLabel = guiCreateLabel(x+10 + (PW2*(1/3)) + 5, y, 60, 24, "Volume:", false, tabScroll)
+            local soundAllLabel = guiCreateLabel(x+10, y, PW2*(1/3), 20, gct("Sound File Path:"), false, tabScroll)
+            local soundAllVolumeLabel = guiCreateLabel(x+10 + (PW2*(1/3)) + 5, y, 60, 24, gct("Volume:"), false, tabScroll)
 
             local soundAllEdit = guiCreateEdit(x+10, y + 20 + 5, PW2*(1/3), 24, "", false, tabScroll)
             local soundAllVolumeEdit = guiCreateEdit(x+10 + (PW2*(1/3)) + 5, y + 20 + 5, 50, 24, "", false, tabScroll)
@@ -864,14 +886,14 @@ addEventHandler("collectibles:admin", localPlayer, function(serverInfo)
         end
     end
 
-    -- Backups
+    -- Misc (other configs)
 
-    local tabBackups = guiCreateTab("Backups", tabPanel)
+    local tabMisc = guiCreateTab(gct("Misc"), tabPanel)
 
     x = 10
     y = 15
 
-    local backupLabel = guiCreateLabel(x, y, TW-(x*2), 20, "Configuration Backups", false, tabBackups)
+    local backupLabel = guiCreateLabel(x, y, TW-(x*2), 20, gct("Configuration Backups"), false, tabMisc)
     y = y + 20 + 5
 
     x = x + 10
@@ -882,26 +904,27 @@ addEventHandler("collectibles:admin", localPlayer, function(serverInfo)
         backupExists = gct("File '%s' (default) could not be found in the server's file system.", "backups/config.xml")
         bR, bG, bB = 255, 0, 0
     end
-    local backupExistsLabel = guiCreateLabel(x, y, TW-(x*2), 20, backupExists, false, tabBackups)
+    local backupExistsLabel = guiCreateLabel(x, y, TW-(x*2), 20, backupExists, false, tabMisc)
     guiLabelSetColor(backupExistsLabel, bR, bG, bB)
 
-    local backupCreateButton = guiCreateButton(x, y + 20 + 5, (TW*(1/3))-(x*2), 24, "Create Backup", false, tabBackups)
+    local backupCreateButton = guiCreateButton(x, y + 20 + 5, (TW*(1/3))-(x*2), 24, gct("Create Backup"), false, tabMisc)
     guiSetProperty(backupCreateButton, "NormalTextColour", "FF00FF00")
 
-    local backupRestoreButton = guiCreateButton(x + (TW*(1/3)) - x, y + 20 + 5, (TW*(1/3)) - x, 24, "Restore Backup", false, tabBackups)
+    local backupRestoreButton = guiCreateButton(x + (TW*(1/3)) - x, y + 20 + 5, (TW*(1/3)) - x, 24, gct("Restore Backup"), false, tabMisc)
     guiSetProperty(backupRestoreButton, "NormalTextColour", "FFFFFF00")
 
-    local backupDuplicateButton = guiCreateButton(x + (TW*(1/3)) - x + (TW*(1/3)), y + 20 + 5, (TW*(1/3)) - x, 24, "Duplicate Backup", false, tabBackups)
+    local backupDuplicateButton = guiCreateButton(x + (TW*(1/3)) - x + (TW*(1/3)), y + 20 + 5, (TW*(1/3)) - x, 24, gct("Duplicate Backup"), false, tabMisc)
     guiSetProperty(backupDuplicateButton, "NormalTextColour", "FF00FFFF")
 
     -- Bottom buttons
 
-    local save = guiCreateButton(15, WH - 45, (2/3)*WW - (15), 30, "Save Changes", false, mainWin)
+    local save = guiCreateButton(15, WH - 45, (2/3)*WW - (15), 30, gct("Save Changes"), false, mainWin)
     guiSetProperty(save, "NormalTextColour", "FF00FF00")
 
-    local close = guiCreateButton(15 + (2/3)*WW, WH - 45, (1/3)*WW - 30, 30, "Close", false, mainWin)
+    local close = guiCreateButton(15 + (2/3)*WW, WH - 45, (1/3)*WW - 30, 30, gct("Close"), false, mainWin)
 
     -- Button interactions
+
     addEventHandler("onClientGUIClick", mainWin, function()
         
         if source == save then
@@ -922,7 +945,7 @@ addEventHandler("collectibles:admin", localPlayer, function(serverInfo)
                         }
                         local nameText = guiGetText(info.typeName)
                         if nameText == "" then
-                            return showValidationError("Name for '"..name.."' cannot be empty")
+                            return showValidationError(gct("Name for '%s' cannot be empty", name))
                         end
                         nameText = string.gsub(nameText, " ", "_")
                         if nameText ~= name then
@@ -933,10 +956,16 @@ addEventHandler("collectibles:admin", localPlayer, function(serverInfo)
                             local respawnAfter = guiGetText(info.typeRespawnAfter)
                             respawnAfter = tonumber(respawnAfter)
                             if (not respawnAfter) or (respawnAfter < 0) then
-                                return showValidationError("Respawn After for '"..name.."' must be a positive number")
+                                return showValidationError(gct("Respawn After for '%s' must be a positive number", name))
                             end
                             updateNodes[settingType][name].attributes.respawn_after = tostring(respawnAfter)
-                            updateNodes[settingType][name].attributes.respawn_after_unit = guiComboBoxGetItemText(info.typeRespawnAfterUnit, guiComboBoxGetSelected(info.typeRespawnAfterUnit))
+                            local respawnUnitItem = guiComboBoxGetSelected(info.typeRespawnAfterUnit)
+                            for i=1, #RESPAWN_UNITS do
+                                if i == (respawnUnitItem+1) then
+                                    updateNodes[settingType][name].attributes.respawn_after_unit = RESPAWN_UNITS[i].name
+                                    break
+                                end
+                            end
                         else
                             updateNodes[settingType][name].attributes.respawn_after = false
                             updateNodes[settingType][name].attributes.respawn_after_unit = false
@@ -944,10 +973,10 @@ addEventHandler("collectibles:admin", localPlayer, function(serverInfo)
                         if guiCheckBoxGetSelected(info.typeToggleCommandOn) then
                             local typeToggleCommand = guiGetText(info.typeToggleCommand)
                             if typeToggleCommand == "" then
-                                return showValidationError("Toggle command for '"..name.."' cannot be empty")
+                                return showValidationError(gct("Toggle command for '%s' cannot be empty", name))
                             end
                             if typeToggleCommand:find(" ") then
-                                return showValidationError("Toggle command for '"..name.."' cannot contain spaces")
+                                return showValidationError(gct("Toggle command for '%s' cannot contain spaces", name))
                             end
                             updateNodes[settingType][name].attributes.toggle_command = typeToggleCommand
                         else
@@ -956,10 +985,10 @@ addEventHandler("collectibles:admin", localPlayer, function(serverInfo)
                         if guiCheckBoxGetSelected(info.typeToggleKeyBindOn) then
                             local typeToggleKeyBind = guiGetText(info.typeToggleKeyBind)
                             if typeToggleKeyBind == "" then
-                                return showValidationError("Toggle keybind for '"..name.."' cannot be empty")
+                                return showValidationError(gct("Toggle keybind for '%s' cannot be empty", name))
                             end
                             if typeToggleKeyBind:find(" ") then
-                                return showValidationError("Toggle keybind for '"..name.."' cannot contain spaces")
+                                return showValidationError(gct("Toggle keybind for '%s' cannot contain spaces", name))
                             end
                             typeToggleKeyBind = string.lower(typeToggleKeyBind)
                             local found = false
@@ -970,7 +999,7 @@ addEventHandler("collectibles:admin", localPlayer, function(serverInfo)
                                 end
                             end
                             if not found then
-                                return showValidationError("Toggle keybind for '"..name.."' must be a valid key name")
+                                return showValidationError(gct("Toggle keybind for '%s' must be a valid key name", name))
                             end
                             updateNodes[settingType][name].attributes.toggle_keybind = typeToggleKeyBind
                         else
@@ -985,11 +1014,11 @@ addEventHandler("collectibles:admin", localPlayer, function(serverInfo)
                             if guiCheckBoxGetSelected(info2.playSound) then
                                 local volume = tonumber(guiGetText(info2.soundVolume))
                                 if (not volume) or (volume < 0) then
-                                    return showValidationError("Sound volume for '"..name.." - "..on.."' must be a positive number")
+                                    return showValidationError(gct("Sound volume for '%s - %s' must be a positive number", name, on))
                                 end
                                 local sound = guiGetText(info2.sound)
                                 if sound == "" then
-                                    return showValidationError("Sound for '"..name.." - "..on.."' cannot be empty")
+                                    return showValidationError(gct("Sound for '%s - %s' cannot be empty", name, on))
                                 end
                                 local found = false
                                 for w=1, #serverInfo.metaFileSrcs do
@@ -1000,7 +1029,7 @@ addEventHandler("collectibles:admin", localPlayer, function(serverInfo)
                                     end
                                 end
                                 if not found then
-                                    return showValidationError("Sound file path for '"..name.." - "..on.."' does not exist")
+                                    return showValidationError(gct("Sound file path for '%s - %s' does not exist", name, on))
                                 end
                                 updateNodes[settingType][i].attributes = {
                                     sound = sound,
@@ -1017,8 +1046,9 @@ addEventHandler("collectibles:admin", localPlayer, function(serverInfo)
                 end
             end
     
-            local saveDesc = "Are you sure you want to save these changes?\nThis will restart the resource if successful."
-            createConfirmPopup("Save Changes", "FFFFFF00", saveDesc, "Save", "Cancel", "collectibles:adminConfirm", "save", updateNodes)
+            local saveDesc = gct("Are you sure you want to save these changes?\nThis will restart the resource if successful.")
+            createConfirmPopup(gct("Save Changes"), "FFFFFF00", saveDesc, gct("Confirm"), gct("Cancel"),
+                "collectibles:adminConfirm", "save", updateNodes)
 
         elseif source == close then
            
@@ -1029,17 +1059,18 @@ addEventHandler("collectibles:admin", localPlayer, function(serverInfo)
 
         elseif source == backupCreateButton then
 
-            local desc = "Are you sure you want to create a backup of the current configuration?"
+            local desc = gct("Are you sure you want to create a backup of the current configuration?\n%s", BACKUPS_DIRECTORY.."config.xml")
             if serverInfo.backupExists then
-                desc = desc .."\n\nWARNING: This will overwrite the existing backup."
+                desc = desc ..gct("\n\nWARNING: This will overwrite the existing backup.")
             end
-            createConfirmPopup("Create Backup", "FFFFFF00", desc, "Create", "Cancel", "collectibles:adminConfirm", "backupCreate", "config.xml")
+            createConfirmPopup(gct("Create Backup"), "FFFFFF00", desc, gct("Confirm"), gct("Cancel"),
+                "collectibles:adminConfirm", "backupCreate", "config.xml")
 
         elseif source == backupRestoreButton then
 
             guiSetEnabled(mainWin, false)
-            local win = guiCreateWindow((SW-500)/2, (SH-130)/2, 500, 130, "Restore Backup", false)
-            local labelCurrPath = guiCreateLabel(10, 25, 500-20, 20, "Backed up configuration file (backups/...):", false, win)
+            local win = guiCreateWindow((SW-500)/2, (SH-130)/2, 500, 130, gct("Restore Backup"), false)
+            local labelCurrPath = guiCreateLabel(10, 25, 500-20, 20, gct("Backed up configuration file (%s...):", BACKUPS_DIRECTORY), false, win)
             local PLACEHOLDER_PATH = "config.xml"
             local currName = guiCreateEdit(10, 50, 500-20, 30, PLACEHOLDER_PATH, false, win)
             addEventHandler("onClientGUIClick", currName, function()
@@ -1047,21 +1078,22 @@ addEventHandler("collectibles:admin", localPlayer, function(serverInfo)
                     guiSetText(source, "")
                 end
             end, false)
-            local cancel = guiCreateButton(10, 90, 140, 30, "Cancel", false, win)
-            local ok = guiCreateButton(160, 90, 140, 30, "Confirm", false, win)
+            local cancel = guiCreateButton(10, 90, 140, 30, gct("Cancel"), false, win)
+            local ok = guiCreateButton(160, 90, 140, 30, gct("Confirm"), false, win)
             guiSetProperty(ok, "NormalTextColour", "FF00FF00")
             addEventHandler("onClientGUIClick", ok, function()
                 local oldName = guiGetText(currName)
                 if oldName == "" then
-                    return showValidationError("Backup name cannot be empty")
+                    return showValidationError(gct("Backup name cannot be empty"))
                 end
                 if oldName:find(" ") then
-                    return showValidationError("Backup name cannot contain spaces")
+                    return showValidationError(gct("Backup name cannot contain spaces"))
                 end
                 destroyElement(win)
                 
-                local desc = "Are you sure you want to restore the configuration from:\n"..("backups/"..oldName)
-                createConfirmPopup("Restore Backup", "FFFFFF00", desc, "Restore", "Cancel", "collectibles:adminConfirm", "backupRestore", oldName)
+                local desc = gct("Are you sure you want to restore the configuration from:\n%s%s", BACKUPS_DIRECTORY, oldName)
+                createConfirmPopup(gct("Restore Backup"), "FFFFFF00", desc, gct("Confirm"), gct("Cancel"),
+                    "collectibles:adminConfirm", "backupRestore", oldName)
 
             end, false)
             addEventHandler("onClientGUIClick", cancel, function()
@@ -1072,11 +1104,11 @@ addEventHandler("collectibles:admin", localPlayer, function(serverInfo)
         elseif source == backupDuplicateButton then
 
             guiSetEnabled(mainWin, false)
-            local win = guiCreateWindow((SW-500)/2, (SH-160)/2, 500, 160, "Duplicate Backup", false)
-            local labeldesc = guiCreateLabel(10, 25, 500, 40, "You can use %s in the new path for the current server date-time string.", false, win)
+            local win = guiCreateWindow((SW-500)/2, (SH-160)/2, 500, 160, gct("Duplicate Backup"), false)
+            local labeldesc = guiCreateLabel(10, 25, 500, 40, gct("You can use %s in the new path for the current server date-time string."), false, win)
             guiLabelSetHorizontalAlign(labeldesc, "center")
-            local labelCurrPath = guiCreateLabel(10, 55, 500/2-10, 20, "Copy file (backups/...):", false, win)
-            local labelNewPath = guiCreateLabel(10+500/2, 55, 500/2-20, 20, "New file (backups/...):", false, win)
+            local labelCurrPath = guiCreateLabel(10, 55, 500/2-10, 20, gct("Copy file (%s...):", BACKUPS_DIRECTORY), false, win)
+            local labelNewPath = guiCreateLabel(10+500/2, 55, 500/2-20, 20, gct("To new file (%s...):", BACKUPS_DIRECTORY), false, win)
             local PLACEHOLDER_PATH = "config_%s.xml"
             local currName = guiCreateEdit(10, 80, 500/2-10, 30, "config.xml", false, win)
             local name = guiCreateEdit(10+500/2, 80, 500/2-20, 30, PLACEHOLDER_PATH, false, win)
@@ -1085,27 +1117,28 @@ addEventHandler("collectibles:admin", localPlayer, function(serverInfo)
                     guiSetText(source, "")
                 end
             end, false)
-            local cancel = guiCreateButton(10, 120, 140, 30, "Cancel", false, win)
-            local ok = guiCreateButton(160, 120, 140, 30, "Confirm", false, win)
+            local cancel = guiCreateButton(10, 120, 140, 30, gct("Cancel"), false, win)
+            local ok = guiCreateButton(160, 120, 140, 30, gct("Confirm"), false, win)
             guiSetProperty(ok, "NormalTextColour", "FF00FF00")
             addEventHandler("onClientGUIClick", ok, function()
                 local newName = guiGetText(name)
                 if newName == "" then
-                    return showValidationError("Backup name cannot be empty")
+                    return showValidationError(gct("Backup name cannot be empty"))
                 end
                 if newName:find(" ") then
-                    return showValidationError("Backup name cannot contain spaces")
+                    return showValidationError(gct("Backup name cannot contain spaces"))
                 end
                 local oldName = guiGetText(currName)
                 if oldName == "" then
-                    return showValidationError("Backup name cannot be empty")
+                    return showValidationError(gct("Backup name cannot be empty"))
                 end
                 if oldName:find(" ") then
-                    return showValidationError("Backup name cannot contain spaces")
+                    return showValidationError(gct("Backup name cannot contain spaces"))
                 end
                 destroyElement(win)
-                local desc = "Are you sure you want to duplicate the backup from:\n"..("backups/"..oldName).."\nto:\n"..("backups/"..newName)
-                createConfirmPopup("Duplicate Backup", "FFFFFF00", desc, "Duplicate", "Cancel", "collectibles:adminConfirm", "backupDuplicate", oldName, newName)
+                local desc = gct("Are you sure you want to duplicate the backup from:\n%s\nto:\n%s", BACKUPS_DIRECTORY..oldName, BACKUPS_DIRECTORY..newName)
+                createConfirmPopup(gct("Duplicate Backup"), "FFFFFF00", desc, gct("Confirm"), gct("Cancel"),
+                    "collectibles:adminConfirm", "backupDuplicate", oldName, newName)
             end, false)
             addEventHandler("onClientGUIClick", cancel, function()
                 destroyElement(win)
@@ -1118,7 +1151,7 @@ end, false)
 local function openCreateNewSpawnpoint(theType, lastModelID)
     guiSetEnabled(spWin, false)
     local WW, WH = 250, 500
-    modelWin = guiCreateWindow((SW-WW)/2, (SH-WH)/2, WW, WH, "Create New "..theType.." Spawnpoint", false)
+    modelWin = guiCreateWindow((SW-WW)/2, (SH-WH)/2, WW, WH, gct("Create New %s Spawnpoint", theType), false)
 
     local MODELS = {
         { "  CUSTOM", -1 },
@@ -1144,15 +1177,15 @@ local function openCreateNewSpawnpoint(theType, lastModelID)
         { "Down arrow", 1318 },
         { "Drug bundle", 1279 },
     }
-    local MODEL_EDIT_PLACEHOLDER = "Valid Object ID"
+    local MODEL_EDIT_PLACEHOLDER = gct("Valid Object ID")
 
     y = 30
-    local modelLabel = guiCreateLabel(15, 30, (WW-30), 20, "Model:", false, modelWin)
+    local modelLabel = guiCreateLabel(15, 30, (WW-30), 20, gct("Model:"), false, modelWin)
     guiLabelSetColor(modelLabel, 255, 255, 255)
     guiSetFont(modelLabel, "default-bold-small")
     y = y + 20 + 5
 
-    local modelCombobox = guiCreateComboBox(15, y, (WW-30), WH-26-10-26-5-y, "Select a model", false, modelWin)
+    local modelCombobox = guiCreateComboBox(15, y, (WW-30), WH-26-10-26-5-y, gct("Select a model"), false, modelWin)
     for i=1, #MODELS do
         local model = MODELS[i]
         if i == 1 then
@@ -1180,10 +1213,10 @@ local function openCreateNewSpawnpoint(theType, lastModelID)
     
     -- Bottom buttons
 
-    local confirmButton = guiCreateButton(15, WH-26-10-26-5, (WW-30), 26, "Confirm", false, modelWin)
+    local confirmButton = guiCreateButton(15, WH-26-10-26-5, (WW-30), 26, gct("Confirm"), false, modelWin)
     guiSetProperty(confirmButton, "NormalTextColour", "FF00FF00")
 
-    local cancelButton = guiCreateButton(15, WH-26-10, (WW-30), 26, "Cancel", false, modelWin)
+    local cancelButton = guiCreateButton(15, WH-26-10, (WW-30), 26, gct("Cancel"), false, modelWin)
     
     addEventHandler("onClientGUIClick", modelWin, function()
 
@@ -1197,13 +1230,14 @@ local function openCreateNewSpawnpoint(theType, lastModelID)
         elseif source == confirmButton then
             
             if not chosenModelID then
-                local infoDesc = "You must select or type a valid object model ID."
-                createConfirmPopup("Information", "FFFFFF00", infoDesc, false, "OK")
+                local infoDesc = gct("You must select or type a valid object model ID.")
+                createConfirmPopup(gct("Information"), "FFFFFF00", infoDesc, false, gct("OK"))
                 return
             end
 
-            local desc = "Are you sure you want to create a new\n'"..theType.."' (model: "..chosenModelID..")\nspawnpoint at your current location?"
-            createConfirmPopup("Create Spawnpoint", "FF00FF00", desc, "Confirm", "Cancel", "collectibles:adminConfirm", "createSpawnpoint", theType, chosenModelID)
+            local desc = gct("Are you sure you want to create a new\n'%s' (model: %s)\nspawnpoint at your current location?", theType, chosenModelID)
+            createConfirmPopup(gct("Create Spawnpoint"), "FF00FF00", desc, gct("Confirm"), gct("Cancel"),
+                "collectibles:adminConfirm", "createSpawnpoint", theType, chosenModelID)
         
         elseif source == customModelEdit then
             if guiGetText(source) == MODEL_EDIT_PLACEHOLDER then
@@ -1263,13 +1297,13 @@ addEventHandler("collectibles:configureSpawnpoints", localPlayer, function(comma
     spWin = guiCreateWindow((SW-WW)/2, (SH-WH)/2, WW, WH, theType.. " - /"..commandName, false)
 
     local spList = guiCreateGridList(0.05, 0.05, 0.9, 0.7, true, spWin)
-    guiGridListAddColumn(spList, "ID", 0.12)
-    guiGridListAddColumn(spList, "Model", 0.12)
-    guiGridListAddColumn(spList, "X", 0.12)
-    guiGridListAddColumn(spList, "Y", 0.12)
-    guiGridListAddColumn(spList, "Z", 0.12)
-    guiGridListAddColumn(spList, "Interior", 0.12)
-    guiGridListAddColumn(spList, "Dimension", 0.12)
+    guiGridListAddColumn(spList, gct("ID"), 0.12)
+    guiGridListAddColumn(spList, gct("Model"), 0.12)
+    guiGridListAddColumn(spList, gct("X Coord"), 0.12)
+    guiGridListAddColumn(spList, gct("Y Coord"), 0.12)
+    guiGridListAddColumn(spList, gct("Z Coord"), 0.12)
+    guiGridListAddColumn(spList, gct("Interior"), 0.12)
+    guiGridListAddColumn(spList, gct("Dimension"), 0.12)
 
     for i=1, #info.spawnpoints do
         local spawnpoint = info.spawnpoints[i]
@@ -1285,18 +1319,18 @@ addEventHandler("collectibles:configureSpawnpoints", localPlayer, function(comma
         end
     end
 
-    local spAdd = guiCreateButton(0.05, 0.8, 0.2, 0.15, "Add", true, spWin)
+    local spAdd = guiCreateButton(0.05, 0.8, 0.2, 0.15, gct("Add"), true, spWin)
     guiSetProperty(spAdd, "NormalTextColour", "FF00FF00")
     
-    local spRemove = guiCreateButton(0.3, 0.8, 0.2, 0.15, "Remove", true, spWin)
+    local spRemove = guiCreateButton(0.3, 0.8, 0.2, 0.15, gct("Remove"), true, spWin)
     guiSetProperty(spRemove, "NormalTextColour", "FFFF0000")
     guiSetEnabled(spRemove, false)
 
-    local spGoto = guiCreateButton(0.55, 0.8, 0.2, 0.15, "Teleport", true, spWin)
+    local spGoto = guiCreateButton(0.55, 0.8, 0.2, 0.15, gct("Teleport"), true, spWin)
     guiSetProperty(spGoto, "NormalTextColour", "FFFFFFFF")
     guiSetEnabled(spGoto, false)
 
-    local spClose = guiCreateButton(0.8, 0.8, 0.15, 0.15, "Close", true, spWin)
+    local spClose = guiCreateButton(0.8, 0.8, 0.15, 0.15, gct("Close"), true, spWin)
     
     addEventHandler("onClientGUIClick", spWin, function()
         if source == spClose then
@@ -1316,14 +1350,17 @@ addEventHandler("collectibles:configureSpawnpoints", localPlayer, function(comma
             if source == spAdd then
                 local lastModelID = tonumber(guiGridListGetItemText(spList, guiGridListGetRowCount(spList)-1, 2))
                 openCreateNewSpawnpoint(theType, lastModelID)
+
             elseif source == spGoto then
                 local spID = tonumber(guiGridListGetItemText(spList, row, 1))
                 triggerServerEvent("collectibles:gotoSpawnpoint", resourceRoot, theType, spID)
+
             elseif source == spRemove then
 
                 local spID = guiGridListGetItemText(spList, row, 1)
-                local desc = "Are you sure you want to remove spawnpoint #"..tostring(spID).."?"
-                createConfirmPopup("Remove Spawnpoint", "FF00FF00", desc, "Confirm", "Cancel", "collectibles:adminConfirm", "removeSpawnpoint", theType, tonumber(spID))
+                local desc = gct("Are you sure you want to remove spawnpoint #%s?", tostring(spID))
+                createConfirmPopup(gct("Remove Spawnpoint"), "FF00FF00", desc, gct("Confirm"), gct("Cancel"),
+                    "collectibles:adminConfirm", "removeSpawnpoint", theType, tonumber(spID))
             end
         end
     end)
@@ -1395,6 +1432,7 @@ addEventHandler("collectibles:adminConfirm", localPlayer, function(confirmType, 
         
         elseif confirmType == "createSpawnpoint" then
             triggerServerEvent("collectibles:createSpawnpoint", resourceRoot, eventArgs[1], eventArgs[2])
+
         elseif confirmType == "removeSpawnpoint" then
             triggerServerEvent("collectibles:removeSpawnpoint", resourceRoot, eventArgs[1], eventArgs[2])
         end
@@ -1404,7 +1442,8 @@ end, false)
 addEventHandler("collectibles:adminResponse", localPlayer, function(success, failureReason, okText)
     if (success) then
         if okText then
-            createConfirmPopup(gct("Success"), "FF00FF00", success, okText, false, "collectibles:adminConfirm", "closeMainWindow")
+            createConfirmPopup(gct("Success"), "FF00FF00", success, okText, false,
+                "collectibles:adminConfirm", "closeMainWindow")
         else
             createConfirmPopup(gct("Success"), "FF00FF00", success, false, false)
         end
