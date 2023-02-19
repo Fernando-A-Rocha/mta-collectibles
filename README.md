@@ -1,4 +1,4 @@
-# mta-collectibles
+![Banner](.github/images/banner.png)
 
 Fun and customizable collectibles system for Multi Theft Auto: San Andreas.
 
