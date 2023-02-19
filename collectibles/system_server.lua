@@ -505,13 +505,11 @@ local function parseCustomSettings()
 
     -- STRINGS
     CONSTANTS.STRINGS = {}
-    local stringsJsonF
     local stringsJson
     if not fileExists(CONSTANTS.STRINGS_FILE) then
-        stringsJsonF = fileCreate(CONSTANTS.STRINGS_FILE)
+        local stringsJsonF = fileCreate(CONSTANTS.STRINGS_FILE)
         if not stringsJsonF then
             outputDebugMsg("Failed to parse "..CONSTANTS.STRINGS_FILE.." - couldn't create file.", "ERROR")
-            stringsJsonF = nil
         else
             stringsJson = toJSON({})
             fileWrite(stringsJsonF, stringsJson)
@@ -519,10 +517,9 @@ local function parseCustomSettings()
             outputDebugMsg("Created '"..CONSTANTS.STRINGS_FILE.."'. Run 'update_strings.py' to fill it with the strings used if you want to translate them.", "INFO")
         end
     else
-        stringsJsonF = fileOpen(CONSTANTS.STRINGS_FILE, true)
+        local stringsJsonF = fileOpen(CONSTANTS.STRINGS_FILE, true)
         if not stringsJsonF then
             outputDebugMsg("Failed to parse "..CONSTANTS.STRINGS_FILE.." - couldn't open file.", "ERROR")
-            stringsJsonF = nil
         else
             stringsJson = fileRead(stringsJsonF, fileGetSize(stringsJsonF))
             fileClose(stringsJsonF)
