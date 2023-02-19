@@ -30,19 +30,19 @@
     <file src="sounds/vc/error.ogg" />
 
     <!-- (Optional) Configuration Editor -->
-    <script src="optional/editor/editor_client.lua" type="client" />
-    <script src="optional/editor/editor_server.lua" type="server" />
+    <script src="editor/editor_client.lua" type="client" />
+    <script src="editor/editor_server.lua" type="server" />
 
     <!-- (Optional) Testing Scripts -->
-    <script src="optional/testing/testing_server.lua" type="server" />
+    <script src="testing/testing_server.lua" type="server" />
 
     <!-- (Optional) Example Implementations -->
-    <file src="optional/examples/events/notification.mp3" />
-    <file src="optional/examples/events/congrats.mp3" />
-    <script src="optional/examples/events/events_client.lua" type="client" />
-    <script src="optional/examples/events/events_server.lua" type="server" />
-    <script src="optional/examples/gui/gui_client.lua" type="client" />
-    <script src="optional/examples/gui/gui_server.lua" type="server" />
-    <script src="optional/examples/godmode/godmode_server.lua" type="server" />
-    <script src="optional/examples/godmode/godmode_client.lua" type="client" />
+    <file src="examples/events/notification.mp3" />
+    <file src="examples/events/congrats.mp3" />
+    <script src="examples/events/events_client.lua" type="client" />
+    <script src="examples/events/events_server.lua" type="server" />
+    <script src="examples/gui/gui_client.lua" type="client" />
+    <script src="examples/gui/gui_server.lua" type="server" />
+    <script src="examples/godmode/godmode_server.lua" type="server" />
+    <script src="examples/godmode/godmode_client.lua" type="client" />
 </meta>

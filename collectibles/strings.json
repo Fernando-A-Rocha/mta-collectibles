@@ -127,8 +127,8 @@
             255
         ]
     },
-    "Collectible type '%s' has 0 spawnpoints defined.": {
-        "value": "Collectible type '%s' has 0 spawnpoints defined.",
+    "Collectible type '%s' has %s spawnpoints defined.": {
+        "value": "Collectible type '%s' has %s spawnpoints defined.",
         "rgb": [
             255,
             255,
@@ -215,46 +215,6 @@
             255
         ]
     },
-    "Create New Collectible": {
-        "value": "Create New Collectible",
-        "rgb": [
-            255,
-            255,
-            255
-        ]
-    },
-    "Name:": {
-        "value": "Name:",
-        "rgb": [
-            255,
-            255,
-            255
-        ]
-    },
-    "Spawn Automatically": {
-        "value": "Spawn Automatically",
-        "rgb": [
-            255,
-            255,
-            255
-        ]
-    },
-    "Target:": {
-        "value": "Target:",
-        "rgb": [
-            255,
-            255,
-            255
-        ]
-    },
-    "(Optional)  Respawn After:": {
-        "value": "(Optional)  Respawn After:",
-        "rgb": [
-            255,
-            255,
-            255
-        ]
-    },
     "Seconds": {
         "value": "Seconds",
         "rgb": [
@@ -289,6 +249,46 @@
     },
     "Weeks": {
         "value": "Weeks",
+        "rgb": [
+            255,
+            255,
+            255
+        ]
+    },
+    "Create New Collectible": {
+        "value": "Create New Collectible",
+        "rgb": [
+            255,
+            255,
+            255
+        ]
+    },
+    "Name:": {
+        "value": "Name:",
+        "rgb": [
+            255,
+            255,
+            255
+        ]
+    },
+    "Spawn Automatically": {
+        "value": "Spawn Automatically",
+        "rgb": [
+            255,
+            255,
+            255
+        ]
+    },
+    "Target:": {
+        "value": "Target:",
+        "rgb": [
+            255,
+            255,
+            255
+        ]
+    },
+    "(Optional)  Respawn After:": {
+        "value": "(Optional)  Respawn After:",
         "rgb": [
             255,
             255,
@@ -521,6 +521,14 @@
     },
     "Collectibles - Editor": {
         "value": "Collectibles - Editor",
+        "rgb": [
+            255,
+            255,
+            255
+        ]
+    },
+    "Here you can translate all texts used in the resource's client-side and server-side scripts.\\nTotal strings in %s: %s\\n\\nSome strings have '%%s' in them. These are replaced with certain values when the text is displayed.Their order is important. To modify this you would need to edit the scripts manually.\\nText color is in R, G, B format.": {
+        "value": "Here you can translate all texts used in the resource's client-side and server-side scripts.\\nTotal strings in %s: %s\\n\\nSome strings have '%%s' in them. These are replaced with certain values when the text is displayed.Their order is important. To modify this you would need to edit the scripts manually.\\nText color is in R, G, B format.",
         "rgb": [
             255,
             255,
@@ -839,8 +847,8 @@
             255
         ]
     },
-    "You can use %s in the new path for the current server date-time string.": {
-        "value": "You can use %s in the new path for the current server date-time string.",
+    "You can use '%s' in the new path for the current date (server time).": {
+        "value": "You can use '%s' in the new path for the current date (server time).",
         "rgb": [
             255,
             255,
@@ -1063,8 +1071,8 @@
             255
         ]
     },
-    "admin_changes_saved": {
-        "value": "admin_changes_saved",
+    "Changes saved successfully.": {
+        "value": "Changes saved successfully.",
         "rgb": [
             255,
             255,

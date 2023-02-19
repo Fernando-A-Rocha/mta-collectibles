@@ -159,7 +159,20 @@ local function showValidationError(msg)
     createConfirmPopup(gct("Validation Error"), "FFFF0000", msg, false, gct("OK"))
 end
 
+local function getRespawnUnits()
+    return {
+        {name="seconds", niceName=gct("Seconds")},
+        {name="minutes", niceName=gct("Minutes")},
+        {name="hours", niceName=gct("Hours")},
+        {name="days", niceName=gct("Days")},
+        {name="weeks", niceName=gct("Weeks")},
+    }
+end
+
 local function openCreateCollectible(metaFileSrcs)
+    
+    local RESPAWN_UNITS = getRespawnUnits()
+
     local WW, WH = 750, 550
     createWin = guiCreateWindow((SW-WW)/2, (SH-WH)/2, WW, WH, gct("Create New Collectible"), false)
     guiSetEnabled(mainWin, false)
@@ -196,13 +209,6 @@ local function openCreateCollectible(metaFileSrcs)
 
     local respawnAfterEdit = guiCreateEdit(0, y, (PW2*(1/3)) * (1/3), 24, "", false, scrollPane)
     local respawnAfterUnitDropdown = guiCreateComboBox((PW2*(1/3)) * (1/3) + 5, y, (PW2*(2/3)) * (1/3), 24*6, "", false, scrollPane)
-    local RESPAWN_UNITS = {
-        {name="seconds", niceName=gct("Seconds")},
-        {name="minutes", niceName=gct("Minutes")},
-        {name="hours", niceName=gct("Hours")},
-        {name="days", niceName=gct("Days")},
-        {name="weeks", niceName=gct("Weeks")},
-    }
     for i=1, #RESPAWN_UNITS do
         guiComboBoxAddItem(respawnAfterUnitDropdown, RESPAWN_UNITS[i].niceName)
     end
@@ -521,12 +527,83 @@ addEventHandler("collectibles:admin", localPlayer, function(serverInfo)
     
     local tabPanel = guiCreateTabPanel(x, y, WW-(x*2), WH - 80, false, mainWin)
 
-    -- Types
-
     local settings = {}
 
+    -- Settings: Texts
+
+    local tabTexts = guiCreateTab("Texts", tabPanel)
+    local TW, TH = guiGetSize(tabTexts, false)
+
+    x = 10
+    y = 10
+    local tabTextsScroll = guiCreateScrollPane(x, y, TW-(x*2), TH-(y*2), false, tabTexts)
+    local PW = guiGetSize(tabTextsScroll, false)
+
+    local strC = 0
+    for name, v in pairs(serverInfo.constants.STRINGS) do
+        strC = strC + 1
+    end
+
+    local textsInfoText = gct("Here you can translate all texts used in the resource's client-side and server-side scripts.\nTotal strings in %s: %s\n\nSome strings have '%%s' in them. These are replaced with certain values when the text is displayed.Their order is important. To modify this you would need to edit the scripts manually.\nText color is in R, G, B format.", serverInfo.constants.STRINGS_FILE, tostring(strC))
+    
+    local _, countLinesT = textsInfoText:gsub("\n","")
+    countLinesT = countLinesT + 1
+    
+    local textsInfo = guiCreateLabel(0, y, PW, (16*countLinesT), textsInfoText, false, tabTextsScroll)
+    guiSetFont(textsInfo, "default-bold-small")
+
+    y = y + (16*countLinesT) + 5
+
+    settings.strings = {}
+
+    for name, v in pairs(serverInfo.constants.STRINGS) do
+        local str = v.value
+        local r, g, b = 255, 255, 255
+        if v.rgb ~= nil then
+            r, g, b = v.rgb[1], v.rgb[2], v.rgb[3]
+        end
+
+        local textLabel = guiCreateLabel(0, y, PW, 20, name, false, tabTextsScroll)
+        y = y + 20 + 5
+        local textWidth = (PW*(2/3))-35
+        local textEdit = guiCreateEdit(0, y, textWidth, 24, str, false, tabTextsScroll)
+        local rgbWidth = (PW*(1/3))-5-24
+        local rgbEdit = guiCreateEdit(textWidth+5, y, rgbWidth, 24, (r..", "..g..", "..b), false, tabTextsScroll)
+        local rgbImage = guiCreateStaticImage(textWidth+5+rgbWidth+5, y, 24, 24, "images/1pixelwhite.png", false, tabTextsScroll)
+        local rgbHex = rgbToHex({r, g, b})
+        guiSetProperty(rgbImage, "ImageColours", "tl:".."FF"..rgbHex.." tr:".."FF"..rgbHex.." bl:".."FF"..rgbHex.." br:".."FF"..rgbHex)
+        addEventHandler("onClientGUIChanged", rgbEdit, function()
+            local color = string.gsub(guiGetText(source), " ", "")
+            color = split(color, ",")
+            if #color ~= 3 then
+                return guiSetVisible(rgbImage, false)
+            end
+            local colorTable = {}
+            for i=1, #color do
+                local value = tonumber(color[i])
+                if (not value) or (value < 0) or (value > 255) then
+                    return guiSetVisible(rgbImage, false)
+                end
+                colorTable[i] = value
+            end
+
+            local hex = rgbToHex(colorTable)
+            guiSetProperty(rgbImage, "ImageColours", "tl:".."FF"..hex.." tr:".."FF"..hex.." bl:".."FF"..hex.." br:".."FF"..hex)
+            guiSetVisible(rgbImage, true)
+        end)
+        y = y + 24 + 10
+
+        settings.strings[name] = {label=textLabel, textEdit=textEdit, rgbEdit=rgbEdit}
+    end
+
+    -- Bottom margin
+    guiCreateLabel(0, y, 50, 60, " ", false, tabTextsScroll)
+
+    -- Types
+
+    local RESPAWN_UNITS = getRespawnUnits()
+
     local tabTypes = guiCreateTab(gct("Types"), tabPanel)
-    local TW, TH = guiGetSize(tabTypes, false)
 
     local ct = 0
     for theType, info in pairs(serverInfo.collectibleTypes) do
@@ -557,7 +634,6 @@ addEventHandler("collectibles:admin", localPlayer, function(serverInfo)
         y = y + 24 + 5
 
         local tabPanelTypes = guiCreateTabPanel(x, y, TW-(x*2), TH-y-5, false, tabTypes)
-        local PW = guiGetSize(tabPanelTypes, false)
 
         settings.types = {}
         settings.actions = {}
@@ -587,7 +663,7 @@ addEventHandler("collectibles:admin", localPlayer, function(serverInfo)
             y = y + 24 + 10
 
             local targetLabel = guiCreateLabel(0, y, (PW2*(1/3))/2, 20, gct("Target:"), false, tabScroll)
-            local spawnPointsLabel = guiCreateLabel((PW*(1/3))/2 + 5, y, (PW*(1/3))/2, 20, gct("Spawn Points:"), false, tabScroll)
+            local spawnPointsLabel = guiCreateLabel((PW2*(1/3))/2 + 5, y, (PW2*(1/3))/2, 20, gct("Spawn Points:"), false, tabScroll)
             y = y + 20 + 5
 
             local targetDropdown = guiCreateComboBox(0, y, (PW2*(1/3))/2, 24*3, "", false, tabScroll)
@@ -595,7 +671,7 @@ addEventHandler("collectibles:admin", localPlayer, function(serverInfo)
             guiComboBoxAddItem(targetDropdown, "server")
             guiComboBoxSetSelected(targetDropdown, info.target == "client" and 0 or 1)
 
-            local spawnPointsButton = guiCreateButton((PW*(1/3))/2 + 5, y, (PW*(1/3))/2, 24, gct("Configure"), false, tabScroll)
+            local spawnPointsButton = guiCreateButton((PW2*(1/3))/2 + 5, y, (PW2*(1/3))/2, 24, gct("Configure"), false, tabScroll)
             guiSetProperty(spawnPointsButton, "NormalTextColour", "FFFFFFFF")
             addEventHandler("onClientGUIClick", spawnPointsButton, function()
 
@@ -613,13 +689,6 @@ addEventHandler("collectibles:admin", localPlayer, function(serverInfo)
 
             local respawnAfterEdit = guiCreateEdit(0, y, (PW2*(1/3)) * (1/3), 24, "", false, tabScroll)
             local respawnAfterUnitDropdown = guiCreateComboBox((PW2*(1/3)) * (1/3) + 5, y, (PW2*(2/3)) * (1/3), 24*6, "", false, tabScroll)
-            local RESPAWN_UNITS = {
-                {name="seconds", niceName=gct("Seconds")},
-                {name="minutes", niceName=gct("Minutes")},
-                {name="hours", niceName=gct("Hours")},
-                {name="days", niceName=gct("Days")},
-                {name="weeks", niceName=gct("Weeks")},
-            }
             for i=1, #RESPAWN_UNITS do
                 guiComboBoxAddItem(respawnAfterUnitDropdown, RESPAWN_UNITS[i].niceName)
             end
@@ -931,6 +1000,7 @@ addEventHandler("collectibles:admin", localPlayer, function(serverInfo)
         if source == save then
 
             local updateNodes = {}
+            local updateStrings = {}
 
             for settingType, list in pairs(settings) do
                 for name, info in pairs(list) do
@@ -938,6 +1008,7 @@ addEventHandler("collectibles:admin", localPlayer, function(serverInfo)
                         updateNodes[settingType] = {}
                     end
                     updateNodes[settingType][name] = {}
+                    
                     if settingType == "types" then
                         updateNodes[settingType][name].attributeNames = {name=name}
                         updateNodes[settingType][name].attributes = {
@@ -1043,13 +1114,35 @@ addEventHandler("collectibles:admin", localPlayer, function(serverInfo)
                                 }
                             end
                         end
+                    elseif settingType == "strings" then
+                        local text1 = guiGetText(info.textEdit)
+                        if text1 == "" then
+                            return showValidationError("Text for '"..name.."' cannot be empty")
+                        end
+                        local text2 = guiGetText(info.rgbEdit)
+                        local color = string.gsub(text2, " ", "")
+                        color = split(color, ",")
+                        if #color ~= 3 then
+                            return showValidationError("RGB color for '"..name.."' must be in the format 'R, G, B' (0-255)")
+                        end
+                        for i=1, #color do
+                            local value = tonumber(color[i])
+                            if (not value) or (value < 0) or (value > 255) then
+                                return showValidationError("RGB color for '"..name.."' must be in the format 'R, G, B' (0-255)")
+                            end
+                            color[i] = value
+                        end
+                        updateStrings[name] = {
+                            value = text1,
+                            rgb = color
+                        }
                     end
                 end
             end
     
             local saveDesc = gct("Are you sure you want to save these changes?\nThis will restart the resource if successful.")
             createConfirmPopup(gct("Save Changes"), "FFFFFF00", saveDesc, gct("Confirm"), gct("Cancel"),
-                "collectibles:adminConfirm", "save", updateNodes)
+                "collectibles:adminConfirm", "save", updateNodes, updateStrings)
 
         elseif source == close then
            
@@ -1105,7 +1198,7 @@ addEventHandler("collectibles:admin", localPlayer, function(serverInfo)
 
             guiSetEnabled(mainWin, false)
             local win = guiCreateWindow((SW-500)/2, (SH-160)/2, 500, 160, gct("Duplicate Backup"), false)
-            local labeldesc = guiCreateLabel(10, 25, 500, 40, gct("You can use %s in the new path for the current server date-time string."), false, win)
+            local labeldesc = guiCreateLabel(10, 25, 500, 40, gct("You can use '%s' in the new path for the current date (server time)."), false, win)
             guiLabelSetHorizontalAlign(labeldesc, "center")
             local labelCurrPath = guiCreateLabel(10, 55, 500/2-10, 20, gct("Copy file (%s...):", BACKUPS_DIRECTORY), false, win)
             local labelNewPath = guiCreateLabel(10+500/2, 55, 500/2-20, 20, gct("To new file (%s...):", BACKUPS_DIRECTORY), false, win)
@@ -1413,7 +1506,7 @@ addEventHandler("collectibles:adminConfirm", localPlayer, function(confirmType, 
         end
 
         if confirmType == "save" then
-            triggerServerEvent("collectibles:updateConfig", resourceRoot, eventArgs[1])
+            triggerServerEvent("collectibles:updateConfig", resourceRoot, eventArgs[1], eventArgs[2])
         
         elseif confirmType == "remove" then
             triggerServerEvent("collectibles:deleteType", resourceRoot, eventArgs[1])

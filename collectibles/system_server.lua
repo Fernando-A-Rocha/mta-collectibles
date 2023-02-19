@@ -408,7 +408,7 @@ local function commandRemoveSpawnpoint(thePlayer, cmd, theType, spID)
         return
     end
     if #collectibleTypes[theType].spawnpoints == 0 then
-        oct(thePlayer, gct("Collectible type '%s' has 0 spawnpoints defined.", (string.gsub(theType, "_", " "))))
+        oct(thePlayer, gct("Collectible type '%s' has %s spawnpoints defined.", (string.gsub(theType, "_", " ")), 0))
         return
     end
     for i=1, #collectibleTypes[theType].spawnpoints do
@@ -674,8 +674,9 @@ local function findNode(theChildren, nodeName, attributeNames)
     return false, "Failed to find node '" .. nodeName .. "/" .. inspect(attributeNames) .. "' in "..CONSTANTS.COLLECTIBLES_FILE.."."
 end
 
-function updateConfiguration(updateNodes)
-    assert(type(updateNodes) == "table", "Bad argument @ updateConfiguration (table expected, got " .. type(updateNodes) .. ")")
+function updateConfiguration(updateNodes, updateStrings)
+    assert(type(updateNodes) == "table", "Bad argument @ updateConfiguration (expected table at argument 1, got " .. type(updateNodes) .. ")")
+    assert(type(updateStrings) == "table", "Bad argument @ updateConfiguration (expected table at argument 2, got " .. type(updateStrings) .. ")")
 
     local config = xmlLoadFile(CONSTANTS.COLLECTIBLES_FILE)
     if not config then
@@ -756,6 +757,35 @@ function updateConfiguration(updateNodes)
     end
 
     xmlUnloadFile(config)
+
+    for name, v in pairs(updateStrings) do
+        if type(name) ~= "string" then
+            return false, "updateStrings table has non-string key."
+        end
+        if type(v) ~= "table" then
+            return false, "updateStrings table has non-table value."
+        end
+        if type(v.value) ~= "string" then
+            return false, "updateStrings - "..name..".value is not a string."
+        end
+        if (v.rgb) ~= nil then
+            if not (type(v.rgb[1])=="number" and type(v.rgb[2])=="number" and type(v.rgb[3])=="number") then
+                return false, "updateStrings - "..name..".rgb is not a table of 3 numbers."
+            end
+            if v.rgb[1] < 0 or v.rgb[1] > 255 or v.rgb[2] < 0 or v.rgb[2] > 255 or v.rgb[3] < 0 or v.rgb[3] > 255 then
+                return false, "updateStrings - "..name..".rgb is not a table of 3 numbers between 0 and 255."
+            end
+        end
+        CONSTANTS.STRINGS[name] = {value = v.value, rgb = (v.rgb or nil)}
+    end
+
+    local stringsJsonF = fileOpen(CONSTANTS.STRINGS_FILE)
+    if not stringsJsonF then
+        return false, "Failed to open file: "..CONSTANTS.STRINGS_FILE
+    end
+    fileWrite(stringsJsonF, toJSON(CONSTANTS.STRINGS, false, "tabs"))
+    fileClose(stringsJsonF)
+
     return true
 end
 

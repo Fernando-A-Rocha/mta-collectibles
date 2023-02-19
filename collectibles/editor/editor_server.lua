@@ -96,14 +96,14 @@ function commandOpenEditor(thePlayer, cmd)
     end, 1000, 1)
 end
 
-local function requestUpdateConfiguration(updateNodes)
+local function requestUpdateConfiguration(updateNodes, updateStrings)
     if not client then return end
     if not canAdminCollectibles(client) then
         handlePermissionMismatch(client)
         return
     end
 
-    local success, reason = updateConfiguration(updateNodes)
+    local success, reason = updateConfiguration(updateNodes, updateStrings)
     if not success then
         return triggerClientEvent(client, "collectibles:adminResponse", client, false, reason, gct("OK"))
     end
@@ -113,7 +113,7 @@ local function requestUpdateConfiguration(updateNodes)
         restartResource(getThisResource())
     end, 5000, 1)
 
-    triggerClientEvent(client, "collectibles:adminResponse", client, gct("admin_changes_saved").."\n\n"..gct("The resource will now restart...\nPay attention to the server console."))
+    triggerClientEvent(client, "collectibles:adminResponse", client, gct("Changes saved successfully.").."\n\n"..gct("The resource will now restart...\nPay attention to the server console."))
 end
 addEventHandler("collectibles:updateConfig", resourceRoot, requestUpdateConfiguration, false)
 
