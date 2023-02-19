@@ -1,2 +1,5 @@
 # Ignore OLD file created when config is restored by a backup
 *.old
+
+# Ignore resource zip files
+*.zip
