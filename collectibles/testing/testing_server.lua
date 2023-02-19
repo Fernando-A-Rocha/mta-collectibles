@@ -41,7 +41,27 @@ addCommandHandler("collectiblesdata", function(thePlayer, cmd, targetAccountID)
             return outputChatBox("You are not logged in.", thePlayer, 255, 0, 0)
         end
     end
-    outputChatBox("Check debug console.", thePlayer, 0, 255, 0)
-    local dataName = getAccountDataNames().CLIENT_COUNTS
-    iprint(getAccountData(targetAccount, dataName))
+    local clientCountsDataName = getAccountDataNames().CLIENT_COUNTS
+    local data = getAccountData(targetAccount, clientCountsDataName) or {}
+    data = fromJSON(data)
+    if not data then
+        return outputChatBox("Corrupt JSON account data: "..clientCountsDataName, thePlayer, 255, 0, 0)
+    end
+    local c = 0
+    for theType, v in pairs(data) do
+        outputChatBox("Type: "..theType, thePlayer)
+        for theID, timestamp in pairs(v) do
+            local colDate = tonumber(timestamp)
+            if colDate then
+                colDate = os.date("%d/%m/%Y %H:%M:%S", colDate)
+            else
+                colDate = "Unknown"
+            end
+            outputChatBox("   spID: "..theID..", Collected at: "..colDate, thePlayer)
+        end
+        c = c + 1
+    end
+    if c == 0 then
+        outputChatBox("No account data: "..clientCountsDataName, thePlayer, 255, 0, 0)
+    end
 end, false, false)

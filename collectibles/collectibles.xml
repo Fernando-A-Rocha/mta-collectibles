@@ -27,9 +27,9 @@
 -->
 <config>
     <types>
-        <type name="Totem" target="client" auto_load="true" toggle_command="totems" respawn_after_unit="minutes" respawn_after="0.5" />
+        <type name="Totem" target="client" auto_load="true" toggle_command="totems" respawn_after_unit="weeks" respawn_after="1" />
         
-        <type name="Heart" target="client" auto_load="false" toggle_keybind="f7" />
+        <type name="Heart" target="client" auto_load="false" toggle_keybind="f7" respawn_after_unit="days" respawn_after="1"  />
         
         <type name="Package" target="server" auto_load="false" />
     </types>
