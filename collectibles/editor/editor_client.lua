@@ -544,7 +544,7 @@ addEventHandler("collectibles:admin", localPlayer, function(serverInfo)
         strC = strC + 1
     end
 
-    local textsInfoText = gct("Here you can translate all texts used in the resource's client-side and server-side scripts.\nTotal strings in %s: %s\n\nSome strings have '%%s' in them. These are replaced with certain values when the text is displayed.Their order is important. To modify this you would need to edit the scripts manually.\nText color is in R, G, B format.", serverInfo.constants.STRINGS_FILE, tostring(strC))
+    local textsInfoText = gct("Here you can translate all texts used in the resource's client-side and server-side scripts.\n\nFile: %s\nTotal: %s\n\nSome strings have '%%s' in them. These are replaced with certain values when the text is displayed.\nTheir order is important. To modify this you would need to edit the scripts manually.\n\nText color is in R, G, B format.\n\nThis can be used to translate the resource to another language.", serverInfo.constants.STRINGS_FILE, tostring(strC))
     
     local _, countLinesT = textsInfoText:gsub("\n","")
     countLinesT = countLinesT + 1
@@ -554,50 +554,59 @@ addEventHandler("collectibles:admin", localPlayer, function(serverInfo)
 
     y = y + (16*countLinesT) + 5
 
-    settings.strings = {}
+    local loadButtonStrings = guiCreateButton(0, y, 150, 24, gct("Load Texts"), false, tabTextsScroll)
+    guiSetProperty(loadButtonStrings, "NormalTextColour", "FF00FF00")
+    addEventHandler("onClientGUIClick", loadButtonStrings, function()
+        
+        destroyElement(source)
+        loadButtonStrings = nil
 
-    for name, v in pairs(serverInfo.constants.STRINGS) do
-        local str = v.value
-        local r, g, b = 255, 255, 255
-        if v.rgb ~= nil then
-            r, g, b = v.rgb[1], v.rgb[2], v.rgb[3]
-        end
+        settings.strings = {}
 
-        local textLabel = guiCreateLabel(0, y, PW, 20, name, false, tabTextsScroll)
-        y = y + 20 + 5
-        local textWidth = (PW*(2/3))-35
-        local textEdit = guiCreateEdit(0, y, textWidth, 24, str, false, tabTextsScroll)
-        local rgbWidth = (PW*(1/3))-5-24
-        local rgbEdit = guiCreateEdit(textWidth+5, y, rgbWidth, 24, (r..", "..g..", "..b), false, tabTextsScroll)
-        local rgbImage = guiCreateStaticImage(textWidth+5+rgbWidth+5, y, 24, 24, "images/1pixelwhite.png", false, tabTextsScroll)
-        local rgbHex = rgbToHex({r, g, b})
-        guiSetProperty(rgbImage, "ImageColours", "tl:".."FF"..rgbHex.." tr:".."FF"..rgbHex.." bl:".."FF"..rgbHex.." br:".."FF"..rgbHex)
-        addEventHandler("onClientGUIChanged", rgbEdit, function()
-            local color = string.gsub(guiGetText(source), " ", "")
-            color = split(color, ",")
-            if #color ~= 3 then
-                return guiSetVisible(rgbImage, false)
+        local yy = 10 + (16*countLinesT) + 5
+
+        for name, v in pairs(serverInfo.constants.STRINGS) do
+            local str = v.value
+            local r, g, b = 255, 255, 255
+            if v.rgb ~= nil then
+                r, g, b = v.rgb[1], v.rgb[2], v.rgb[3]
             end
-            local colorTable = {}
-            for i=1, #color do
-                local value = tonumber(color[i])
-                if (not value) or (value < 0) or (value > 255) then
+            local textLabel = guiCreateLabel(0, yy, PW, 20, name, false, tabTextsScroll)
+            yy = yy + 20 + 5
+            local textWidth = (PW*(2/3))-35
+            local textEdit = guiCreateEdit(0, yy, textWidth, 24, str, false, tabTextsScroll)
+            local rgbWidth = (PW*(1/3))-5-24
+            local rgbEdit = guiCreateEdit(textWidth+5, yy, rgbWidth, 24, (r..", "..g..", "..b), false, tabTextsScroll)
+            local rgbImage = guiCreateStaticImage(textWidth+5+rgbWidth+5, yy, 24, 24, "images/1pixelwhite.png", false, tabTextsScroll)
+            local rgbHex = rgbToHex({r, g, b})
+            guiSetProperty(rgbImage, "ImageColours", "tl:".."FF"..rgbHex.." tr:".."FF"..rgbHex.." bl:".."FF"..rgbHex.." br:".."FF"..rgbHex)
+            addEventHandler("onClientGUIChanged", rgbEdit, function()
+                local color = string.gsub(guiGetText(source), " ", "")
+                color = split(color, ",")
+                if #color ~= 3 then
                     return guiSetVisible(rgbImage, false)
                 end
-                colorTable[i] = value
-            end
+                local colorTable = {}
+                for i=1, #color do
+                    local value = tonumber(color[i])
+                    if (not value) or (value < 0) or (value > 255) then
+                        return guiSetVisible(rgbImage, false)
+                    end
+                    colorTable[i] = value
+                end
 
-            local hex = rgbToHex(colorTable)
-            guiSetProperty(rgbImage, "ImageColours", "tl:".."FF"..hex.." tr:".."FF"..hex.." bl:".."FF"..hex.." br:".."FF"..hex)
-            guiSetVisible(rgbImage, true)
-        end)
-        y = y + 24 + 10
+                local hex = rgbToHex(colorTable)
+                guiSetProperty(rgbImage, "ImageColours", "tl:".."FF"..hex.." tr:".."FF"..hex.." bl:".."FF"..hex.." br:".."FF"..hex)
+                guiSetVisible(rgbImage, true)
+            end)
+            yy = yy + 24 + 10
 
-        settings.strings[name] = {label=textLabel, textEdit=textEdit, rgbEdit=rgbEdit}
-    end
+            settings.strings[name] = {label=textLabel, textEdit=textEdit, rgbEdit=rgbEdit}
+        end
 
-    -- Bottom margin
-    guiCreateLabel(0, y, 50, 60, " ", false, tabTextsScroll)
+        -- Bottom margin
+        guiCreateLabel(0, yy, 50, 60, " ", false, tabTextsScroll)
+    end, false)
 
     -- Types
 
@@ -616,7 +625,7 @@ addEventHandler("collectibles:admin", localPlayer, function(serverInfo)
     else
         x, y = 5, 5
 
-        local targetExplanation = gct("There are two possible collectible 'targets':\n• [client]: The collectibles are created on each client only. Toggle command/bind and respawn time can be defined.\nDon't forget to define a toggle command/keybind if 'Spawn Automatically' is disabled.\n• [server]: The collectibles are created on the server and all players will compete for them.")
+        local targetExplanation = gct("There are two possible collectible 'targets':\n- [client]: The collectibles are created on each client only. Toggle command/bind and respawn time can be defined.\nDon't forget to define a toggle command/keybind if 'Spawn Automatically' is disabled.\n- [server]: The collectibles are created on the server and all players will compete for them.")
         
         local _, countLines = targetExplanation:gsub("\n","")
         countLines = countLines + 1

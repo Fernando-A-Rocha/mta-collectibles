@@ -527,8 +527,16 @@
             255
         ]
     },
-    "Here you can translate all texts used in the resource's client-side and server-side scripts.\\nTotal strings in %s: %s\\n\\nSome strings have '%%s' in them. These are replaced with certain values when the text is displayed.Their order is important. To modify this you would need to edit the scripts manually.\\nText color is in R, G, B format.": {
-        "value": "Here you can translate all texts used in the resource's client-side and server-side scripts.\\nTotal strings in %s: %s\\n\\nSome strings have '%%s' in them. These are replaced with certain values when the text is displayed.Their order is important. To modify this you would need to edit the scripts manually.\\nText color is in R, G, B format.",
+    "Here you can translate all texts used in the resource's client-side and server-side scripts.\\n\\nFile: %s\\nTotal: %s\\n\\nSome strings have '%%s' in them. These are replaced with certain values when the text is displayed.\\nTheir order is important. To modify this you would need to edit the scripts manually.\\n\\nText color is in R, G, B format.\\n\\nThis can be used to translate the resource to another language.": {
+        "value": "Here you can translate all texts used in the resource's client-side and server-side scripts.\\n\\nFile: %s\\nTotal: %s\\n\\nSome strings have '%%s' in them. These are replaced with certain values when the text is displayed.\\nTheir order is important. To modify this you would need to edit the scripts manually.\\n\\nText color is in R, G, B format.\\n\\nThis can be used to translate the resource to another language.",
+        "rgb": [
+            255,
+            255,
+            255
+        ]
+    },
+    "Load Texts": {
+        "value": "Load Texts",
         "rgb": [
             255,
             255,
@@ -551,8 +559,8 @@
             255
         ]
     },
-    "There are two possible collectible 'targets':\\n\u00e2\u20ac\u00a2 [client]: The collectibles are created on each client only. Toggle command/bind and respawn time can be defined.\\nDon't forget to define a toggle command/keybind if 'Spawn Automatically' is disabled.\\n\u00e2\u20ac\u00a2 [server]: The collectibles are created on the server and all players will compete for them.": {
-        "value": "There are two possible collectible 'targets':\\n\u00e2\u20ac\u00a2 [client]: The collectibles are created on each client only. Toggle command/bind and respawn time can be defined.\\nDon't forget to define a toggle command/keybind if 'Spawn Automatically' is disabled.\\n\u00e2\u20ac\u00a2 [server]: The collectibles are created on the server and all players will compete for them.",
+    "There are two possible collectible 'targets':\\n- [client]: The collectibles are created on each client only. Toggle command/bind and respawn time can be defined.\\nDon't forget to define a toggle command/keybind if 'Spawn Automatically' is disabled.\\n- [server]: The collectibles are created on the server and all players will compete for them.": {
+        "value": "There are two possible collectible 'targets':\\n- [client]: The collectibles are created on each client only. Toggle command/bind and respawn time can be defined.\\nDon't forget to define a toggle command/keybind if 'Spawn Automatically' is disabled.\\n- [server]: The collectibles are created on the server and all players will compete for them.",
         "rgb": [
             255,
             255,

@@ -2,6 +2,7 @@
 # 
 # Updates JSON file with all strings used by the Lua scripts
 # Finds all .lua files in the current directory
+# Run this script after adding new strings or changing existing ones in the Lua scripts
 #
 # Usage: python update_strings.py
 #
@@ -9,6 +10,7 @@
 WORKING_DIRS = [".", "editor"]
 JSON_FILE = "strings.json"
 GCT_FUNC = "gct"
+LUA_FILE_EXT = ".lua"
 
 import os
 import json
@@ -33,7 +35,7 @@ def get_strings_from_file(file_path):
 def get_strings_from_dir(dir_path):
     strings = []
     for file in os.listdir(dir_path):
-        if file.endswith(".lua"):
+        if file.endswith(LUA_FILE_EXT):
             file_path = os.path.join(dir_path, file)
             strings.extend(get_strings_from_file(file_path))
     return strings
@@ -44,8 +46,6 @@ strings = []
 for dir in WORKING_DIRS:
     strings.extend(get_strings_from_dir(dir))
 strings = { s: { "value": s, "rgb": [255, 255, 255] } for s in strings }
-
-# update JSON file
 
 with open(JSON_FILE, "w") as f:
     json.dump(strings, f, indent=4)
