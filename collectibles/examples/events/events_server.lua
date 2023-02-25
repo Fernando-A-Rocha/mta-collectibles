@@ -45,32 +45,30 @@ local function handlePlayerLogin()
     end, 10000, 1, player2)
 end
 addEventHandler("onPlayerLogin", root, handlePlayerLogin)
-local function getPlayerWithAccountID(accountID)
+local function getPlayerWithID(id)
     for k, player in ipairs(getElementsByType("player")) do
-        local account = getPlayerAccount(player)
-        if (account and not isGuestAccount(account)) then
-            if getAccountID(account) == accountID then
-                return player
-            end
+        local id2 = exports["collectibles"]:getPlayerIdentity(player)
+        if id2 == id then
+            return player
         end
     end
 end
-local function handleCollect(account, accountID, accountName, collectibleTarget, theType, count, total)
+local function handleCollect(collectorID, collectibleTarget, theType, count, total)
     local thePlayer = source
     local event = EVENTS[theType]
     if not event then return end
     if not event.ongoing then return end
     local now = getRealTime().timestamp
     local i = #event.found+1
-    EVENTS[theType].found[i] = { timestamp = now, accountID = accountID, playerName = getPlayerName(thePlayer) }
+    EVENTS[theType].found[i] = { timestamp = now, collectorID = collectorID, playerName = getPlayerName(thePlayer) }
 
     if #EVENTS[theType].found == total then
         local playerCollectedCounts = {}
         for k, v in ipairs(EVENTS[theType].found) do
-            if not playerCollectedCounts[v.accountID] then
-                playerCollectedCounts[v.accountID] = 1
+            if not playerCollectedCounts[v.collectorID] then
+                playerCollectedCounts[v.collectorID] = 1
             else
-                playerCollectedCounts[v.accountID] = playerCollectedCounts[v.accountID] + 1
+                playerCollectedCounts[v.collectorID] = playerCollectedCounts[v.collectorID] + 1
             end
         end
         local winnerID = nil
@@ -83,12 +81,12 @@ local function handleCollect(account, accountID, accountName, collectibleTarget,
         end
         local winnerName = nil
         for k, v in ipairs(EVENTS[theType].found) do
-            if v.accountID == winnerID then
+            if v.collectorID == winnerID then
                 winnerName = v.playerName
                 break
             end
         end
-        local winnerPlayer = getPlayerWithAccountID(winnerID)
+        local winnerPlayer = getPlayerWithID(collectorID)
         local winnerInfo = {name = winnerName, player = winnerPlayer}
         local rewardMoney = event.rewardMoney
         if winnerPlayer then

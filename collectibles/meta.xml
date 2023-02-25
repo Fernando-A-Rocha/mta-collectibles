@@ -20,6 +20,7 @@
     <export function="canCollectPickup" type="client" />
     <export function="setPlayerPreventPicking" type="server" />
     <export function="canAdminCollectibles" type="server" />
+    <export function="getPlayerIdentity" type="server" />
 
     <!-- Sounds (must be in meta.xml in order to be played) -->
     <file src="sounds/vc/checkpoint.ogg" />

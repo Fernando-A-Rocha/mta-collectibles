@@ -12,6 +12,7 @@ addCommandHandler("bb", function(thePlayer)
     setElementInterior(thePlayer, 0)
     setElementDimension(thePlayer, 0)
 end, false, false)
+
 addCommandHandler("shop", function(thePlayer)
     setElementPosition(thePlayer, -30.99, -90.74, 1003.6)
     setElementInterior(thePlayer, 18)

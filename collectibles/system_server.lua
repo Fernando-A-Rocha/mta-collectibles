@@ -20,12 +20,7 @@ addEvent("collectibles:onDestroyedServer", true) -- source: always root
 local clientsWaiting = {} -- initial startup
 local collectibleTypes = {}
 local spawnedServerCollectibles = {}
-
-function getAccountDataNames()
-    return {
-        CLIENT_COUNTS = "collectibiles.client",
-    }
-end
+local con -- SQLite connection
 
 --- **(Exported)**
 function getCollectibleTypes()
@@ -342,25 +337,20 @@ local function commandDestroyCollectibles(thePlayer, cmd, theType)
     destroyCollectibles(theType, thePlayer)
 end
 
-local function commandResetCollectibles(thePlayer, cmd, targetAccountID, theType)
+local function commandResetCollectibles(thePlayer, cmd, targetID, theType)
     if not canAdminCollectibles(thePlayer) then
         oct(thePlayer, gct("You don't have permission to do this."))
         return
     end
-    targetAccountID = tonumber(targetAccountID)
-    if not targetAccountID then
-        oct(thePlayer, gct("SYNTAX: /%s %s", cmd, gct("[target account ID]")..gct("optional:")..gct("[collectible type name]")))
-        return
-    end
-    local targetAccount = getAccountByID(targetAccountID)
-    if not targetAccount then
-        oct(thePlayer, gct("User account ID %s does not exist.", tostring(targetAccount)))
+    targetID = tonumber(targetID)
+    if not targetID then
+        oct(thePlayer, gct("SYNTAX: /%s %s", cmd, gct("[target player ID]").." "..gct("optional:").." "..gct("[collectible type name]")))
         return
     end
     if not theType then
         theType = "all"
     end
-    resetClientCollectibles(targetAccount, theType, thePlayer)
+    resetClientCollectibles(targetID, theType, thePlayer)
 end
 
 local function commandCreateSpawnpoint(thePlayer, cmd, theType, model)
@@ -425,10 +415,116 @@ local function commandRemoveSpawnpoint(thePlayer, cmd, theType, spID)
     oct(thePlayer, gct("Collectible type '%s' doesn't have a spawnpoint with ID %s.", (string.gsub(theType, "_", " ")), spID))
 end
 
+--- Initialize local SQLite database
+local function initDB()
+
+    con = dbConnect("sqlite", CONSTANTS.SAVED_DATA_FILE)
+    if not con then
+        return false, "Failed to connect to SQLite database."
+    end
+    local qstr = "CREATE table IF NOT EXISTS client_counts (playerID TEXT, theType TEXT, spID INTEGER, collectedAt INTEGER)"
+    if not dbExec(con, qstr) then
+        return false, "Failed to create table 'collectibles' in SQLite database."
+    end
+    return true
+end
+
+local function updateDB(mode, ...)
+    local args = {...}
+    if mode == "RESET_ALL" then
+        local playerID = args[1]
+        if not (type(playerID)=="number" or type(playerID)=="string") then
+            return false, "Failed to reset all collectibles - playerID is not a string/number."
+        end
+        local qstr = "DELETE FROM client_counts WHERE playerID=?"
+        if not dbExec(con, qstr, playerID) then
+            return false, "Failed to reset all collectibles for playerID "..playerID.."."
+        end
+    elseif mode == "RESET_TYPE" then
+        local playerID = args[1]
+        local theType = args[2]
+        if not (type(playerID)=="number" or type(playerID)=="string") then
+            return false, "Failed to reset all collectibles - playerID is not a string/number."
+        end
+        if type(theType) ~= "string" then
+            return false, "Failed to reset collectibles - theType is not a string."
+        end
+        local qstr = "DELETE FROM client_counts WHERE playerID=? AND theType=?"
+        if not dbExec(con, qstr, playerID, theType) then
+            return false, "Failed to reset collectibles for playerID "..playerID.." and type "..theType.."."
+        end
+    elseif mode == "RESET_SPAWNPOINT" then
+        local playerID = args[1]
+        local theType = args[2]
+        local spID = args[3]
+        if not (type(playerID)=="number" or type(playerID)=="string") then
+            return false, "Failed to reset all collectibles - playerID is not a string/number."
+        end
+        if type(theType) ~= "string" then
+            return false, "Failed to reset collectibles - theType is not a string."
+        end
+        if type(spID) ~= "number" then
+            return false, "Failed to reset collectibles - spID is not a number."
+        end
+        local qstr = "DELETE FROM client_counts WHERE playerID=? AND theType=? AND spID=?"
+        if not dbExec(con, qstr, playerID, theType, spID) then
+            return false, "Failed to reset collectibles for playerID "..playerID.." and type "..theType.." and spID "..spID.."."
+        end
+    elseif mode == "COLLECT_SPAWNPOINT" then
+        local playerID = args[1]
+        local theType = args[2]
+        local spID = args[3]
+        local now = getRealTime().timestamp
+        if not (type(playerID)=="number" or type(playerID)=="string") then
+            return false, "Failed to reset all collectibles - playerID is not a string/number."
+        end
+        if type(theType) ~= "string" then
+            return false, "Failed to collect collectible - theType is not a string."
+        end
+        if type(spID) ~= "number" then
+            return false, "Failed to collect collectible - spID is not a number."
+        end
+        local qstr = "INSERT INTO client_counts (playerID, theType, spID, collectedAt) VALUES (?, ?, ?, ?)"
+        if not dbExec(con, qstr, playerID, theType, spID, now) then
+            return false, "Failed to collect collectible for playerID "..playerID.." and type "..theType.." and spID "..spID.."."
+        end
+    elseif mode == "RESET_TYPE_EVERYONE" then
+        local theType = args[1]
+        if type(theType) ~= "string" then
+            return false, "Failed to reset collectibles - theType is not a string."
+        end
+        local qstr = "DELETE FROM client_counts WHERE theType=?"
+        if not dbExec(con, qstr, theType) then
+            return false, "Failed to reset collectibles for type "..theType.."."
+        end
+    else
+        return false, "Failed to update SQLite database - unknown mode."
+    end
+    return true
+end
+
+local function getFromDB(mode, ...)
+    local args = {...}
+    if mode == "PLAYER_COLLECTED" then
+        local playerID = args[1]
+        if not (type(playerID)=="number" or type(playerID)=="string") then
+            return false, "Failed to get collected collectibles - playerID is not a string/number."
+        end
+        local qstr = "SELECT * FROM client_counts WHERE playerID=?"
+        local qh = dbQuery(con, qstr, playerID)
+        local res, num_affected_rows, err = dbPoll(qh, -1)
+        if not res then
+            return false, "Failed to get collected collectibles for playerID "..playerID.."."
+        end
+        return res
+    end
+    return false, "Failed to get from SQLite database - unknown mode."
+end
+
 --- Validates all custom settings
 --
 --- returns true if successful, false + error message otherwise.
-local function parseCustomSettings()
+local function loadSettings()
 
     --[[
         CUSTOM FUNCTIONS
@@ -494,6 +590,9 @@ local function parseCustomSettings()
     -- Misc constants
     if type(CONSTANTS.COLLECTIBLES_FILE) ~= "string" then
         return false, "Failed to parse constants - CONSTANTS.COLLECTIBLES_FILE is not a string."
+    end
+    if type(CONSTANTS.SAVED_DATA_FILE) ~= "string" then
+        return false, "Failed to parse constants - CONSTANTS.SAVED_DATA_FILE is not a string."
     end
     if type(CONSTANTS.STRINGS_FILE) ~= "string" then
         return false, "Failed to parse constants - CONSTANTS.STRINGS_FILE is not a string."
@@ -561,7 +660,7 @@ end
 --- Loads the configuration file and parses it
 --
 -- Errors are usually caused by incorrectly formatted XML file (caused by editing it manually) and file IO operations.
-local function loadConfiguration()
+local function loadCollectibles()
 
     local config = xmlLoadFile(CONSTANTS.COLLECTIBLES_FILE)
     if not config then
@@ -909,22 +1008,7 @@ function deleteType(theType)
     if info.target == "client" then
 
         -- reset all accounts' collected counts of this type
-        local accounts = getAccounts()
-        local collectedCounts = {}
-        for i=1, #accounts do
-            local account = accounts[i]
-            if account then
-                local dataName = getAccountDataNames().CLIENT_COUNTS
-                local data = getAccountData(account, dataName)
-                if not data then
-                    data = {}
-                else
-                    data = fromJSON(data) or {}
-                end
-                data[theType] = nil
-                setAccountData(account, dataName, toJSON(data))
-            end
-        end
+        updateDB("RESET_TYPE_EVERYONE", theType)
     end
 
     if not xmlSaveFile(config) then
@@ -1209,37 +1293,40 @@ function destroyCollectibles(theType, thePlayer)
     return true
 end
 
-local function isCollectedClient(thePlayer, account, theType, respawn_after, spID)
-    local dataName = getAccountDataNames().CLIENT_COUNTS
-    local data = getAccountData(account, dataName)
+local function isCollectedClient(thePlayer, playerID, theType, respawn_after, spID)
+    local data = getFromDB("PLAYER_COLLECTED", playerID)
     if not data then
         return false
     end
-    data = fromJSON(data) or {}
-    if not data[theType] then
-        return false
+    local collectedAt = false
+    for i=1, #data do
+        local v = data[i]
+        if v then
+            if (v["theType"] == theType) and (tonumber(v["spID"]) == spID) then
+                collectedAt = tonumber(v["collectedAt"]) or false
+                break
+            end
+        end
     end
-    local collectedAt = tonumber(data[theType][tostring(spID)])
     if not collectedAt then
         return false
     end
     local now = getRealTime().timestamp
     if (respawn_after) and ((now - collectedAt) > respawn_after) then
-        data[theType][tostring(spID)] = nil
-        setAccountData(account, dataName, toJSON(data))
+        updateDB("RESET_SPAWNPOINT", playerID, theType, spID)
         return false
     end
     return true
 end
 
-local function sendCollectibles(player, account)
+local function sendCollectibles(player, playerID)
     local collectiblesToSend = {}
     for theType, info in pairs(collectibleTypes) do
         if info.target == "client" then
             for i=1, #info.spawnpoints do
                 local spawnpoint = info.spawnpoints[i]
                 if spawnpoint then
-                    info.spawnpoints[i].wasCollected = isCollectedClient(player, account, theType, info.respawn_after, spawnpoint.spID)
+                    info.spawnpoints[i].wasCollected = isCollectedClient(player, playerID, theType, info.respawn_after, spawnpoint.spID)
                 end
             end
             collectiblesToSend[theType] = {
@@ -1266,9 +1353,9 @@ local function resendClientCollectibles()
     for i=1, #playersTable do
         local player = playersTable[i]
         if player then
-            local account = getPlayerAccount(player)
-            if (account and not isGuestAccount(account)) then
-                sendCollectibles(player, account)
+            local id = getPlayerIdentity(player)
+            if id then
+                sendCollectibles(player, id)
             end
         end
     end
@@ -1356,22 +1443,7 @@ function removeSpawnpoint(theType, spID)
 
     if info.target == "client" then
         -- reset all accounts' collected counts of this type
-        local dataName = getAccountDataNames().CLIENT_COUNTS
-        local accounts = getAccounts()
-        local collectedCounts = {}
-        for i=1, #accounts do
-            local account = accounts[i]
-            if account then
-                local data = getAccountData(account, dataName)
-                if not data then
-                    data = {}
-                else
-                    data = fromJSON(data) or {}
-                end
-                data[theType] = nil
-                setAccountData(account, dataName, toJSON(data))
-            end
-        end
+        updateDB("RESET_TYPE_EVERYONE", theType)
 
         resendClientCollectibles()
     end
@@ -1485,57 +1557,38 @@ local function createServerCollectibles()
     end
 end
 
-local function countCollectedServer(accountID, theType)
+local function countCollectedServer(playerID, theType)
     local count = 0
     for i=1, #collectibleTypes[theType].spawnpoints do
         local sp = collectibleTypes[theType].spawnpoints[i]
-        if sp and sp.collected_by == accountID then
+        if sp and sp.collected_by == playerID then
             count = count + 1
         end
     end
     return count
 end
 
-local function saveCollectedClient(account, theType, spID)
-    local dataName = getAccountDataNames().CLIENT_COUNTS
-    local data = getAccountData(account, dataName)
-    if not data then
-        data = {}
-    else
-        data = fromJSON(data) or {}
-    end
-    if not data[theType] then
-        data[theType] = {}
-    end
-    data[theType][tostring(spID)] = getRealTime().timestamp
-    setAccountData(account, dataName, toJSON(data))
-end
-
 local function despawnCollectibles(player)
     triggerClientEvent(player, "collectibles:despawn", player)
 end
 
-local function countCollectedClient(thePlayer, account, theType, respawn_after)
-    local dataName = getAccountDataNames().CLIENT_COUNTS
-    local data = getAccountData(account, dataName)
+local function countCollectedClient(thePlayer, playerID, theType, respawn_after)
+    local data = getFromDB("PLAYER_COLLECTED", playerID)
     if not data then
-        return 0
-    end
-    data = fromJSON(data) or {}
-    if not data[theType] then
         return 0
     end
     local now = getRealTime().timestamp
     local count = 0
     local forceRespawn = false
-    for spID, collectedAt in pairs(data[theType]) do
-        collectedAt = tonumber(collectedAt)
-        if collectedAt then
+    for i=1, #data do
+        local row = data[i]
+        if row and row.theType == theType then
+            local spID = tonumber(row.spID)
+            local collectedAt = tonumber(row.collectedAt)
             if (respawn_after) and ((now - collectedAt) > respawn_after) then
-                data[theType][tostring(spID)] = nil
-                setAccountData(account, dataName, toJSON(data))
+                updateDB("RESET_SPAWNPOINT", playerID, theType, spID)
 
-                if not forceRespawn and isElement(thePlayer) then
+                if not forceRespawn then
                     forceRespawn = true
                 end
             else
@@ -1543,16 +1596,15 @@ local function countCollectedClient(thePlayer, account, theType, respawn_after)
             end
         end
     end
-    if forceRespawn then
+    if forceRespawn and isElement(thePlayer) then
         sendCollectibles(thePlayer, account)
     end
     return count
 end
 
 --- **(Exported)**
-function getCollectedCounts(account)
-    local accountID = getAccountID(account)
-    assert(type(accountID)=="number", "Bad argument @ getCollectedCounts [valid account expected, got " .. tostring(account) .. "]")
+function getCollectedCounts(targetPlayerID)
+    assert(targetPlayerID ~= nil, "Bad argument @ getCollectedCounts [targetPlayerID expected, got " .. tostring(targetPlayerID) .. "]")
     local serverCounts = {}
     local clientCounts = {}
     for theType, info in pairs(collectibleTypes) do
@@ -1563,10 +1615,10 @@ function getCollectedCounts(account)
                     spawnedPickups[data.spID] = pickup
                 end
             end
-            local count = countCollectedServer(accountID, theType)
+            local count = countCollectedServer(targetPlayerID, theType)
             serverCounts[theType] = {count = count, total = info.total, spawnpoints = info.spawnpoints, spawnedPickups = spawnedPickups}
         elseif info.target == "client" then
-            local count = countCollectedClient(false, account, theType, info.respawn_after)
+            local count = countCollectedClient(false, targetPlayerID, theType, info.respawn_after)
             clientCounts[theType] = {count = count, total = info.total, spawnpoints = info.spawnpoints}
         end
     end
@@ -1578,12 +1630,12 @@ local function respawnAllClientCollectibles()
     for i=1, #playersTable do
         local thePlayer = playersTable[i]
         if thePlayer then
-            local account = getPlayerAccount(thePlayer)
-            if (account) and (not isGuestAccount(account)) then
+            local id = getPlayerIdentity(thePlayer)
+            if id then
                 for theType, info in pairs(collectibleTypes) do
                     if info.target == "client" then
                         local respawn_after = info.respawn_after
-                        countCollectedClient(thePlayer, account, theType, respawn_after)
+                        countCollectedClient(thePlayer, id, theType, respawn_after)
                     end
                 end
             end
@@ -1592,9 +1644,8 @@ local function respawnAllClientCollectibles()
 end
 
 --- **(Exported)**
-function resetClientCollectibles(targetAccount, theType, thePlayer)
-    local targetAccountID = getAccountID(targetAccount)
-    assert(type(targetAccountID)=="number", "Bad argument @ getCollectedCounts [valid account expected, got " .. tostring(targetAccount) .. "]")
+function resetClientCollectibles(targetPlayerID, theType, thePlayer)
+    assert(targetPlayerID ~= nil, "Bad argument @ resetClientCollectibles [targetPlayerID expected, got " .. tostring(targetPlayerID) .. "]")
     assert(type(theType) == "string", "Bad argument @ resetClientCollectibles [string expected, got " .. type(theType) .. "]")
     if theType ~= "all" and ((not collectibleTypes[theType]) or (collectibleTypes[theType].target ~= "client")) then
         if isElement(thePlayer) then
@@ -1607,44 +1658,29 @@ function resetClientCollectibles(targetAccount, theType, thePlayer)
         end
         return false, "Collectible type '%s' does not exist."
     end
-    local dataName = getAccountDataNames().CLIENT_COUNTS
-    local data = getAccountData(targetAccount, dataName)
-    if not data then
-        data = {}
-    else
-        data = fromJSON(data) or {}
-    end
     if theType == "all" then
-        for theType2, info in pairs(collectibleTypes) do
-            if info.target == "client" then
-                data[theType2] = {}
-            end
-        end
+        updateDB("RESET_ALL", targetPlayerID)
     else
-        data[theType] = {}
+        updateDB("RESET_TYPE", targetPlayerID, theType)
     end
-    setAccountData(targetAccount, dataName, toJSON(data))
     local targetPlayer = nil
     local playersTable = getElementsByType("player")
     for i=1, #playersTable do
         local player = playersTable[i]
         if player then
-            local account = getPlayerAccount(player)
-            if (account) and (not isGuestAccount(account)) then
-                if getAccountID(account) == targetAccountID then
-                    targetPlayer = player
-                    break
-                end
+            local id = getPlayerIdentity(player)
+            if id and id == targetPlayerID then
+                targetPlayer = player
+                break
             end
         end
     end
     if targetPlayer then
-        sendCollectibles(targetPlayer, targetAccount)
+        sendCollectibles(targetPlayer, targetPlayerID)
         oct(targetPlayer, gct("admin_reset_success_player", (string.gsub(theType, "_", " "))))
     end
     if isElement(thePlayer) then
-        local targetAccountName = getAccountName(targetAccount)
-        oct(thePlayer, gct("You have reset and respawned %s client collectibles for %s (ID: %s).", (string.gsub(theType, "_", " ")), targetAccountName, tostring(targetAccountID)))
+        oct(thePlayer, gct("You have reset and respawned %s client collectibles for: %s", (string.gsub(theType, "_", " ")), tostring(targetPlayerID)))
     end
     return true
 end
@@ -1654,12 +1690,10 @@ local function handlePickedUp(serversidePickup, collectibleInfo_)
     if (type(collectibleTypes)~="table") then
         return false, "Unexpected error: collectibleTypes is not a table"
     end
-    local account = getPlayerAccount(client)
-    if (not account) or (isGuestAccount(account)) then
-        return false, "Guest account"
+    local playerID = getPlayerIdentity(client)
+    if not playerID then
+        return false, "Missing playerID ("..getPlayerName(client)..")"
     end
-    local accountName = getAccountName(account)
-    local accountID = getAccountID(account)
     if serversidePickup and not (isElement(serversidePickup) and getElementType(serversidePickup) == "pickup") then
         return false, "serversidePickup is not a pickup element"
         --hacker?
@@ -1715,7 +1749,7 @@ local function handlePickedUp(serversidePickup, collectibleInfo_)
         return false, "Type '"..theType.."' does not have spawnpoint ID "..spID
         --hacker?
     end
-    if not canCollectPickup(client, account, theType) then
+    if not canCollectPickup(client, theType) then
         triggerClientEvent(client, "collectibles:pickupDenied", client, theType, spID)
         return true
     end
@@ -1723,19 +1757,19 @@ local function handlePickedUp(serversidePickup, collectibleInfo_)
     -- success, pick it up:
     local count
     if (target == "server") then
-        count = countCollectedServer(accountID, theType) + 1
+        count = countCollectedServer(playerID, theType) + 1
         for i=1, #collectibleTypes[theType].spawnpoints do
             local spawnpoint = collectibleTypes[theType].spawnpoints[i]
             if spawnpoint and (spawnpoint.spID == spID) then
-                collectibleTypes[theType].spawnpoints[i].collected_by = accountID
+                collectibleTypes[theType].spawnpoints[i].collected_by = playerID
                 break
             end
         end
         destroyElement(serversidePickup)
         spawnedServerCollectibles[serversidePickup] = nil
     else
-        count = countCollectedClient(client, account, theType, respawn_after) + 1
-        saveCollectedClient(account, theType, spID)
+        count = countCollectedClient(client, playerID, theType, respawn_after) + 1
+        updateDB("COLLECT_SPAWNPOINT", playerID, theType, spID)
         -- pickup will be destroyed on client
     end
 
@@ -1762,7 +1796,7 @@ local function handlePickedUp(serversidePickup, collectibleInfo_)
     triggerClientEvent(client, "collectibles:onCollectVisuals", client, theType, count, total, visualFx)
 
     -- Custom Event (for Developers)
-    triggerEvent("collectibles:onCollected", client, account, accountID, accountName, collectibleTypes[theType].target, theType, count, total)
+    triggerEvent("collectibles:onCollected", client, playerID, collectibleTypes[theType].target, theType, count, total)
     return true
 end
 
@@ -1778,62 +1812,64 @@ addEventHandler("onPickupHit", resourceRoot, function()
     cancelEvent()
 end, true, "high+9")
 
-addEventHandler("onPlayerLogin", root, function(_, newAccount)
-    if isGuestAccount(newAccount) then
-        despawnCollectibles(source)
+local function handlePlayerIdentityChange(player)
+    assert(isElement(player) and getElementType(player) == "player", "Bad argument @ handlePlayerIdentityChange (expected player at argument 1, got "..type(player)..")")
+    local id = getPlayerIdentity(player)
+    if not id then
+        despawnCollectibles(player)
         return
     end
     if type(clientsWaiting)=="table" then
-        clientsWaiting[#clientsWaiting+1] = source
+        clientsWaiting[#clientsWaiting+1] = player
     else
-        sendCollectibles(source, newAccount)
+        sendCollectibles(player, id)
     end
+end
+
+addEventHandler("onPlayerLogin", root, function(_, newAccount)
+    handlePlayerIdentityChange(source)
 end)
 
 addEventHandler("onPlayerLogout", root, function(_, newAccount)
-    if isGuestAccount(newAccount) then
-        despawnCollectibles(source)
-        return
-    end
-    if type(clientsWaiting)=="table" then
-        clientsWaiting[#clientsWaiting+1] = source
-    else
-        sendCollectibles(source, newAccount)
-    end
+    handlePlayerIdentityChange(source)
 end)
 
 addEventHandler("onPlayerResourceStart", root, function(res)
     if res ~= resource then return end
-    local account = getPlayerAccount(source)
-    if (not account) or (isGuestAccount(account)) then return end
-    sendCollectibles(source, account)
+    local id = getPlayerIdentity(source)
+    if (not id) then return end
+    sendCollectibles(source, id)
 end)
 
 addEventHandler("onResourceStart", resourceRoot, function()
 
-    local success1, reason1 = parseCustomSettings()
+    local success1, reason1 = loadSettings()
     if not success1 then
         outputInfoMessage(reason1)
         return cancelEvent()
     end
 
-    local success, reason = loadConfiguration()
+    local success2, reason2 = initDB()
+    if not success2 then
+        outputInfoMessage(reason2)
+        return cancelEvent()
+    end
+
+    local success, reason = loadCollectibles()
     if not success then
         outputInfoMessage(reason)
         outputInfoMessage("Restore a configuration file from the 'backups' folder if needed.")
         return cancelEvent()
     end
 
-    outputInfoMessage("Successfully loaded configuration.")
-    
     createServerCollectibles()
 
     for i=1, #clientsWaiting do
         local player = clientsWaiting[i]
         if player then
-            local account = getPlayerAccount(player)
-            if (account) and (not isGuestAccount(account)) then
-                sendCollectibles(player, account)
+            local id = getPlayerIdentity(player)
+            if id then
+                sendCollectibles(player, id)
             end
         end
     end

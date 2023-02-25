@@ -54,13 +54,18 @@
 </td>
 </tr>
 <tr>
-<td class="name"><a href="#system_server.parseCustomSettings"><var>system_server.parseCustomSettings</var></a>()</td>
+<td class="name"><a href="#system_server.initDB"><var>system_server.initDB</var></a>()</td>
+<td class="doc"><p>Initialize local SQLite database</p>
+</td>
+</tr>
+<tr>
+<td class="name"><a href="#system_server.loadSettings"><var>system_server.loadSettings</var></a>()</td>
 <td class="doc"><p>Validates all custom settings</p>
 <p>returns true if successful, false + error message otherwise</p>
 </td>
 </tr>
 <tr>
-<td class="name"><a href="#system_server.loadConfiguration"><var>system_server.loadConfiguration</var></a>()</td>
+<td class="name"><a href="#system_server.loadCollectibles"><var>system_server.loadCollectibles</var></a>()</td>
 <td class="doc"><p>Loads the configuration file and parses it</p>
 <p>Errors are usually caused by incorrectly formatted XML file (caused by editing it manually) and file IO operations</p>
 </td>
@@ -106,18 +111,26 @@
 <p><strong>(Exported)</strong></p>
 
 </dd>
-<dt id="system_server.parseCustomSettings">
-<span class="icon"></span><var>system_server.parseCustomSettings</var>()
-<a class="permalink" href="#system_server.parseCustomSettings" title="Permalink to this definition">¶</a>
+<dt id="system_server.initDB">
+<span class="icon"></span><var>system_server.initDB</var>()
+<a class="permalink" href="#system_server.initDB" title="Permalink to this definition">¶</a>
+</dt>
+<dd>
+<p>Initialize local SQLite database</p>
+
+</dd>
+<dt id="system_server.loadSettings">
+<span class="icon"></span><var>system_server.loadSettings</var>()
+<a class="permalink" href="#system_server.loadSettings" title="Permalink to this definition">¶</a>
 </dt>
 <dd>
 <p>Validates all custom settings</p>
 <p>returns true if successful, false + error message otherwise.</p>
 
 </dd>
-<dt id="system_server.loadConfiguration">
-<span class="icon"></span><var>system_server.loadConfiguration</var>()
-<a class="permalink" href="#system_server.loadConfiguration" title="Permalink to this definition">¶</a>
+<dt id="system_server.loadCollectibles">
+<span class="icon"></span><var>system_server.loadCollectibles</var>()
+<a class="permalink" href="#system_server.loadCollectibles" title="Permalink to this definition">¶</a>
 </dt>
 <dd>
 <p>Loads the configuration file and parses it</p>
@@ -157,7 +170,7 @@
 
 </dd>
 <dt id="system_server.getCollectedCounts">
-<span class="icon"></span><var>system_server.getCollectedCounts</var>(<em>account</em>)
+<span class="icon"></span><var>system_server.getCollectedCounts</var>(<em>targetPlayerID</em>)
 <a class="permalink" href="#system_server.getCollectedCounts" title="Permalink to this definition">¶</a>
 </dt>
 <dd>
@@ -165,7 +178,7 @@
 
 </dd>
 <dt id="system_server.resetClientCollectibles">
-<span class="icon"></span><var>system_server.resetClientCollectibles</var>(<em>targetAccount</em>, <em>theType</em>, <em>thePlayer</em>)
+<span class="icon"></span><var>system_server.resetClientCollectibles</var>(<em>targetPlayerID</em>, <em>theType</em>, <em>thePlayer</em>)
 <a class="permalink" href="#system_server.resetClientCollectibles" title="Permalink to this definition">¶</a>
 </dt>
 <dd>
