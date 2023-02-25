@@ -429,6 +429,25 @@ local function initDB()
     return true
 end
 
+local function getFromDB(mode, ...)
+    local args = {...}
+    if mode == "PLAYER_COLLECTED" then
+        local playerID = args[1]
+        if not (type(playerID)=="number" or type(playerID)=="string") then
+            return false, "Failed to get collected collectibles - playerID is not a string/number."
+        end
+        local qstr = "SELECT * FROM client_counts WHERE playerID=?"
+        local qh = dbQuery(con, qstr, playerID)
+        local res, num_affected_rows, err = dbPoll(qh, -1)
+        if not res then
+            return false, "Failed to get collected collectibles for playerID "..playerID.."."
+        end
+        return res
+    else
+        return false, "Failed to get from SQLite database - unknown mode."
+    end
+end
+
 local function updateDB(mode, ...)
     local args = {...}
     if mode == "RESET_ALL" then
@@ -501,24 +520,6 @@ local function updateDB(mode, ...)
         return false, "Failed to update SQLite database - unknown mode."
     end
     return true
-end
-
-local function getFromDB(mode, ...)
-    local args = {...}
-    if mode == "PLAYER_COLLECTED" then
-        local playerID = args[1]
-        if not (type(playerID)=="number" or type(playerID)=="string") then
-            return false, "Failed to get collected collectibles - playerID is not a string/number."
-        end
-        local qstr = "SELECT * FROM client_counts WHERE playerID=?"
-        local qh = dbQuery(con, qstr, playerID)
-        local res, num_affected_rows, err = dbPoll(qh, -1)
-        if not res then
-            return false, "Failed to get collected collectibles for playerID "..playerID.."."
-        end
-        return res
-    end
-    return false, "Failed to get from SQLite database - unknown mode."
 end
 
 --- Validates all custom settings
@@ -1008,7 +1009,10 @@ function deleteType(theType)
     if info.target == "client" then
 
         -- reset all accounts' collected counts of this type
-        updateDB("RESET_TYPE_EVERYONE", theType)
+        local dbsuccess, dbreason = updateDB("RESET_TYPE_EVERYONE", theType)
+        if not dbsuccess then
+            outputDebugMsg(dbreason, "ERROR")
+        end
     end
 
     if not xmlSaveFile(config) then
@@ -1293,8 +1297,7 @@ function destroyCollectibles(theType, thePlayer)
     return true
 end
 
-local function isCollectedClient(thePlayer, playerID, theType, respawn_after, spID)
-    local data = getFromDB("PLAYER_COLLECTED", playerID)
+local function isCollectedClient(thePlayer, playerID, data, theType, respawn_after, spID)
     if not data then
         return false
     end
@@ -1313,20 +1316,24 @@ local function isCollectedClient(thePlayer, playerID, theType, respawn_after, sp
     end
     local now = getRealTime().timestamp
     if (respawn_after) and ((now - collectedAt) > respawn_after) then
-        updateDB("RESET_SPAWNPOINT", playerID, theType, spID)
+        local dbsuccess, dbreason = updateDB("RESET_SPAWNPOINT", playerID, theType, spID)
+        if not dbsuccess then
+            outputDebugMsg(dbreason, "ERROR")
+        end
         return false
     end
     return true
 end
 
 local function sendCollectibles(player, playerID)
+    local data = getFromDB("PLAYER_COLLECTED", playerID)
     local collectiblesToSend = {}
     for theType, info in pairs(collectibleTypes) do
         if info.target == "client" then
             for i=1, #info.spawnpoints do
                 local spawnpoint = info.spawnpoints[i]
                 if spawnpoint then
-                    info.spawnpoints[i].wasCollected = isCollectedClient(player, playerID, theType, info.respawn_after, spawnpoint.spID)
+                    info.spawnpoints[i].wasCollected = isCollectedClient(player, playerID, data, theType, info.respawn_after, spawnpoint.spID)
                 end
             end
             collectiblesToSend[theType] = {
@@ -1443,7 +1450,10 @@ function removeSpawnpoint(theType, spID)
 
     if info.target == "client" then
         -- reset all accounts' collected counts of this type
-        updateDB("RESET_TYPE_EVERYONE", theType)
+        local dbsuccess, dbreason = updateDB("RESET_TYPE_EVERYONE", theType)
+        if not dbsuccess then
+            outputDebugMsg(dbreason, "ERROR")
+        end
 
         resendClientCollectibles()
     end
@@ -1572,8 +1582,7 @@ local function despawnCollectibles(player)
     triggerClientEvent(player, "collectibles:despawn", player)
 end
 
-local function countCollectedClient(thePlayer, playerID, theType, respawn_after)
-    local data = getFromDB("PLAYER_COLLECTED", playerID)
+local function countCollectedClient(thePlayer, playerID, data, theType, respawn_after)
     if not data then
         return 0
     end
@@ -1586,7 +1595,10 @@ local function countCollectedClient(thePlayer, playerID, theType, respawn_after)
             local spID = tonumber(row.spID)
             local collectedAt = tonumber(row.collectedAt)
             if (respawn_after) and ((now - collectedAt) > respawn_after) then
-                updateDB("RESET_SPAWNPOINT", playerID, theType, spID)
+                local dbsuccess, dbreason = updateDB("RESET_SPAWNPOINT", playerID, theType, spID)
+                if not dbsuccess then
+                    outputDebugMsg(dbreason, "ERROR")
+                end
 
                 if not forceRespawn then
                     forceRespawn = true
@@ -1607,6 +1619,7 @@ function getCollectedCounts(targetPlayerID)
     assert(targetPlayerID ~= nil, "Bad argument @ getCollectedCounts [targetPlayerID expected, got " .. tostring(targetPlayerID) .. "]")
     local serverCounts = {}
     local clientCounts = {}
+    local targetPlayerData = getFromDB("PLAYER_COLLECTED", playerID)
     for theType, info in pairs(collectibleTypes) do
         if info.target == "server" then
             local spawnedPickups = {}
@@ -1618,7 +1631,7 @@ function getCollectedCounts(targetPlayerID)
             local count = countCollectedServer(targetPlayerID, theType)
             serverCounts[theType] = {count = count, total = info.total, spawnpoints = info.spawnpoints, spawnedPickups = spawnedPickups}
         elseif info.target == "client" then
-            local count = countCollectedClient(false, targetPlayerID, theType, info.respawn_after)
+            local count = countCollectedClient(false, targetPlayerID, targetPlayerData, theType, info.respawn_after)
             clientCounts[theType] = {count = count, total = info.total, spawnpoints = info.spawnpoints}
         end
     end
@@ -1632,10 +1645,11 @@ local function respawnAllClientCollectibles()
         if thePlayer then
             local id = getPlayerIdentity(thePlayer)
             if id then
+                local data = getFromDB("PLAYER_COLLECTED", id)
                 for theType, info in pairs(collectibleTypes) do
                     if info.target == "client" then
                         local respawn_after = info.respawn_after
-                        countCollectedClient(thePlayer, id, theType, respawn_after)
+                        countCollectedClient(thePlayer, id, data, theType, respawn_after)
                     end
                 end
             end
@@ -1659,9 +1673,15 @@ function resetClientCollectibles(targetPlayerID, theType, thePlayer)
         return false, "Collectible type '%s' does not exist."
     end
     if theType == "all" then
-        updateDB("RESET_ALL", targetPlayerID)
+        local dbsuccess, dbreason = updateDB("RESET_ALL", targetPlayerID)
+        if not dbsuccess then
+            outputDebugMsg(dbreason, "ERROR")
+        end
     else
-        updateDB("RESET_TYPE", targetPlayerID, theType)
+        local dbsuccess, dbreason = updateDB("RESET_TYPE", targetPlayerID, theType)
+        if not dbsuccess then
+            outputDebugMsg(dbreason, "ERROR")
+        end
     end
     local targetPlayer = nil
     local playersTable = getElementsByType("player")
@@ -1768,8 +1788,13 @@ local function handlePickedUp(serversidePickup, collectibleInfo_)
         destroyElement(serversidePickup)
         spawnedServerCollectibles[serversidePickup] = nil
     else
-        count = countCollectedClient(client, playerID, theType, respawn_after) + 1
-        updateDB("COLLECT_SPAWNPOINT", playerID, theType, spID)
+        local data = getFromDB("PLAYER_COLLECTED", playerID)
+        count = countCollectedClient(client, playerID, data, theType, respawn_after) + 1
+        
+        local dbsuccess, dbreason = updateDB("COLLECT_SPAWNPOINT", playerID, theType, spID)
+        if not dbsuccess then
+            outputDebugMsg(dbreason, "ERROR")
+        end
         -- pickup will be destroyed on client
     end
 
