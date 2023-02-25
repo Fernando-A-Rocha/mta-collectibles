@@ -13,9 +13,9 @@
 addEvent("collectibles:handlePickedUp", true) -- source: always resourceRoot
 
 -- Custom Events (for Developers)
-addEvent("collectibles:onCollected", true) -- source: a player element
-addEvent("collectibles:onSpawnedServer", true) -- source: always root
-addEvent("collectibles:onDestroyedServer", true) -- source: always root
+addEvent("collectibles:onCollected", false) -- source: a player element [not remote-triggered]
+addEvent("collectibles:onSpawnedServer", false) -- source: always root [not remote-triggered]
+addEvent("collectibles:onDestroyedServer", false) -- source: always root [not remote-triggered]
 
 local clientsWaiting = {} -- initial startup
 local collectibleTypes = {}
