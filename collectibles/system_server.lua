@@ -10,7 +10,6 @@
 ]]
 
 -- Internal Events
-addEvent("collectibles:requestCollectibles", true) -- source: always resourceRoot
 addEvent("collectibles:handlePickedUp", true) -- source: always resourceRoot
 
 -- Custom Events (for Developers)
@@ -1803,12 +1802,12 @@ addEventHandler("onPlayerLogout", root, function(_, newAccount)
     end
 end)
 
-addEventHandler("collectibles:requestCollectibles", resourceRoot, function()
-    if not client then return end
-    local account = getPlayerAccount(client)
+addEventHandler("onPlayerResourceStart", root, function(res)
+    if res ~= resource then return end
+    local account = getPlayerAccount(source)
     if (not account) or (isGuestAccount(account)) then return end
-    sendCollectibles(client, account)
-end, false)
+    sendCollectibles(source, account)
+end)
 
 addEventHandler("onResourceStart", resourceRoot, function()
 

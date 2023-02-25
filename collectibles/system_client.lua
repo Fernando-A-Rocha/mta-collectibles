@@ -280,7 +280,3 @@ addEventHandler("collectibles:despawn", localPlayer, function()
     end
     spawnedCollectibles = nil
 end, false)
-
-addEventHandler("onClientResourceStart", resourceRoot, function()
-    triggerLatentServerEvent("collectibles:requestCollectibles", resourceRoot)
-end, false)
