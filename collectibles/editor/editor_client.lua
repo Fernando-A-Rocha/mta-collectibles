@@ -8,7 +8,7 @@
 
 -- Internal Events
 addEvent("collectibles:admin", true) -- source: always the local player
-addEvent("collectibles:adminConfirm", true) -- source: always the local player
+addEvent("collectibles:adminConfirm", false) -- source: always the local player [not remote-triggered]
 addEvent("collectibles:adminResponse", true) -- source: always the local player
 addEvent("collectibles:configureSpawnpoints", true) -- source: always the local player
 

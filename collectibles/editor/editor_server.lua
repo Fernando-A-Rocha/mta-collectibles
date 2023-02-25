@@ -67,23 +67,9 @@ function commandOpenEditor(thePlayer, cmd)
     xmlUnloadFile(meta)
 
     local collectibleTypes = getCollectibleTypes()
-    local accounts = getAccounts()
-    local collectedCounts = {}
-    for i=1, #accounts do
-        local account = accounts[i]
-        if account then
-            collectedCounts[#collectedCounts + 1] = {
-                accountID = getAccountID(account),
-                accountName = getAccountName(account),
-                counts = getCollectedCounts(account)
-            }
-        end
-    end
-
     local constants = getConstants()
     local info = {
         collectibleTypes = collectibleTypes,
-        collectedCounts = collectedCounts,
         backupExists = fileExists((constants.BACKUPS_DIRECTORY)..(constants.COLLECTIBLES_FILE)),
         metaFileSrcs = metaFileSrcs,
         constants = constants

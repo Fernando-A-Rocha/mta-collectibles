@@ -1,5 +1,8 @@
 # Ignore OLD file created when config is restored by a backup
 *.old
 
+# Ignore local SQLite database
+*.db
+
 # Ignore resource zip files
 *.zip

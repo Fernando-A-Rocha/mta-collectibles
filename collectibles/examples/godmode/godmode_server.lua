@@ -20,7 +20,7 @@ local function syncGodModeWithClients()
         end
     end
 end
-local function handlePickedHeart(account, accountID, accountName, collectibleTarget, theType, count, total)
+local function handlePickedHeart(collectorID, collectibleTarget, theType, count, total)
     local thePlayer = source
     if theType ~= "Heart" then return end
     if count ~= total then return end -- Only give godmode when all hearts have been collected

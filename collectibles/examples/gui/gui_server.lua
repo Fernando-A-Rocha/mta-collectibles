@@ -4,17 +4,17 @@
     Example Implementation (Server-Side)
 ]]
 local function cmdCollectibleStats(thePlayer, cmd)
-    local account = getPlayerAccount(thePlayer)
-    if (not account) or (isGuestAccount(account)) then
+    local id = exports["collectibles"]:getPlayerIdentity(thePlayer)
+    if (not id) then
         outputChatBox("You are not logged in.", thePlayer, 255, 0, 0)
         return
     end
-    local counts = exports["collectibles"]:getCollectedCounts(account)
+    local counts = exports["collectibles"]:getCollectedCounts(id)
     triggerClientEvent(thePlayer, "collectibles-gui:showStats", thePlayer, counts)
 end
 addCommandHandler("collectibles", cmdCollectibleStats, false, false)
 addCommandHandler("collectiblestats", cmdCollectibleStats, false, false)
-local function handleCollect(account, accountID, accountName, collectibleTarget, theType, count, total)
+local function handleCollect(collectorID, collectibleTarget, theType, count, total)
     local thePlayer = source
     outputChatBox("#ffffffCheck your stats with#00ff00 /collectibles#ffffff.", thePlayer, 255, 255, 255, true)
 end
